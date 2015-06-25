@@ -1,9 +1,14 @@
 /* Copyright © 2011-2013 by Neil Jenkins. MIT Licensed. */
 
-( function ( doc, undefined ) {
-
 "use strict";
-/*jshint strict:false, undef:false, unused:false */
+
+define(function(require) {
+    var dep = require('dependency');
+    console.log('hello');
+
+    if (typeof define !== 'function') {
+        var define = require('amdefine')(module);
+    }/*jshint strict:false, undef:false, unused:false */
 
 var DOCUMENT_POSITION_PRECEDING = 2; // Node.DOCUMENT_POSITION_PRECEDING
 var ELEMENT_NODE = 1;                // Node.ELEMENT_NODE;
@@ -3423,14 +3428,7 @@ proto.increaseListLevel = command( 'modifyBlocks', increaseListLevel );
 proto.decreaseListLevel = command( 'modifyBlocks', decreaseListLevel );
 proto.insertNodeInRange = insertNodeInRange ;
 
-if ( top !== win ) {
-    win.editor = new Squire( doc );
-    if ( win.onEditorLoad ) {
-        win.onEditorLoad( win.editor );
-        win.onEditorLoad = null;
-    }
-} else {
-    win.Squire = Squire;
-}
-
-}( document ) );
+    //The value returned from the function is
+    //used as the module export visible to Node.
+    return Squire;
+});
