@@ -3421,6 +3421,7 @@ proto.removeList = command( 'modifyBlocks', removeList );
 
 proto.increaseListLevel = command( 'modifyBlocks', increaseListLevel );
 proto.decreaseListLevel = command( 'modifyBlocks', decreaseListLevel );
+proto.insertNodeInRange = insertNodeInRange ;
 
 if ( top !== win ) {
     win.editor = new Squire( doc );
