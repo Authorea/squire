@@ -766,7 +766,15 @@ var extractContentsOfRange = function ( range, common ) {
 
 var deleteContentsOfRange = function ( range ) {
     // Move boundaries up as much as possible to reduce need to split.
+    // But we need to check whether we've moved the boundary outside of a
+    // block. If so, the entire block will be removed, so we shouldn't merge
+    // later.
     moveRangeBoundariesUpTree( range );
+
+    var startBlock = range.startContainer,
+        endBlock = range.endContainer,
+        needsMerge = ( isInline( startBlock ) || isBlock( startBlock ) ) &&
+            ( isInline( endBlock ) || isBlock( endBlock ) );
 
     // Remove selected range
     extractContentsOfRange( range );
@@ -777,10 +785,12 @@ var deleteContentsOfRange = function ( range ) {
     moveRangeBoundariesDownTree( range );
 
     // If we split into two different blocks, merge the blocks.
-    var startBlock = getStartBlockOfRange( range ),
+    if ( needsMerge ) {
+        startBlock = getStartBlockOfRange( range );
         endBlock = getEndBlockOfRange( range );
-    if ( startBlock && endBlock && startBlock !== endBlock ) {
-        mergeWithBlock( startBlock, endBlock, range );
+        if ( startBlock && endBlock && startBlock !== endBlock ) {
+            mergeWithBlock( startBlock, endBlock, range );
+        }
     }
 
     // Ensure block has necessary children
@@ -794,6 +804,8 @@ var deleteContentsOfRange = function ( range ) {
     if ( !child || child.nodeName === 'BR' ) {
         fixCursor( body );
         range.selectNodeContents( body.firstChild );
+    } else {
+        range.collapse( false );
     }
 };
 
@@ -1142,6 +1154,8 @@ var keys = {
     9: 'tab',
     13: 'enter',
     32: 'space',
+    33: 'pageup',
+    34: 'pagedown',
     37: 'left',
     39: 'right',
     46: 'delete',
@@ -1155,6 +1169,10 @@ var onKey = function ( event ) {
         key = keys[ code ],
         modifiers = '',
         range = this.getSelection();
+
+    if ( event.defaultPrevented ) {
+        return;
+    }
 
     if ( !key ) {
         key = String.fromCharCode( code ).toLowerCase();
@@ -1257,6 +1275,14 @@ var afterDelete = function ( self, range ) {
             fixCursor( parent );
             // Move cursor into text node
             moveRangeBoundariesDownTree( range );
+        }
+        // If you delete the last character in the sole <div> in Chrome,
+        // it removes the div and replaces it with just a <br> inside the
+        // body. Detach the <br>; the _ensureBottomLine call will insert a new
+        // block.
+        if ( node.nodeName === 'BODY' &&
+                ( node = node.firstChild ) && node.nodeName === 'BR' ) {
+            detach( node );
         }
         self._ensureBottomLine();
         self.setSelection( range );
@@ -1565,6 +1591,18 @@ if ( isMac && isGecko && win.getSelection().modify ) {
     };
 }
 
+// System standard for page up/down on Mac is to just scroll, not move the
+// cursor. On Linux/Windows, it should move the cursor, but some browsers don't
+// implement this natively. Override to support it.
+if ( !isMac ) {
+    keyHandlers.pageup = function ( self ) {
+        self.moveCursorToStart();
+    };
+    keyHandlers.pagedown = function ( self ) {
+        self.moveCursorToEnd();
+    };
+}
+
 keyHandlers[ ctrlKey + 'b' ] = mapKeyToFormat( 'B' );
 keyHandlers[ ctrlKey + 'i' ] = mapKeyToFormat( 'I' );
 keyHandlers[ ctrlKey + 'u' ] = mapKeyToFormat( 'U' );
@@ -1794,11 +1832,8 @@ var cleanTree = function cleanTree ( node ) {
         } else {
             if ( nodeType === TEXT_NODE ) {
                 data = child.data;
-                // Use \s instead of notWS, because we want to remove nodes
-                // which are just nbsp, in order to cleanup <div>nbsp<br></div>
-                // construct.
-                startsWithWS = /\s/.test( data.charAt( 0 ) );
-                endsWithWS = /\s/.test( data.charAt( data.length - 1 ) );
+                startsWithWS = !notWS.test( data.charAt( 0 ) );
+                endsWithWS = !notWS.test( data.charAt( data.length - 1 ) );
                 if ( !startsWithWS && !endsWithWS ) {
                     continue;
                 }
@@ -1951,7 +1986,7 @@ var onPaste = function ( event ) {
         hasImage = false,
         plainItem = null,
         self = this,
-        l, item, type;
+        l, item, type, data;
 
     // Current HTML5 Clipboard interface
     // ---------------------------------
@@ -2003,20 +2038,26 @@ var onPaste = function ( event ) {
 
     // Old interface
     // -------------
-    // Currently supported by FF & Safari. *However*, Safari flat out refuses
-    // to copy stuff as text/html when copying from *within Safari*. There is
-    // no way to get an HTML version of the clipboard other than to use the
-    // fallback method.
 
-    // if ( clipboardData ) {
-    //     event.preventDefault();
-    //     if ( indexOf.call( clipboardData.types, 'text/html' ) > -1 ) {
-    //         this.insertHTML( clipboardData.getData( 'text/html' ), true );
-    //     } else {
-    //         this.insertPlainText( clipboardData.getData( 'text/plain' ), true );
-    //     }
-    //     return;
-    // }
+    // Safari (and indeed many other OS X apps) copies stuff as text/rtf
+    // rather than text/html; even from a webpage in Safari. The only way
+    // to get an HTML version is to fallback to letting the browser insert
+    // the content. Same for getting image data. *Sigh*.
+    if ( clipboardData && (
+            indexOf.call( clipboardData.types, 'text/html' ) > -1 || (
+            indexOf.call( clipboardData.types, 'text/plain' ) > -1 &&
+            indexOf.call( clipboardData.types, 'text/rtf' ) < 0 ) ) ) {
+        event.preventDefault();
+        // Abiword on Linux copies a plain text and html version, but the HTML
+        // version is the empty string! So always try to get HTML, but if none,
+        // insert plain text instead.
+        if (( data = clipboardData.getData( 'text/html' ) )) {
+            this.insertHTML( data, true );
+        } else if (( data = clipboardData.getData( 'text/plain' ) )) {
+            this.insertPlainText( data, true );
+        }
+        return;
+    }
 
     // No interface :(
     // ---------------
@@ -2275,7 +2316,7 @@ var customEvents = {
 
 proto.fireEvent = function ( type, event ) {
     var handlers = this._events[ type ],
-        i, l, obj;
+        l, obj;
     if ( handlers ) {
         if ( !event ) {
             event = {};
@@ -2285,8 +2326,9 @@ proto.fireEvent = function ( type, event ) {
         }
         // Clone handlers array, so any handlers added/removed do not affect it.
         handlers = handlers.slice();
-        for ( i = 0, l = handlers.length; i < l; i += 1 ) {
-            obj = handlers[i];
+        l = handlers.length;
+        while ( l-- ) {
+            obj = handlers[l];
             try {
                 if ( obj.handleEvent ) {
                     obj.handleEvent( event );
@@ -3837,19 +3879,36 @@ proto.removeList = command( 'modifyBlocks', removeList );
 proto.increaseListLevel = command( 'modifyBlocks', increaseListLevel );
 proto.decreaseListLevel = command( 'modifyBlocks', decreaseListLevel );
 
+<<<<<<< HEAD
 proto.insertNodeInRange = insertNodeInRange;
 
 if ( typeof exports === 'object' ) {
     module.exports = Squire;
 } else {
     if ( top !== win ) {
+=======
+if ( typeof exports === 'object' ) {
+    module.exports = Squire;
+} else if ( typeof define === 'function' && define.amd ) {
+    define( function () {
+        return Squire;
+    });
+} else {
+    win.Squire = Squire;
+
+    if ( top !== win &&
+            doc.documentElement.getAttribute( 'data-squireinit' ) === 'true' ) {
+>>>>>>> edfd35ccecba06814823952dd345ec82c4d63eec
         win.editor = new Squire( doc );
         if ( win.onEditorLoad ) {
             win.onEditorLoad( win.editor );
             win.onEditorLoad = null;
         }
+<<<<<<< HEAD
     } else {
         win.Squire = Squire;
+=======
+>>>>>>> edfd35ccecba06814823952dd345ec82c4d63eec
     }
 }
 

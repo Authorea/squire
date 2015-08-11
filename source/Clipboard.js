@@ -24,7 +24,7 @@ var onPaste = function ( event ) {
         hasImage = false,
         plainItem = null,
         self = this,
-        l, item, type;
+        l, item, type, data;
 
     // Current HTML5 Clipboard interface
     // ---------------------------------
@@ -76,20 +76,26 @@ var onPaste = function ( event ) {
 
     // Old interface
     // -------------
-    // Currently supported by FF & Safari. *However*, Safari flat out refuses
-    // to copy stuff as text/html when copying from *within Safari*. There is
-    // no way to get an HTML version of the clipboard other than to use the
-    // fallback method.
 
-    // if ( clipboardData ) {
-    //     event.preventDefault();
-    //     if ( indexOf.call( clipboardData.types, 'text/html' ) > -1 ) {
-    //         this.insertHTML( clipboardData.getData( 'text/html' ), true );
-    //     } else {
-    //         this.insertPlainText( clipboardData.getData( 'text/plain' ), true );
-    //     }
-    //     return;
-    // }
+    // Safari (and indeed many other OS X apps) copies stuff as text/rtf
+    // rather than text/html; even from a webpage in Safari. The only way
+    // to get an HTML version is to fallback to letting the browser insert
+    // the content. Same for getting image data. *Sigh*.
+    if ( clipboardData && (
+            indexOf.call( clipboardData.types, 'text/html' ) > -1 || (
+            indexOf.call( clipboardData.types, 'text/plain' ) > -1 &&
+            indexOf.call( clipboardData.types, 'text/rtf' ) < 0 ) ) ) {
+        event.preventDefault();
+        // Abiword on Linux copies a plain text and html version, but the HTML
+        // version is the empty string! So always try to get HTML, but if none,
+        // insert plain text instead.
+        if (( data = clipboardData.getData( 'text/html' ) )) {
+            this.insertHTML( data, true );
+        } else if (( data = clipboardData.getData( 'text/plain' ) )) {
+            this.insertPlainText( data, true );
+        }
+        return;
+    }
 
     // No interface :(
     // ---------------
