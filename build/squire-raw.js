@@ -3879,14 +3879,8 @@ proto.removeList = command( 'modifyBlocks', removeList );
 proto.increaseListLevel = command( 'modifyBlocks', increaseListLevel );
 proto.decreaseListLevel = command( 'modifyBlocks', decreaseListLevel );
 
-<<<<<<< HEAD
 proto.insertNodeInRange = insertNodeInRange;
 
-if ( typeof exports === 'object' ) {
-    module.exports = Squire;
-} else {
-    if ( top !== win ) {
-=======
 if ( typeof exports === 'object' ) {
     module.exports = Squire;
 } else if ( typeof define === 'function' && define.amd ) {
@@ -3898,17 +3892,11 @@ if ( typeof exports === 'object' ) {
 
     if ( top !== win &&
             doc.documentElement.getAttribute( 'data-squireinit' ) === 'true' ) {
->>>>>>> edfd35ccecba06814823952dd345ec82c4d63eec
         win.editor = new Squire( doc );
         if ( win.onEditorLoad ) {
             win.onEditorLoad( win.editor );
             win.onEditorLoad = null;
         }
-<<<<<<< HEAD
-    } else {
-        win.Squire = Squire;
-=======
->>>>>>> edfd35ccecba06814823952dd345ec82c4d63eec
     }
 }
 
