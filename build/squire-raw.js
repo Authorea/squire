@@ -16,7 +16,8 @@ var START_TO_END = 1;   // Range.START_TO_END
 var END_TO_END = 2;     // Range.END_TO_END
 var END_TO_START = 3;   // Range.END_TO_START
 
-var ZWS = '\u200B';
+// var ZWS = '\u200B';
+var ZWS = 'X'
 
 var win = doc.defaultView;
 
@@ -111,7 +112,7 @@ TreeWalker.prototype.nextNode = function () {
     }
 };
 
-TreeWalker.prototype.previousNode = function () {
+TreeWalker.prototype.previousNode = function (breakoutFunction) {
     var current = this.currentNode,
         root = this.root,
         nodeType = this.nodeType,
@@ -122,10 +123,17 @@ TreeWalker.prototype.previousNode = function () {
             return null;
         }
         node = current.previousSibling;
+        //modified to let us break on an element satisfying the breakoutFunction
         if ( node ) {
-            while ( current = node.lastChild ) {
-                node = current;
-            }
+           if(breakoutFunction && breakoutFunction(node)){
+               this.currentNode = node;
+               return node;
+           }
+           else{
+               while ( current = node.lastChild ) {
+                   node = current;
+               }
+           }
         } else {
             node = current.parentNode;
         }
@@ -174,7 +182,9 @@ var inlineNodeNames  = /^(?:#text|A(?:BBR|CRONYM)?|B(?:R|D[IO])?|C(?:ITE|ODE)|D(
 var leafNodeNames = {
     BR: 1,
     IMG: 1,
-    INPUT: 1
+    INPUT: 1,
+    SPAN: 1,
+    CITE: 1
 };
 
 function every ( nodeList, fn ) {
@@ -226,6 +236,9 @@ function isContainer ( node ) {
     var type = node.nodeType;
     return ( type === ELEMENT_NODE || type === DOCUMENT_FRAGMENT_NODE ) &&
         !isInline( node ) && !isBlock( node );
+}
+function notEditable( node ){
+    return (node.isContentEditable === false)
 }
 
 function getBlockWalker ( node ) {
@@ -1037,6 +1050,43 @@ var moveRangeBoundariesUpTree = function ( range, common ) {
     range.setEnd( endContainer, endOffset );
 };
 
+var moveRangeOutOfNotEditable = function( range ){
+    
+    var startContainer = range.startContainer
+    var endContainer = range.endContainer
+    var moveRight = false
+    var nextSibling
+    if(range.collapsed){
+        if(startContainer.nodeType === TEXT_NODE){
+            var currentParent = startContainer.parentNode
+            var newParent = currentParent
+            var textLength = startContainer.data.length
+            // if we are for some reason, likely an up or down arrow, finding ourselves in the middle of a 
+            // text area that isn't editable, we need to decide if we should be in front of that element
+            // or to the right of it.  At the moment this will only work for a single text element in a series
+            // of non-editable structures, but it can be extended to work for all cases if necessary.
+            if(range.startOffset > textLength/2){
+                moveRight = true
+            }
+            while(notEditable(newParent)){
+                currentParent = newParent
+                if(moveRight){
+                    if(nextSibling = currentParent.nextSibling){
+                        currentParent = nextSibling
+                    }
+                }
+                newParent = currentParent.parentNode
+                var startOffset = indexOf.call( newParent.childNodes, currentParent );
+            }
+            if(newParent !== currentParent){
+                var offset = indexOf.call( newParent.childNodes, currentParent )
+                range.setStart( newParent, offset );
+                range.setEnd( newParent, offset );
+            }
+        } 
+    }
+}
+
 // Returns the first block at least partially contained by the range,
 // or null if no block is contained by the range.
 var getStartBlockOfRange = function ( range ) {
@@ -1160,7 +1210,10 @@ var keys = {
     39: 'right',
     46: 'delete',
     219: '[',
-    221: ']'
+    221: ']',
+    40:  'down',
+    38:  'up'
+
 };
 
 // Ref: http://unixpapa.com/js/key.html
@@ -1292,6 +1345,12 @@ var afterDelete = function ( self, range ) {
     }
 };
 
+var ensureOutsideOfNotEditable = function ( self ){
+    var range = self.getSelection()
+    moveRangeOutOfNotEditable(range)
+    self.setSelection(range)
+};
+
 var keyHandlers = {
     enter: function ( self, event, range ) {
         var block, parent, nodeAfterSplit;
@@ -1340,7 +1399,6 @@ var keyHandlers = {
                 return self.modifyBlocks( removeBlockQuote, range );
             }
         }
-
         // Otherwise, split at cursor point.
         nodeAfterSplit = splitBlock( self, block,
             range.startContainer, range.startOffset );
@@ -1369,6 +1427,10 @@ var keyHandlers = {
                 break;
             }
 
+
+            if ( nodeAfterSplit.nodeType !== TEXT_NODE && notEditable(nodeAfterSplit)) {
+                break;
+            }
             while ( child && child.nodeType === TEXT_NODE && !child.data ) {
                 next = child.nextSibling;
                 if ( !next || next.nodeName === 'BR' ) {
@@ -1455,9 +1517,51 @@ var keyHandlers = {
                 self._updatePath( range, true );
             }
         }
-        // Otherwise, leave to browser but check afterwards whether it has
-        // left behind an empty inline tag.
+        // Nate: previously this was left to the browser but had issues with non-editable spans.  Furthermore
+        // firefox had an odd bug where it is confused by non-editable spans causing spaces to be added
+        // inside the non-editable block rather than deleting the appropriate character inside editable
+        // text.  There is some information on what is probably the same bug here:
+        // https://bugzilla.mozilla.org/show_bug.cgi?id=685445
         else {
+            event.preventDefault();
+            var w = new TreeWalker(self._doc.body, NodeFilter.SHOW_ALL, function(node){
+                return ((node.nodeType === TEXT_NODE) || (node.isContentEditable===false))
+            } );
+            w.currentNode = range.startContainer;
+            var sc = range.startContainer;
+            var so = range.startOffset;
+            var pn = null;
+            if((sc.nodeType === TEXT_NODE)){
+                if(so>0){
+                    sc.deleteData(so-1, 1)
+                    cleanTree(sc.parentNode)
+                    replaceDoubleSpace(sc.parentNode, range)
+                }
+                else{
+                    pn = w.previousNode(notEditable)
+                    var previousParent = pn.parentNode
+                    if(pn.nodeType === TEXT_NODE){
+                        pn.deleteData(pn.length - 1, 1)
+                    }
+                    else if(!pn.isContentEditable){
+                        detach(pn);
+                    }
+                    cleanTree(previousParent)
+                    replaceDoubleSpace(previousParent, range)
+                }
+            }
+            else if((sc.nodeType === ELEMENT_NODE) && (so>0)){
+                pn = sc.childNodes[so-1]
+                if(pn.nodeType === TEXT_NODE){
+                    pn.deleteData(pn.length - 1, 1)
+                }
+                else if(!pn.isContentEditable){
+                    detach(pn);
+                }
+                cleanTree(sc)
+                replaceDoubleSpace(sc, range)
+            }
+
             self.setSelection( range );
             setTimeout( function () { afterDelete( self ); }, 0 );
         }
@@ -1522,7 +1626,7 @@ var keyHandlers = {
                 }
             }
             self.setSelection( originalRange );
-            setTimeout( function () { afterDelete( self ); }, 0 );
+            // setTimeout( function () { afterDelete( self ); }, 0 );
         }
     },
     tab: function ( self, event, range ) {
@@ -1568,12 +1672,54 @@ var keyHandlers = {
 
         self.setSelection( range );
     },
-    left: function ( self ) {
+    left: function ( self, event ) {
         self._removeZWS();
+        var range = self.getSelection()
+        var sc = range.startContainer
+        var so = range.startOffset
+        if(sc.nodeType != TEXT_NODE && so == 1 && notEditable(sc.childNodes[0])){
+            //firefox does not handle this properly, it jumps up a line
+            if(sc.childNodes.length == 2 && so == 1){
+                event.preventDefault()
+                so = 0;
+                range.setStart(sc, so)
+                range.setEnd(sc, so)
+                self.setSelection(range)     
+            }
+
+        }
+        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
     },
-    right: function ( self ) {
+    right: function ( self, event ) {
         self._removeZWS();
+        var range = self.getSelection()
+        var sc = range.startContainer
+        var so = range.startOffset
+        if(sc.nodeType != TEXT_NODE && notEditable(sc.childNodes[so])){
+            //firefox does not handle this properly, the cursor gets stuck
+            if(sc.childNodes.length == 2 && so == 0){
+                event.preventDefault()
+                so = 1;
+                range.setStart(sc, so)
+                range.setEnd(sc, so)
+                self.setSelection(range)     
+            }
+
+        }
+        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
+    },
+    up: function ( self, event ) {
+        console.info('up')
+        // event.preventDefault();
+        self._removeZWS();
+        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
+    },
+    down: function ( self, event ) {
+        console.info('down')
+        self._removeZWS();
+        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
     }
+
 };
 
 // Firefox incorrectly handles Cmd-left/Cmd-right on Mac:
@@ -1875,7 +2021,16 @@ var cleanTree = function cleanTree ( node ) {
                     }
                 }
                 if ( data ) {
-                    child.data = data;
+                    //TODO: This is resetting the range info for the editor, I had a pointer to that range 
+                    //inside of backspace.  Calls to cleanTree were causing the cursor to jump around 
+                    //if a space was at the end of an element even though data and child.data were the same,
+                    //ie this was a no-op.  cleanTree should probably store a clone of the range initially,
+                    //and at the end of execution either restore the range or figure out what the knew range 
+                    //should be based on the cleanup actions taken.
+                    if(child.data !== data){
+                        console.info("child data does not equal data")
+                        child.data = data
+                    }
                     continue;
                 }
             }
@@ -1903,6 +2058,34 @@ var removeEmptyInlines = function removeEmptyInlines ( root ) {
         } else if ( child.nodeType === TEXT_NODE && !child.data ) {
             root.removeChild( child );
         }
+    }
+};
+
+// chrome doesn't like consecutive spaces, it will only show one of them.  We need to replace '  ' with
+// '$nbsp; '.  Also, if a range happens to contain a node as its start or end and the data is altered in
+// that range, the offset will be set to 0.  I don't know how to prevent that other than replacing it
+// afterwards.
+var replaceDoubleSpace = function removeEmptyInlines ( root, range ) {
+    var walker = new TreeWalker(root, SHOW_TEXT, function(){return true})
+    var node = walker.currentNode
+    var startNode = range.startContainer
+    var endNode = range.endContainer
+    var startOffset = range.startOffset
+    var endOffset = range.endOffset
+    while(node){
+        if (node.nodeType === TEXT_NODE && !isLeaf( node ) ) {
+            var text = node.data
+            if(text){
+                node.data = text.replace('  ', "\u00A0 ")
+                if(startNode === node){
+                    range.setStart(startNode, startOffset)
+                }
+                else if(endNode === node){
+                    range.setEnd(endNode, endOffset)
+                }
+            }
+        }
+        node = walker.nextNode()
     }
 };
 
@@ -2181,6 +2364,11 @@ function Squire ( doc, config ) {
 
     this.addEventListener( 'keyup', this._updatePathOnEvent );
     this.addEventListener( 'mouseup', this._updatePathOnEvent );
+    this.addEventListener( 'mouseup', function(){
+        var range = this.getSelection()
+        moveRangeOutOfNotEditable(range)
+        this.setSelection(range)
+    } );
 
     win.addEventListener( 'focus', this, false );
     win.addEventListener( 'blur', this, false );
@@ -2627,9 +2815,10 @@ proto._saveRangeToBookmark = function ( range ) {
             id: startSelectionId,
             type: 'hidden'
         }),
-        endNode = this.createElement( 'INPUT', {
+    endNode = this.createElement( 'INPUT', {
             id: endSelectionId,
             type: 'hidden'
+
         }),
         temp;
 

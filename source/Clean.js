@@ -258,7 +258,16 @@ var cleanTree = function cleanTree ( node ) {
                     }
                 }
                 if ( data ) {
-                    child.data = data;
+                    //TODO: This is resetting the range info for the editor, I had a pointer to that range 
+                    //inside of backspace.  Calls to cleanTree were causing the cursor to jump around 
+                    //if a space was at the end of an element even though data and child.data were the same,
+                    //ie this was a no-op.  cleanTree should probably store a clone of the range initially,
+                    //and at the end of execution either restore the range or figure out what the knew range 
+                    //should be based on the cleanup actions taken.
+                    if(child.data !== data){
+                        console.info("child data does not equal data")
+                        child.data = data
+                    }
                     continue;
                 }
             }
@@ -286,6 +295,34 @@ var removeEmptyInlines = function removeEmptyInlines ( root ) {
         } else if ( child.nodeType === TEXT_NODE && !child.data ) {
             root.removeChild( child );
         }
+    }
+};
+
+// chrome doesn't like consecutive spaces, it will only show one of them.  We need to replace '  ' with
+// '$nbsp; '.  Also, if a range happens to contain a node as its start or end and the data is altered in
+// that range, the offset will be set to 0.  I don't know how to prevent that other than replacing it
+// afterwards.
+var replaceDoubleSpace = function removeEmptyInlines ( root, range ) {
+    var walker = new TreeWalker(root, SHOW_TEXT, function(){return true})
+    var node = walker.currentNode
+    var startNode = range.startContainer
+    var endNode = range.endContainer
+    var startOffset = range.startOffset
+    var endOffset = range.endOffset
+    while(node){
+        if (node.nodeType === TEXT_NODE && !isLeaf( node ) ) {
+            var text = node.data
+            if(text){
+                node.data = text.replace('  ', "\u00A0 ")
+                if(startNode === node){
+                    range.setStart(startNode, startOffset)
+                }
+                else if(endNode === node){
+                    range.setEnd(endNode, endOffset)
+                }
+            }
+        }
+        node = walker.nextNode()
     }
 };
 

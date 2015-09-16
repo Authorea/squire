@@ -11,7 +11,10 @@ var keys = {
     39: 'right',
     46: 'delete',
     219: '[',
-    221: ']'
+    221: ']',
+    40:  'down',
+    38:  'up'
+
 };
 
 // Ref: http://unixpapa.com/js/key.html
@@ -143,6 +146,12 @@ var afterDelete = function ( self, range ) {
     }
 };
 
+var ensureOutsideOfNotEditable = function ( self ){
+    var range = self.getSelection()
+    moveRangeOutOfNotEditable(range)
+    self.setSelection(range)
+};
+
 var keyHandlers = {
     enter: function ( self, event, range ) {
         var block, parent, nodeAfterSplit;
@@ -191,7 +200,6 @@ var keyHandlers = {
                 return self.modifyBlocks( removeBlockQuote, range );
             }
         }
-
         // Otherwise, split at cursor point.
         nodeAfterSplit = splitBlock( self, block,
             range.startContainer, range.startOffset );
@@ -220,6 +228,10 @@ var keyHandlers = {
                 break;
             }
 
+
+            if ( nodeAfterSplit.nodeType !== TEXT_NODE && notEditable(nodeAfterSplit)) {
+                break;
+            }
             while ( child && child.nodeType === TEXT_NODE && !child.data ) {
                 next = child.nextSibling;
                 if ( !next || next.nodeName === 'BR' ) {
@@ -306,9 +318,51 @@ var keyHandlers = {
                 self._updatePath( range, true );
             }
         }
-        // Otherwise, leave to browser but check afterwards whether it has
-        // left behind an empty inline tag.
+        // Nate: previously this was left to the browser but had issues with non-editable spans.  Furthermore
+        // firefox had an odd bug where it is confused by non-editable spans causing spaces to be added
+        // inside the non-editable block rather than deleting the appropriate character inside editable
+        // text.  There is some information on what is probably the same bug here:
+        // https://bugzilla.mozilla.org/show_bug.cgi?id=685445
         else {
+            event.preventDefault();
+            var w = new TreeWalker(self._doc.body, NodeFilter.SHOW_ALL, function(node){
+                return ((node.nodeType === TEXT_NODE) || (node.isContentEditable===false))
+            } );
+            w.currentNode = range.startContainer;
+            var sc = range.startContainer;
+            var so = range.startOffset;
+            var pn = null;
+            if((sc.nodeType === TEXT_NODE)){
+                if(so>0){
+                    sc.deleteData(so-1, 1)
+                    cleanTree(sc.parentNode)
+                    replaceDoubleSpace(sc.parentNode, range)
+                }
+                else{
+                    pn = w.previousNode(notEditable)
+                    var previousParent = pn.parentNode
+                    if(pn.nodeType === TEXT_NODE){
+                        pn.deleteData(pn.length - 1, 1)
+                    }
+                    else if(!pn.isContentEditable){
+                        detach(pn);
+                    }
+                    cleanTree(previousParent)
+                    replaceDoubleSpace(previousParent, range)
+                }
+            }
+            else if((sc.nodeType === ELEMENT_NODE) && (so>0)){
+                pn = sc.childNodes[so-1]
+                if(pn.nodeType === TEXT_NODE){
+                    pn.deleteData(pn.length - 1, 1)
+                }
+                else if(!pn.isContentEditable){
+                    detach(pn);
+                }
+                cleanTree(sc)
+                replaceDoubleSpace(sc, range)
+            }
+
             self.setSelection( range );
             setTimeout( function () { afterDelete( self ); }, 0 );
         }
@@ -373,7 +427,7 @@ var keyHandlers = {
                 }
             }
             self.setSelection( originalRange );
-            setTimeout( function () { afterDelete( self ); }, 0 );
+            // setTimeout( function () { afterDelete( self ); }, 0 );
         }
     },
     tab: function ( self, event, range ) {
@@ -419,12 +473,54 @@ var keyHandlers = {
 
         self.setSelection( range );
     },
-    left: function ( self ) {
+    left: function ( self, event ) {
         self._removeZWS();
+        var range = self.getSelection()
+        var sc = range.startContainer
+        var so = range.startOffset
+        if(sc.nodeType != TEXT_NODE && so == 1 && notEditable(sc.childNodes[0])){
+            //firefox does not handle this properly, it jumps up a line
+            if(sc.childNodes.length == 2 && so == 1){
+                event.preventDefault()
+                so = 0;
+                range.setStart(sc, so)
+                range.setEnd(sc, so)
+                self.setSelection(range)     
+            }
+
+        }
+        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
     },
-    right: function ( self ) {
+    right: function ( self, event ) {
         self._removeZWS();
+        var range = self.getSelection()
+        var sc = range.startContainer
+        var so = range.startOffset
+        if(sc.nodeType != TEXT_NODE && notEditable(sc.childNodes[so])){
+            //firefox does not handle this properly, the cursor gets stuck
+            if(sc.childNodes.length == 2 && so == 0){
+                event.preventDefault()
+                so = 1;
+                range.setStart(sc, so)
+                range.setEnd(sc, so)
+                self.setSelection(range)     
+            }
+
+        }
+        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
+    },
+    up: function ( self, event ) {
+        console.info('up')
+        // event.preventDefault();
+        self._removeZWS();
+        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
+    },
+    down: function ( self, event ) {
+        console.info('down')
+        self._removeZWS();
+        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
     }
+
 };
 
 // Firefox incorrectly handles Cmd-left/Cmd-right on Mac:

@@ -56,6 +56,11 @@ function Squire ( doc, config ) {
 
     this.addEventListener( 'keyup', this._updatePathOnEvent );
     this.addEventListener( 'mouseup', this._updatePathOnEvent );
+    this.addEventListener( 'mouseup', function(){
+        var range = this.getSelection()
+        moveRangeOutOfNotEditable(range)
+        this.setSelection(range)
+    } );
 
     win.addEventListener( 'focus', this, false );
     win.addEventListener( 'blur', this, false );
@@ -502,9 +507,10 @@ proto._saveRangeToBookmark = function ( range ) {
             id: startSelectionId,
             type: 'hidden'
         }),
-        endNode = this.createElement( 'INPUT', {
+    endNode = this.createElement( 'INPUT', {
             id: endSelectionId,
             type: 'hidden'
+
         }),
         temp;
 
