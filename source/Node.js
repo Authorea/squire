@@ -5,7 +5,8 @@ var inlineNodeNames  = /^(?:#text|A(?:BBR|CRONYM)?|B(?:R|D[IO])?|C(?:ITE|ODE)|D(
 var leafNodeNames = {
     BR: 1,
     IMG: 1,
-    INPUT: 1
+    INPUT: 1,
+    SPAN: 1
 };
 
 function every ( nodeList, fn ) {

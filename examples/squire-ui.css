@@ -1,0 +1,21 @@
+body {
+    position: relative;
+    margin: 0 auto;
+    padding: 50px;
+    width: 800px;
+    font: 400 14px/1.24 helvetica, arial, sans-serif;
+    text-shadow: 0 1px 0 white;
+}
+h1 {
+  font-size: 1.95em;
+}
+iframe {
+  border: 1px solid #888;
+}
+span {
+  cursor: pointer;
+  text-decoration: underline;
+}
+p {
+  margin: 5px 0;
+}

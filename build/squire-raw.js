@@ -174,7 +174,8 @@ var inlineNodeNames  = /^(?:#text|A(?:BBR|CRONYM)?|B(?:R|D[IO])?|C(?:ITE|ODE)|D(
 var leafNodeNames = {
     BR: 1,
     IMG: 1,
-    INPUT: 1
+    INPUT: 1,
+    SPAN: 1
 };
 
 function every ( nodeList, fn ) {
@@ -1458,6 +1459,27 @@ var keyHandlers = {
         // Otherwise, leave to browser but check afterwards whether it has
         // left behind an empty inline tag.
         else {
+            var sc = range.startContainer;
+            var so = range.startOffset;
+            var nn = range.startContainer;
+            var ps = null;
+            if(so>0 && (sc.nodeType === ELEMENT_NODE)){
+                var nn = sc.childNodes[so]
+                so = 0
+            }
+            if((nn.nodeType === TEXT_NODE) && (so>0)){
+
+            }
+            else{
+                ps = nn.previousSibling
+                if( ps && (ps.nodeType === ELEMENT_NODE) && (!ps.isContentEditable) ){
+                    event.preventDefault();
+                    detach(ps);
+                    self.setSelection( range );
+                    setTimeout( function () { afterDelete( self ); }, 0 );
+                    return;
+                }
+            }
             self.setSelection( range );
             setTimeout( function () { afterDelete( self ); }, 0 );
         }
@@ -2627,9 +2649,10 @@ proto._saveRangeToBookmark = function ( range ) {
             id: startSelectionId,
             type: 'hidden'
         }),
-        endNode = this.createElement( 'INPUT', {
+    endNode = this.createElement( 'INPUT', {
             id: endSelectionId,
             type: 'hidden'
+
         }),
         temp;
 

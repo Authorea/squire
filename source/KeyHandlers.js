@@ -309,6 +309,27 @@ var keyHandlers = {
         // Otherwise, leave to browser but check afterwards whether it has
         // left behind an empty inline tag.
         else {
+            var sc = range.startContainer;
+            var so = range.startOffset;
+            var nn = range.startContainer;
+            var ps = null;
+            if(so>0 && (sc.nodeType === ELEMENT_NODE)){
+                var nn = sc.childNodes[so]
+                so = 0
+            }
+            if((nn.nodeType === TEXT_NODE) && (so>0)){
+
+            }
+            else{
+                ps = nn.previousSibling
+                if( ps && (ps.nodeType === ELEMENT_NODE) && (!ps.isContentEditable) ){
+                    event.preventDefault();
+                    detach(ps);
+                    self.setSelection( range );
+                    setTimeout( function () { afterDelete( self ); }, 0 );
+                    return;
+                }
+            }
             self.setSelection( range );
             setTimeout( function () { afterDelete( self ); }, 0 );
         }
