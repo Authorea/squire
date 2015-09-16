@@ -11,7 +11,10 @@ var keys = {
     39: 'right',
     46: 'delete',
     219: '[',
-    221: ']'
+    221: ']',
+    40:  'down',
+    38:  'up'
+
 };
 
 // Ref: http://unixpapa.com/js/key.html
@@ -143,6 +146,12 @@ var afterDelete = function ( self, range ) {
     }
 };
 
+var ensureOutsideOfNotEditable = function ( self ){
+    var range = self.getSelection()
+    moveRangeOutOfNotEditable(range)
+    self.setSelection(range)
+};
+
 var keyHandlers = {
     enter: function ( self, event, range ) {
         var block, parent, nodeAfterSplit;
@@ -191,7 +200,6 @@ var keyHandlers = {
                 return self.modifyBlocks( removeBlockQuote, range );
             }
         }
-
         // Otherwise, split at cursor point.
         nodeAfterSplit = splitBlock( self, block,
             range.startContainer, range.startOffset );
@@ -220,6 +228,10 @@ var keyHandlers = {
                 break;
             }
 
+
+            if ( nodeAfterSplit.nodeType !== TEXT_NODE && notEditable(nodeAfterSplit)) {
+                break;
+            }
             while ( child && child.nodeType === TEXT_NODE && !child.data ) {
                 next = child.nextSibling;
                 if ( !next || next.nodeName === 'BR' ) {
@@ -462,12 +474,54 @@ var keyHandlers = {
 
         self.setSelection( range );
     },
-    left: function ( self ) {
+    left: function ( self, event ) {
         self._removeZWS();
+        var range = self.getSelection()
+        var sc = range.startContainer
+        var so = range.startOffset
+        if(sc.nodeType != TEXT_NODE && so == 1 && notEditable(sc.childNodes[0])){
+            //firefox does not handle this properly, it jumps up a line
+            if(sc.childNodes.length == 2 && so == 1){
+                event.preventDefault()
+                so = 0;
+                range.setStart(sc, so)
+                range.setEnd(sc, so)
+                self.setSelection(range)     
+            }
+
+        }
+        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
     },
-    right: function ( self ) {
+    right: function ( self, event ) {
         self._removeZWS();
+        var range = self.getSelection()
+        var sc = range.startContainer
+        var so = range.startOffset
+        if(sc.nodeType != TEXT_NODE && notEditable(sc.childNodes[so])){
+            //firefox does not handle this properly, the cursor gets stuck
+            if(sc.childNodes.length == 2 && so == 0){
+                event.preventDefault()
+                so = 1;
+                range.setStart(sc, so)
+                range.setEnd(sc, so)
+                self.setSelection(range)     
+            }
+
+        }
+        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
+    },
+    up: function ( self, event ) {
+        console.info('up')
+        // event.preventDefault();
+        self._removeZWS();
+        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
+    },
+    down: function ( self, event ) {
+        console.info('down')
+        self._removeZWS();
+        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
     }
+
 };
 
 // Firefox incorrectly handles Cmd-left/Cmd-right on Mac:
