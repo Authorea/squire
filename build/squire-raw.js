@@ -1409,7 +1409,9 @@ var keyHandlers = {
         self._removeZWS();
         // Record undo checkpoint.
         self._recordUndoState( range );
+        before.html(editor.getHTML())
         self._getRangeAndRemoveBookmark( range );
+        after.html(editor.getHTML())
         // If not collapsed, delete contents
         if ( !range.collapsed ) {
             event.preventDefault();
@@ -1460,20 +1462,23 @@ var keyHandlers = {
         // Otherwise, leave to browser but check afterwards whether it has
         // left behind an empty inline tag.
         else {
-            var sc = range.startContainer;
-            var so = range.startOffset;
-            var nn = range.startContainer;
-            var ps = null;
+            window.sc = range.startContainer;
+            window.so = range.startOffset;
+            window.nn = range.startContainer;
+            window.ps = null;
+            window.r = range;
             if(so>0 && (sc.nodeType === ELEMENT_NODE)){
-                var nn = sc.childNodes[so]
+                nn = sc.childNodes[so]
                 so = 0
             }
+
             if((nn.nodeType === TEXT_NODE) && (so>0)){
 
             }
             else{
                 ps = nn.previousSibling
                 if( ps && (ps.nodeType === ELEMENT_NODE) && (!ps.isContentEditable) ){
+                    console.info("removing non editable")
                     event.preventDefault();
                     detach(ps);
                     self.setSelection( range );
@@ -1481,6 +1486,7 @@ var keyHandlers = {
                     return;
                 }
             }
+            console.info("default backspace");
             self.setSelection( range );
             setTimeout( function () { afterDelete( self ); }, 0 );
         }
