@@ -59,7 +59,7 @@ TreeWalker.prototype.nextNode = function () {
     }
 };
 
-TreeWalker.prototype.previousNode = function () {
+TreeWalker.prototype.previousNode = function (breakoutFunction) {
     var current = this.currentNode,
         root = this.root,
         nodeType = this.nodeType,
@@ -70,10 +70,17 @@ TreeWalker.prototype.previousNode = function () {
             return null;
         }
         node = current.previousSibling;
+        //modified to let us break on an element satisfying the breakoutFunction
         if ( node ) {
-            while ( current = node.lastChild ) {
-                node = current;
-            }
+           if(breakoutFunction && breakoutFunction(node)){
+               this.currentNode = node;
+               return node;
+           }
+           else{
+               while ( current = node.lastChild ) {
+                   node = current;
+               }
+           }
         } else {
             node = current.parentNode;
         }

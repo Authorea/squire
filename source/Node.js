@@ -60,6 +60,9 @@ function isContainer ( node ) {
     return ( type === ELEMENT_NODE || type === DOCUMENT_FRAGMENT_NODE ) &&
         !isInline( node ) && !isBlock( node );
 }
+function notEditable( node ){
+    return (node.isContentEditable === false)
+}
 
 function getBlockWalker ( node ) {
     var doc = node.ownerDocument,
