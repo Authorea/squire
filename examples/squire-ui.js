@@ -38,31 +38,8 @@ var initEditors = function(){
     editor.addEventListener("focus", function(){
       console.info('focus');
     });
-    var citation = '<cite contenteditable="false" style="cursor: pointer" data-bib-key="20366120" data-bib-text="a" class="squire-citation ltx_cite"><a href="#20366120" class="au-cite-link">(Jenkins 2009)</a></cite>'
-    var citation2 = '<cite contenteditable="false" style="cursor: pointer" data-bib-key="20366120" data-bib-text="@article{20366120,\
-  title = {{Imaging the essential role of spin fluctuations in high-T(c) superconductivity.}},\
-  date = {2009 Nov 27},\
-  source = {Phys Rev Lett},\
-  authors = {Jenkins, N and Fasano, Y and Berthod, C and Maggio-Aprile, I and Piriou, A and Giannini, E and Hoogenboom, BW and Hess, C and Cren, T and Fischer, Ø},\
-  author = {Jenkins, N and Fasano, Y and Berthod, C and Maggio-Aprile, I and Piriou, A and Giannini, E and Hoogenboom, BW and Hess, C and Cren, T and Fischer, Ø},\
-  year = {2009},\
-  month = {Nov},\
-  journal = {Phys Rev Lett},\
-  volume = {103},\
-  number = {},\
-  pages = {227001},\
-  pubmed_id = {20366120},\
-}\
-" class="squire-citation ltx_cite">\
-        <a href="#20366120" class="au-cite-link">(Jenkins 2009)</a>\
-    </cite>'
-  var citation3 = '<cite contenteditable="false" style="cursor: pointer" data-bib-key="20366120" data-bib-text="@article{20366120,\
-  title = {{Imaging the essential role of spin fluctuations in high-T(c) superconductivity.}}," class="squire-citation ltx_cite">\
-        <a href="#20366120" class="au-cite-link">(Jenkins 2009)</a>\
-    </cite>'
-  var citation4 = '<cite contenteditable="false">\
-        <a href="#">(J)</a>\
-    </cite>'
+    
+    var citation4 = '<cite contenteditable="false"><a href="#">(J)</a> </cite>'
     editor.setHTML("is <span contentEditable='false'>non</span> edit or " + citation4 + " something else")
   
   });
