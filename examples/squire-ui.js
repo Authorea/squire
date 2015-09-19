@@ -38,7 +38,9 @@ var initEditors = function(){
     editor.addEventListener("focus", function(){
       console.info('focus');
     });
-    editor.setHTML("is <span contentEditable='false'>non</span> edit")
+    var citation = '<cite contenteditable="false" style="cursor: pointer" data-bib-key="20366120" data-bib-text="a" class="squire-citation ltx_cite"><a href="#20366120" class="au-cite-link">(Jenkins 2009)</a></cite>'
+    editor.setHTML("is <span contentEditable='false'>non</span> edit or " + citation + " something else")
+  
   });
 }
 
