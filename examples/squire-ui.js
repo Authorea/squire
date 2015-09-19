@@ -60,7 +60,7 @@ var initEditors = function(){
   title = {{Imaging the essential role of spin fluctuations in high-T(c) superconductivity.}}," class="squire-citation ltx_cite">\
         <a href="#20366120" class="au-cite-link">(Jenkins 2009)</a>\
     </cite>'
-  var citation4 = '<cite contenteditable="false" style="cursor: pointer" data-bib-key="20366120" data-bib-text="a">\
+  var citation4 = '<cite contenteditable="false">\
         <a href="#">(J)</a>\
     </cite>'
     editor.setHTML("is <span contentEditable='false'>non</span> edit or " + citation4 + " something else")
