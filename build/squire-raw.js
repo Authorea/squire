@@ -111,7 +111,7 @@ TreeWalker.prototype.nextNode = function () {
     }
 };
 
-TreeWalker.prototype.previousNode = function () {
+TreeWalker.prototype.previousNode = function (breakoutFunction) {
     var current = this.currentNode,
         root = this.root,
         nodeType = this.nodeType,
@@ -122,10 +122,17 @@ TreeWalker.prototype.previousNode = function () {
             return null;
         }
         node = current.previousSibling;
+        //modified to let us break on an element satisfying the breakoutFunction
         if ( node ) {
-            while ( current = node.lastChild ) {
-                node = current;
-            }
+           if(breakoutFunction && breakoutFunction(node)){
+               this.currentNode = node;
+               return node;
+           }
+           else{
+               while ( current = node.lastChild ) {
+                   node = current;
+               }
+           }
         } else {
             node = current.parentNode;
         }
@@ -174,7 +181,9 @@ var inlineNodeNames  = /^(?:#text|A(?:BBR|CRONYM)?|B(?:R|D[IO])?|C(?:ITE|ODE)|D(
 var leafNodeNames = {
     BR: 1,
     IMG: 1,
-    INPUT: 1
+    INPUT: 1,
+    SPAN: 1,
+    CITE: 1
 };
 
 function every ( nodeList, fn ) {
@@ -226,6 +235,9 @@ function isContainer ( node ) {
     var type = node.nodeType;
     return ( type === ELEMENT_NODE || type === DOCUMENT_FRAGMENT_NODE ) &&
         !isInline( node ) && !isBlock( node );
+}
+function notEditable( node ){
+    return (node.isContentEditable === false)
 }
 
 function getBlockWalker ( node ) {
@@ -1455,9 +1467,49 @@ var keyHandlers = {
                 self._updatePath( range, true );
             }
         }
-        // Otherwise, leave to browser but check afterwards whether it has
-        // left behind an empty inline tag.
+        // Nate: previously this was left to the browser but had issues with non-editable spans.  Furthermore
+        // firefox had an odd bug where it is confused by non-editable spans causing spaces to be added
+        // inside the non-editable block rather than deleting the appropriate character inside editable
+        // text.  There is some information on what is probably the same bug here:
+        // https://bugzilla.mozilla.org/show_bug.cgi?id=685445
         else {
+            event.preventDefault();
+            var w = new TreeWalker(self._doc.body, NodeFilter.SHOW_ALL, function(node){
+                return ((node.nodeType === TEXT_NODE) || (node.isContentEditable===false))
+            } );
+            w.currentNode = range.startContainer;
+            // window.node = walker.previousNode();
+            // console.info(window.node);
+            var sc = range.startContainer;
+            var so = range.startOffset;
+            var pn = null;
+            if((sc.nodeType === TEXT_NODE)){
+                if(so>0){
+                    sc.deleteData(so-1, 1)
+                    cleanTree(sc.parentNode)
+                }
+                else{
+                    pn = w.previousNode(notEditable)
+                    var previousParent = pn.parentNode
+                    if(pn.nodeType === TEXT_NODE){
+                        pn.deleteData(pn.length - 1, 1)
+                    }
+                    else if(!pn.isContentEditable){
+                        detach(pn);
+                    }
+                    cleanTree(previousParent)
+                }
+            }
+            else if((sc.nodeType === ELEMENT_NODE) && (so>0)){
+                pn = sc.childNodes[so-1]
+                if(pn.nodeType === TEXT_NODE){
+                    pn.deleteData(pn.length - 1, 1)
+                }
+                else if(!pn.isContentEditable){
+                    detach(pn);
+                }
+                cleanTree(sc)
+            }
             self.setSelection( range );
             setTimeout( function () { afterDelete( self ); }, 0 );
         }
@@ -1875,7 +1927,16 @@ var cleanTree = function cleanTree ( node ) {
                     }
                 }
                 if ( data ) {
-                    child.data = data;
+                    //TODO: This is resetting the range info for the editor, I had a pointer to that range 
+                    //inside of backspace.  Calls to cleanTree were causing the cursor to jump around 
+                    //if a space was at the end of an element even though data and child.data were the same,
+                    //ie this was a no-op.  cleanTree should probably store a clone of the range initially,
+                    //and at the end of execution either restore the range or figure out what the knew range 
+                    //should be based on the cleanup actions taken.
+                    if(child.data !== data){
+                        console.info("child data does not equal data")
+                        child.data = data
+                    }
                     continue;
                 }
             }
@@ -2627,9 +2688,10 @@ proto._saveRangeToBookmark = function ( range ) {
             id: startSelectionId,
             type: 'hidden'
         }),
-        endNode = this.createElement( 'INPUT', {
+    endNode = this.createElement( 'INPUT', {
             id: endSelectionId,
             type: 'hidden'
+
         }),
         temp;
 

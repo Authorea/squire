@@ -502,9 +502,10 @@ proto._saveRangeToBookmark = function ( range ) {
             id: startSelectionId,
             type: 'hidden'
         }),
-        endNode = this.createElement( 'INPUT', {
+    endNode = this.createElement( 'INPUT', {
             id: endSelectionId,
             type: 'hidden'
+
         }),
         temp;
 

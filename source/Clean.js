@@ -258,7 +258,16 @@ var cleanTree = function cleanTree ( node ) {
                     }
                 }
                 if ( data ) {
-                    child.data = data;
+                    //TODO: This is resetting the range info for the editor, I had a pointer to that range 
+                    //inside of backspace.  Calls to cleanTree were causing the cursor to jump around 
+                    //if a space was at the end of an element even though data and child.data were the same,
+                    //ie this was a no-op.  cleanTree should probably store a clone of the range initially,
+                    //and at the end of execution either restore the range or figure out what the knew range 
+                    //should be based on the cleanup actions taken.
+                    if(child.data !== data){
+                        console.info("child data does not equal data")
+                        child.data = data
+                    }
                     continue;
                 }
             }

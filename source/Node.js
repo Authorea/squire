@@ -5,7 +5,9 @@ var inlineNodeNames  = /^(?:#text|A(?:BBR|CRONYM)?|B(?:R|D[IO])?|C(?:ITE|ODE)|D(
 var leafNodeNames = {
     BR: 1,
     IMG: 1,
-    INPUT: 1
+    INPUT: 1,
+    SPAN: 1,
+    CITE: 1
 };
 
 function every ( nodeList, fn ) {
@@ -57,6 +59,9 @@ function isContainer ( node ) {
     var type = node.nodeType;
     return ( type === ELEMENT_NODE || type === DOCUMENT_FRAGMENT_NODE ) &&
         !isInline( node ) && !isBlock( node );
+}
+function notEditable( node ){
+    return (node.isContentEditable === false)
 }
 
 function getBlockWalker ( node ) {
