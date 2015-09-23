@@ -1478,15 +1478,12 @@ var keyHandlers = {
                 return ((node.nodeType === TEXT_NODE) || (node.isContentEditable===false))
             } );
             w.currentNode = range.startContainer;
-            // window.node = walker.previousNode();
-            // console.info(window.node);
             var sc = range.startContainer;
             var so = range.startOffset;
             var pn = null;
             if((sc.nodeType === TEXT_NODE)){
                 if(so>0){
                     sc.deleteData(so-1, 1)
-                    window.r1 = range.cloneRange();
                     cleanTree(sc.parentNode)
                     replaceDoubleSpace(sc.parentNode, range)
                 }
@@ -1499,8 +1496,6 @@ var keyHandlers = {
                     else if(!pn.isContentEditable){
                         detach(pn);
                     }
-                    window.r1 = range.cloneRange();
-
                     cleanTree(previousParent)
                     replaceDoubleSpace(previousParent, range)
                 }
@@ -1513,13 +1508,11 @@ var keyHandlers = {
                 else if(!pn.isContentEditable){
                     detach(pn);
                 }
-                window.r1 = range.cloneRange();
                 cleanTree(sc)
                 replaceDoubleSpace(sc, range)
             }
 
             self.setSelection( range );
-            window.r2 = range.cloneRange()
             setTimeout( function () { afterDelete( self ); }, 0 );
         }
     },
