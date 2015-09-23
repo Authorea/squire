@@ -13,7 +13,7 @@ document.addEventListener( 'click', function ( e ) {
 
 $(document).ready(function(){
   window.squire_editors = [];
-  setTimeout(initEditors, 1000);
+  // setTimeout(initEditors, 100);
 
   var x = null;
   if(true){
