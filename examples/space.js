@@ -1,20 +1,7 @@
-document.addEventListener( 'click', function ( e ) {
-  var editor = squire_editors[0];
-  var id = e.target.id,
-      value;
-  console.info(id);
-  if ( id && editor && editor[ id ] ) {
-    if ( e.target.className === 'prompt' ) {
-      value = prompt( 'Value:' );
-    }
-    editor[ id ]( value );
-  }
-}, false );
-
 $(document).ready(function(){
   window.squire_editors = [];
   setTimeout(initEditors, 100);
-
+  setTimeout(updateCursor, 100);
 });
 
 var initEditors = function(){
@@ -42,11 +29,23 @@ var initEditors = function(){
     
     var citation4 = '<cite contenteditable="false"><a href="#">Jen</a> </cite> this is a <div>div</div> and'
     // editor.setHTML("is <span contentEditable='false'>non</span> edit or " + citation4 + " something else")
-    // editor.setHTML("is " + citation4 + " som" + "<div>abc</div><div>xy<b>bd</b>z</div>")
-    // editor.setHTML("<div>abc</div><div>xy<b>bd</b>z</div>")
-    // editor.setHTML("<div>a b c d e f</div>")
+    //editor.setHTML("is " + citation4 + " som" + "<div>abc</div><div>xy<b>bd</b>z</div>")
+    //editor.setHTML("<div>abc</div><div>xy<b>bd</b>z</div>")
+    editor.setHTML("a b c")
   
   });
+}
+
+var updateCursor = function(){
+  // console.info("updating cursor")
+  setTimeout(updateCursor, 500);
+  // editor._saveRangeToBookmark(editor.getSelection())
+  window.html = editor.getHTML();
+  // window.html = after.html();
+  // html = html.replace('<input id="squire-selection-start" type="hidden">', '|')
+  // html = html.replace('<input id="squire-selection-end" type="hidden">', '|')
+  before.text(html)
+  // editor._getRangeAndRemoveBookmark(editor.getSelection())
 }
 
 

@@ -1486,7 +1486,9 @@ var keyHandlers = {
             if((sc.nodeType === TEXT_NODE)){
                 if(so>0){
                     sc.deleteData(so-1, 1)
+                    window.r1 = range.cloneRange();
                     cleanTree(sc.parentNode)
+                    replaceDoubleSpace(sc.parentNode, range)
                 }
                 else{
                     pn = w.previousNode(notEditable)
@@ -1497,7 +1499,10 @@ var keyHandlers = {
                     else if(!pn.isContentEditable){
                         detach(pn);
                     }
+                    window.r1 = range.cloneRange();
+
                     cleanTree(previousParent)
+                    replaceDoubleSpace(previousParent, range)
                 }
             }
             else if((sc.nodeType === ELEMENT_NODE) && (so>0)){
@@ -1508,9 +1513,13 @@ var keyHandlers = {
                 else if(!pn.isContentEditable){
                     detach(pn);
                 }
+                window.r1 = range.cloneRange();
                 cleanTree(sc)
+                replaceDoubleSpace(sc, range)
             }
+
             self.setSelection( range );
+            window.r2 = range.cloneRange()
             setTimeout( function () { afterDelete( self ); }, 0 );
         }
     },
@@ -1555,6 +1564,7 @@ var keyHandlers = {
         // Otherwise, leave to browser but check afterwards whether it has
         // left behind an empty inline tag.
         else {
+            console.info("browser delete")
             // But first check if the cursor is just before an IMG tag. If so,
             // delete it ourselves, because the browser won't if it is not
             // inline.
@@ -1574,7 +1584,7 @@ var keyHandlers = {
                 }
             }
             self.setSelection( originalRange );
-            setTimeout( function () { afterDelete( self ); }, 0 );
+            // setTimeout( function () { afterDelete( self ); }, 0 );
         }
     },
     tab: function ( self, event, range ) {
@@ -1964,6 +1974,34 @@ var removeEmptyInlines = function removeEmptyInlines ( root ) {
         } else if ( child.nodeType === TEXT_NODE && !child.data ) {
             root.removeChild( child );
         }
+    }
+};
+
+// chrome doesn't like consecutive spaces, it will only show one of them.  We need to replace '  ' with
+// '$nbsp; '.  Also, if a range happens to contain a node as its start or end and the data is altered in
+// that range, the offset will be set to 0.  I don't know how to prevent that other than replacing it
+// afterwards.
+var replaceDoubleSpace = function removeEmptyInlines ( root, range ) {
+    var walker = new TreeWalker(root, SHOW_TEXT, function(){return true})
+    var node = walker.currentNode
+    var startNode = range.startContainer
+    var endNode = range.endContainer
+    var startOffset = range.startOffset
+    var endOffset = range.endOffset
+    while(node){
+        if (node.nodeType === TEXT_NODE && !isLeaf( node ) ) {
+            var text = node.data
+            if(text){
+                node.data = text.replace('  ', "\u00A0 ")
+                if(startNode === node){
+                    range.setStart(startNode, startOffset)
+                }
+                else if(endNode === node){
+                    range.setEnd(endNode, endOffset)
+                }
+            }
+        }
+        node = walker.nextNode()
     }
 };
 
