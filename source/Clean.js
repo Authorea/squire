@@ -298,6 +298,34 @@ var removeEmptyInlines = function removeEmptyInlines ( root ) {
     }
 };
 
+// chrome doesn't like consecutive spaces, it will only show one of them.  We need to replace '  ' with
+// '$nbsp; '.  Also, if a range happens to contain a node as its start or end and the data is altered in
+// that range, the offset will be set to 0.  I don't know how to prevent that other than replacing it
+// afterwards.
+var replaceDoubleSpace = function removeEmptyInlines ( root, range ) {
+    var walker = new TreeWalker(root, SHOW_TEXT, function(){return true})
+    var node = walker.currentNode
+    var startNode = range.startContainer
+    var endNode = range.endContainer
+    var startOffset = range.startOffset
+    var endOffset = range.endOffset
+    while(node){
+        if (node.nodeType === TEXT_NODE && !isLeaf( node ) ) {
+            var text = node.data
+            if(text){
+                node.data = text.replace('  ', "\u00A0 ")
+                if(startNode === node){
+                    range.setStart(startNode, startOffset)
+                }
+                else if(endNode === node){
+                    range.setEnd(endNode, endOffset)
+                }
+            }
+        }
+        node = walker.nextNode()
+    }
+};
+
 // ---
 
 var notWSTextNode = function ( node ) {

@@ -317,8 +317,6 @@ var keyHandlers = {
                 return ((node.nodeType === TEXT_NODE) || (node.isContentEditable===false))
             } );
             w.currentNode = range.startContainer;
-            // window.node = walker.previousNode();
-            // console.info(window.node);
             var sc = range.startContainer;
             var so = range.startOffset;
             var pn = null;
@@ -326,6 +324,7 @@ var keyHandlers = {
                 if(so>0){
                     sc.deleteData(so-1, 1)
                     cleanTree(sc.parentNode)
+                    replaceDoubleSpace(sc.parentNode, range)
                 }
                 else{
                     pn = w.previousNode(notEditable)
@@ -337,6 +336,7 @@ var keyHandlers = {
                         detach(pn);
                     }
                     cleanTree(previousParent)
+                    replaceDoubleSpace(previousParent, range)
                 }
             }
             else if((sc.nodeType === ELEMENT_NODE) && (so>0)){
@@ -348,7 +348,9 @@ var keyHandlers = {
                     detach(pn);
                 }
                 cleanTree(sc)
+                replaceDoubleSpace(sc, range)
             }
+
             self.setSelection( range );
             setTimeout( function () { afterDelete( self ); }, 0 );
         }
@@ -394,6 +396,7 @@ var keyHandlers = {
         // Otherwise, leave to browser but check afterwards whether it has
         // left behind an empty inline tag.
         else {
+            console.info("browser delete")
             // But first check if the cursor is just before an IMG tag. If so,
             // delete it ourselves, because the browser won't if it is not
             // inline.
@@ -413,7 +416,7 @@ var keyHandlers = {
                 }
             }
             self.setSelection( originalRange );
-            setTimeout( function () { afterDelete( self ); }, 0 );
+            // setTimeout( function () { afterDelete( self ); }, 0 );
         }
     },
     tab: function ( self, event, range ) {
