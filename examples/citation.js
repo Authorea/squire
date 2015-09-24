@@ -39,6 +39,7 @@ var initEditors = function(){
     //editor.setHTML("is " + citation4 + " som" + "<div>abc</div><div>xy<b>bd</b>z</div>")
     //editor.setHTML("<div>abc</div><div>xy<b>bd</b>z</div>")
     var citation5 = '<cite contenteditable="false"><a href="#">Jen</a> </cite>'
+    citation5 = '<a href="#">Jen</a>'
     editor.setHTML(citation5)
   
   });
