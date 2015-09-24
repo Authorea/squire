@@ -456,9 +456,6 @@ function fixContainer ( container ) {
 }
 
 function split ( node, offset, stopNode ) {
-    // console.info("splitting node")
-    // console.info(node)
-    // console.info(stopNode)
     var nodeType = node.nodeType,
         parent, clone, next;
     if ( nodeType === TEXT_NODE && node !== stopNode ) {
@@ -1351,19 +1348,14 @@ var keyHandlers = {
         // Selected text is overwritten, therefore delete the contents
         // to collapse selection.
         if ( !range.collapsed ) {
-            console.info("collapsed")
             deleteContentsOfRange( range );
         }
 
         block = getStartBlockOfRange( range );
-        window.b = block
-        console.info("block")
-        console.info(block)
 
         // If this is a malformed bit of document or in a table;
         // just play it safe and insert a <br>.
         if ( !block || /^T[HD]$/.test( block.nodeName ) ) {
-            console.info("not block or")
             insertNodeInRange( range, self.createElement( 'BR' ) );
             range.collapse( false );
             self.setSelection( range );
@@ -1378,7 +1370,6 @@ var keyHandlers = {
 
         if ( !block.textContent ) {
             // Break list
-            console.info("not block textcontent")
             if ( getNearest( block, 'UL' ) || getNearest( block, 'OL' ) ) {
                 return self.modifyBlocks( decreaseListLevel, range );
             }
@@ -1387,7 +1378,6 @@ var keyHandlers = {
                 return self.modifyBlocks( removeBlockQuote, range );
             }
         }
-        console.info("splitting at cursor point")
         // Otherwise, split at cursor point.
         nodeAfterSplit = splitBlock( self, block,
             range.startContainer, range.startOffset );
@@ -1402,8 +1392,6 @@ var keyHandlers = {
         // If there's a <b>/<i> etc. at the beginning of the split
         // make sure we focus inside it.
         while ( nodeAfterSplit.nodeType === ELEMENT_NODE ) {
-            console.info("nodeAfterSplit")
-            console.info(nodeAfterSplit)
             var child = nodeAfterSplit.firstChild,
                 next;
 
@@ -1420,7 +1408,6 @@ var keyHandlers = {
 
 
             if ( nodeAfterSplit.nodeType !== TEXT_NODE && notEditable(nodeAfterSplit)) {
-                console.info("not editable nodeaftersplit")
                 break;
             }
             while ( child && child.nodeType === TEXT_NODE && !child.data ) {
@@ -1599,7 +1586,6 @@ var keyHandlers = {
         // Otherwise, leave to browser but check afterwards whether it has
         // left behind an empty inline tag.
         else {
-            console.info("browser delete")
             // But first check if the cursor is just before an IMG tag. If so,
             // delete it ourselves, because the browser won't if it is not
             // inline.
@@ -2316,7 +2302,6 @@ function Squire ( doc, config ) {
     this.addEventListener( 'keyup', this._updatePathOnEvent );
     this.addEventListener( 'mouseup', this._updatePathOnEvent );
     this.addEventListener( 'mouseup', function(){
-        // console.info("mouseup")
         var range = this.getSelection()
         moveRangeOutOfNotEditable(range)
         this.setSelection(range)

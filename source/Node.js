@@ -280,9 +280,6 @@ function fixContainer ( container ) {
 }
 
 function split ( node, offset, stopNode ) {
-    // console.info("splitting node")
-    // console.info(node)
-    // console.info(stopNode)
     var nodeType = node.nodeType,
         parent, clone, next;
     if ( nodeType === TEXT_NODE && node !== stopNode ) {

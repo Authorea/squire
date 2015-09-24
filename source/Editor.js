@@ -57,7 +57,6 @@ function Squire ( doc, config ) {
     this.addEventListener( 'keyup', this._updatePathOnEvent );
     this.addEventListener( 'mouseup', this._updatePathOnEvent );
     this.addEventListener( 'mouseup', function(){
-        // console.info("mouseup")
         var range = this.getSelection()
         moveRangeOutOfNotEditable(range)
         this.setSelection(range)
