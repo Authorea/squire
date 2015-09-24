@@ -1049,6 +1049,32 @@ var moveRangeBoundariesUpTree = function ( range, common ) {
     range.setEnd( endContainer, endOffset );
 };
 
+var moveRangeOutOfNotEditable = function( range ){
+    
+    var startContainer = range.startContainer
+    var endContainer = range.endContainer
+    if(range.collapsed){
+        if(startContainer.nodeType === TEXT_NODE){
+            var currentParent = startContainer.parentNode
+            var newParent = currentParent
+            while(notEditable(newParent)){
+                currentParent = newParent
+                newParent = newParent.parentNode
+            }
+            if(newParent !== currentParent){
+                console.info("moving out of not editable")
+                window.np = newParent
+                window.cp = currentParent
+                var offset = indexOf.call( newParent.childNodes, currentParent )
+                window.o = offset
+                range.setStart( newParent, offset );
+                range.setEnd( newParent, offset );
+                window.r = range
+            }
+        } 
+    }
+}
+
 // Returns the first block at least partially contained by the range,
 // or null if no block is contained by the range.
 var getStartBlockOfRange = function ( range ) {
@@ -2273,6 +2299,12 @@ function Squire ( doc, config ) {
 
     this.addEventListener( 'keyup', this._updatePathOnEvent );
     this.addEventListener( 'mouseup', this._updatePathOnEvent );
+    this.addEventListener( 'mouseup', function(){
+        // console.info("mouseup")
+        var range = this.getSelection()
+        moveRangeOutOfNotEditable(range)
+        this.setSelection(range)
+    } );
 
     win.addEventListener( 'focus', this, false );
     win.addEventListener( 'blur', this, false );
@@ -2681,6 +2713,13 @@ proto._updatePath = function ( range, force ) {
 
 proto._updatePathOnEvent = function () {
     this._updatePath( this.getSelection() );
+};
+
+proto._ensureNotInContentEditable = function () {
+    var range = this.getSelection()
+    var sc = range.startContainer
+    var ec = range.endContainer
+    moveRangeOutOfContentEditable(range)
 };
 
 // --- Focus ---

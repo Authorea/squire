@@ -56,6 +56,12 @@ function Squire ( doc, config ) {
 
     this.addEventListener( 'keyup', this._updatePathOnEvent );
     this.addEventListener( 'mouseup', this._updatePathOnEvent );
+    this.addEventListener( 'mouseup', function(){
+        // console.info("mouseup")
+        var range = this.getSelection()
+        moveRangeOutOfNotEditable(range)
+        this.setSelection(range)
+    } );
 
     win.addEventListener( 'focus', this, false );
     win.addEventListener( 'blur', this, false );
@@ -464,6 +470,13 @@ proto._updatePath = function ( range, force ) {
 
 proto._updatePathOnEvent = function () {
     this._updatePath( this.getSelection() );
+};
+
+proto._ensureNotInContentEditable = function () {
+    var range = this.getSelection()
+    var sc = range.startContainer
+    var ec = range.endContainer
+    moveRangeOutOfContentEditable(range)
 };
 
 // --- Focus ---

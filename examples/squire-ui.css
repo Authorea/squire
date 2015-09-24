@@ -15,6 +15,7 @@ iframe {
 span {
   cursor: pointer;
   text-decoration: underline;
+  padding-left: 1px;
 }
 p {
   margin: 5px 0;

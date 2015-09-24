@@ -405,6 +405,32 @@ var moveRangeBoundariesUpTree = function ( range, common ) {
     range.setEnd( endContainer, endOffset );
 };
 
+var moveRangeOutOfNotEditable = function( range ){
+    
+    var startContainer = range.startContainer
+    var endContainer = range.endContainer
+    if(range.collapsed){
+        if(startContainer.nodeType === TEXT_NODE){
+            var currentParent = startContainer.parentNode
+            var newParent = currentParent
+            while(notEditable(newParent)){
+                currentParent = newParent
+                newParent = newParent.parentNode
+            }
+            if(newParent !== currentParent){
+                console.info("moving out of not editable")
+                window.np = newParent
+                window.cp = currentParent
+                var offset = indexOf.call( newParent.childNodes, currentParent )
+                window.o = offset
+                range.setStart( newParent, offset );
+                range.setEnd( newParent, offset );
+                window.r = range
+            }
+        } 
+    }
+}
+
 // Returns the first block at least partially contained by the range,
 // or null if no block is contained by the range.
 var getStartBlockOfRange = function ( range ) {
