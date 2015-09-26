@@ -408,7 +408,6 @@ var keyHandlers = {
         // Otherwise, leave to browser but check afterwards whether it has
         // left behind an empty inline tag.
         else {
-            console.info("browser delete")
             // But first check if the cursor is just before an IMG tag. If so,
             // delete it ourselves, because the browser won't if it is not
             // inline.
@@ -511,13 +510,10 @@ var keyHandlers = {
         setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
     },
     up: function ( self, event ) {
-        console.info('up')
-        // event.preventDefault();
         self._removeZWS();
         setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
     },
     down: function ( self, event ) {
-        console.info('down')
         self._removeZWS();
         setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
     }
