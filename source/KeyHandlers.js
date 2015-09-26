@@ -11,7 +11,10 @@ var keys = {
     39: 'right',
     46: 'delete',
     219: '[',
-    221: ']'
+    221: ']',
+    40:  'down',
+    38:  'up'
+
 };
 
 // Ref: http://unixpapa.com/js/key.html
@@ -141,6 +144,12 @@ var afterDelete = function ( self, range ) {
     } catch ( error ) {
         self.didError( error );
     }
+};
+
+var ensureOutsideOfNotEditable = function ( self ){
+    var range = self.getSelection()
+    moveRangeOutOfNotEditable(range)
+    self.setSelection(range)
 };
 
 var keyHandlers = {
@@ -464,12 +473,26 @@ var keyHandlers = {
 
         self.setSelection( range );
     },
-    left: function ( self ) {
+    left: function ( self, event ) {
         self._removeZWS();
+        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
     },
-    right: function ( self ) {
+    right: function ( self, event ) {
         self._removeZWS();
+        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
+    },
+    up: function ( self, event ) {
+        console.info('up')
+        // event.preventDefault();
+        self._removeZWS();
+        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
+    },
+    down: function ( self, event ) {
+        console.info('down')
+        self._removeZWS();
+        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
     }
+
 };
 
 // Firefox incorrectly handles Cmd-left/Cmd-right on Mac:

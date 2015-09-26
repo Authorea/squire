@@ -27,11 +27,11 @@ var initEditors = function(){
       // console.info('focus');
     });
     
-    var citation4 = '<cite contenteditable="false"><a href="#">Jen</a> </cite> this is a <div>div</div> and'
+    var citation4 = '<cite contenteditable="false"><a href="#">Jen</a> </cite>'
     // editor.setHTML("is <span contentEditable='false'>non</span> edit or " + citation4 + " something else")
-    //editor.setHTML("is " + citation4 + " som" + "<div>abc</div><div>xy<b>bd</b>z</div>")
+    editor.setHTML("<div>a b c</div>" + "<div>" + citation4 + "</div>")
     //editor.setHTML("<div>abc</div><div>xy<b>bd</b>z</div>")
-    editor.setHTML("a b c")
+    // editor.setHTML("a b c")
   
   });
 }

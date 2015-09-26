@@ -27,8 +27,9 @@ var initEditors = function(){
       // console.info('focus');
     });
 
-    editor.addEventListener("keyup", function(){
+    editor.addEventListener("keyup", function(e){
       setTimeout(updateCursor, 20)
+      console.info(e)
     });    
     editor.addEventListener("mouseup", function(){
       setTimeout(updateCursor, 20)
@@ -38,8 +39,8 @@ var initEditors = function(){
     // editor.setHTML("is <span contentEditable='false'>non</span> edit or " + citation4 + " something else")
     //editor.setHTML("is " + citation4 + " som" + "<div>abc</div><div>xy<b>bd</b>z</div>")
     //editor.setHTML("<div>abc</div><div>xy<b>bd</b>z</div>")
-    var citation5 = '<cite contenteditable="false"><a href="#">Jen</a> </cite>'
-    editor.setHTML(citation5)
+    var citation5 = '<cite contenteditable="false"><a href="#">Jenkins</a> </cite>'
+    editor.setHTML("<div>a b c</div>" + "<div>" + citation5 + "</div>")
   
   });
 }

@@ -1053,23 +1053,34 @@ var moveRangeOutOfNotEditable = function( range ){
     
     var startContainer = range.startContainer
     var endContainer = range.endContainer
+    var moveRight = false
+    var nextSibling
     if(range.collapsed){
         if(startContainer.nodeType === TEXT_NODE){
             var currentParent = startContainer.parentNode
             var newParent = currentParent
+            var textLength = startContainer.data.length
+            // if we are for some reason, likely an up or down arrow, finding ourselves in the middle of a 
+            // text area that isn't editable, we need to decide if we should be in front of that element
+            // or to the right of it.  At the moment this will only work for a single text element in a series
+            // of non-editable structures, but it can be extended to work for all cases if necessary.
+            if(range.startOffset > textLength/2){
+                moveRight = true
+            }
             while(notEditable(newParent)){
                 currentParent = newParent
-                newParent = newParent.parentNode
+                if(moveRight){
+                    if(nextSibling = currentParent.nextSibling){
+                        currentParent = nextSibling
+                    }
+                }
+                newParent = currentParent.parentNode
+                var startOffset = indexOf.call( newParent.childNodes, currentParent );
             }
             if(newParent !== currentParent){
-                console.info("moving out of not editable")
-                window.np = newParent
-                window.cp = currentParent
                 var offset = indexOf.call( newParent.childNodes, currentParent )
-                window.o = offset
                 range.setStart( newParent, offset );
                 range.setEnd( newParent, offset );
-                window.r = range
             }
         } 
     }
@@ -1198,7 +1209,10 @@ var keys = {
     39: 'right',
     46: 'delete',
     219: '[',
-    221: ']'
+    221: ']',
+    40:  'down',
+    38:  'up'
+
 };
 
 // Ref: http://unixpapa.com/js/key.html
@@ -1328,6 +1342,12 @@ var afterDelete = function ( self, range ) {
     } catch ( error ) {
         self.didError( error );
     }
+};
+
+var ensureOutsideOfNotEditable = function ( self ){
+    var range = self.getSelection()
+    moveRangeOutOfNotEditable(range)
+    self.setSelection(range)
 };
 
 var keyHandlers = {
@@ -1651,12 +1671,26 @@ var keyHandlers = {
 
         self.setSelection( range );
     },
-    left: function ( self ) {
+    left: function ( self, event ) {
         self._removeZWS();
+        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
     },
-    right: function ( self ) {
+    right: function ( self, event ) {
         self._removeZWS();
+        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
+    },
+    up: function ( self, event ) {
+        console.info('up')
+        // event.preventDefault();
+        self._removeZWS();
+        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
+    },
+    down: function ( self, event ) {
+        console.info('down')
+        self._removeZWS();
+        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
     }
+
 };
 
 // Firefox incorrectly handles Cmd-left/Cmd-right on Mac:
