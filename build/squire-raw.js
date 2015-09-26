@@ -2750,13 +2750,6 @@ proto._updatePathOnEvent = function () {
     this._updatePath( this.getSelection() );
 };
 
-proto._ensureNotInContentEditable = function () {
-    var range = this.getSelection()
-    var sc = range.startContainer
-    var ec = range.endContainer
-    moveRangeOutOfContentEditable(range)
-};
-
 // --- Focus ---
 
 proto.focus = function () {
