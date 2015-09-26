@@ -265,7 +265,6 @@ var cleanTree = function cleanTree ( node ) {
                     //and at the end of execution either restore the range or figure out what the knew range 
                     //should be based on the cleanup actions taken.
                     if(child.data !== data){
-                        console.info("child data does not equal data")
                         child.data = data
                     }
                     continue;

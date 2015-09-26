@@ -56,6 +56,11 @@ function Squire ( doc, config ) {
 
     this.addEventListener( 'keyup', this._updatePathOnEvent );
     this.addEventListener( 'mouseup', this._updatePathOnEvent );
+    this.addEventListener( 'mouseup', function(){
+        var range = this.getSelection()
+        moveRangeOutOfNotEditable(range)
+        this.setSelection(range)
+    } );
 
     win.addEventListener( 'focus', this, false );
     win.addEventListener( 'blur', this, false );
