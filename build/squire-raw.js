@@ -1683,7 +1683,7 @@ var keyHandlers = {
         var range = self.getSelection()
         var sc = range.startContainer
         var so = range.startOffset
-        if(sc.nodeType != TEXT_NODE && so == 1 && notEditable(sc.childNodes[0])){
+        if(sc.nodeType !== TEXT_NODE && so === 1 && notEditable(sc.childNodes[0])){
             //firefox does not handle this properly, it jumps up a line
             if(sc.childNodes.length == 2 && so == 1){
                 event.preventDefault()
@@ -1692,7 +1692,15 @@ var keyHandlers = {
                 range.setEnd(sc, so)
                 self.setSelection(range)     
             }
-
+        }
+        else if(sc.nodeType === TEXT_NODE && so === 0){
+            var parent = sc.parentNode
+            var scOffset = indexOf.call(parent.childNodes, sc)
+            if(scOffset === 1 && notEditable(parent.childNodes[0])){
+                range.setStart(parent, 0)
+                range.setEnd(parent, 0)
+                self.setSelection(range)
+            }
         }
         setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
     },
