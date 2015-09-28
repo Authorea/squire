@@ -337,6 +337,7 @@ var keyHandlers = {
                     sc.deleteData(so-1, 1)
                     cleanTree(sc.parentNode)
                     replaceDoubleSpace(sc.parentNode, range)
+                    replaceTrailingSingleSpace(sc.parentNode, range)
                 }
                 else{
                     pn = w.previousNode(notEditable)
@@ -349,6 +350,7 @@ var keyHandlers = {
                     }
                     cleanTree(previousParent)
                     replaceDoubleSpace(previousParent, range)
+                    replaceTrailingSingleSpace(previousParent, range)
                 }
             }
             else if((sc.nodeType === ELEMENT_NODE) && (so>0)){
@@ -361,6 +363,7 @@ var keyHandlers = {
                 }
                 cleanTree(sc)
                 replaceDoubleSpace(sc, range)
+                replaceTrailingSingleSpace(sc, range)
             }
 
             self.setSelection( range );

@@ -1535,6 +1535,7 @@ var keyHandlers = {
                     sc.deleteData(so-1, 1)
                     cleanTree(sc.parentNode)
                     replaceDoubleSpace(sc.parentNode, range)
+                    replaceTrailingSingleSpace(sc.parentNode, range)
                 }
                 else{
                     pn = w.previousNode(notEditable)
@@ -1547,6 +1548,7 @@ var keyHandlers = {
                     }
                     cleanTree(previousParent)
                     replaceDoubleSpace(previousParent, range)
+                    replaceTrailingSingleSpace(previousParent, range)
                 }
             }
             else if((sc.nodeType === ELEMENT_NODE) && (so>0)){
@@ -1559,6 +1561,7 @@ var keyHandlers = {
                 }
                 cleanTree(sc)
                 replaceDoubleSpace(sc, range)
+                replaceTrailingSingleSpace(sc, range)
             }
 
             self.setSelection( range );
@@ -2060,7 +2063,7 @@ var removeEmptyInlines = function removeEmptyInlines ( root ) {
 // '$nbsp; '.  Also, if a range happens to contain a node as its start or end and the data is altered in
 // that range, the offset will be set to 0.  I don't know how to prevent that other than replacing it
 // afterwards.
-var replaceDoubleSpace = function removeEmptyInlines ( root, range ) {
+var replaceDoubleSpace = function replaceDoubleSpace ( root, range ) {
     var walker = new TreeWalker(root, SHOW_TEXT, function(){return true})
     var node = walker.currentNode
     var startNode = range.startContainer
@@ -2077,6 +2080,34 @@ var replaceDoubleSpace = function removeEmptyInlines ( root, range ) {
                 }
                 else if(endNode === node){
                     range.setEnd(endNode, endOffset)
+                }
+            }
+        }
+        node = walker.nextNode()
+    }
+};
+
+var replaceTrailingSingleSpace = function replaceTrailingSingleSpace ( root, range ) {
+    var walker = new TreeWalker(root, SHOW_TEXT, function(){return true})
+    var node = walker.currentNode
+    var startNode = range.startContainer
+    var endNode = range.endContainer
+    var startOffset = range.startOffset
+    var endOffset = range.endOffset
+    while(node){
+        if (node.nodeType === TEXT_NODE && !isLeaf( node ) ) {
+            var text = node.data
+            if(text){
+                // Nate: Chrome does not do well with trailing spaces
+                if(node.data[node.data.length-1] === ' '){
+                    node.replaceData(node.data.length-1, 1, "\u00A0")
+                
+                    if(startNode === node){
+                        range.setStart(startNode, startOffset)
+                    }
+                    else if(endNode === node){
+                        range.setEnd(endNode, endOffset)
+                    }
                 }
             }
         }
