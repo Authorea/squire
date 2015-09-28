@@ -41,8 +41,9 @@ var initEditors = function(){
     //editor.setHTML("<div>abc</div><div>xy<b>bd</b>z</div>")
     var citation5 = '<cite contenteditable="false"><a href="#">Jenkins</a>   </cite>'
     // var citation5 = '&#8203;<cite contenteditable="false"><a href="#">Jenkins</a> </cite>&#8203;'
-    editor.setHTML("<div>a b c</div>" + "<div>" + citation5 + "</div>")
-    editor.setHTML('<div><cite contenteditable="false"><a href="#20366120">(Jenkins 2009)</a></cite>&nbsp; This is after<br></div>')
+    // editor.setHTML("<div>a b c</div>" + "<div>" + citation5 + "</div>")
+    editor.setHTML('<div>f<cite contenteditable="false"><a href="#20366120">(Jenkins 2009)</a></cite>&nbsp; This is after<br></div>')
+    // editor.setHTML('<div>&nbsp;f<cite contenteditable="false"><a href="#20366120">(Jenkins 2009)</a></cite><br></div>')
   });
 }
 

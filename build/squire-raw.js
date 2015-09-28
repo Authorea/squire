@@ -1697,6 +1697,7 @@ var keyHandlers = {
             var parent = sc.parentNode
             var scOffset = indexOf.call(parent.childNodes, sc)
             if(scOffset === 1 && notEditable(parent.childNodes[0])){
+                event.preventDefault()
                 range.setStart(parent, 0)
                 range.setEnd(parent, 0)
                 self.setSelection(range)
@@ -1711,14 +1712,25 @@ var keyHandlers = {
         var so = range.startOffset
         if(sc.nodeType != TEXT_NODE && notEditable(sc.childNodes[so])){
             //firefox does not handle this properly, the cursor gets stuck
-            if(sc.childNodes.length == 2 && so == 0){
+            if(sc.childNodes.length > so){
                 event.preventDefault()
-                so = 1;
+                so = so + 1;
                 range.setStart(sc, so)
                 range.setEnd(sc, so)
                 self.setSelection(range)     
             }
 
+        }
+        else if(sc.nodeType === TEXT_NODE && so === (sc.data.length) ){
+            var parent = sc.parentNode
+            var scOffset = indexOf.call(parent.childNodes, sc)
+            var scSibling = sc.nextSibling
+            if(notEditable(scSibling)){
+                event.preventDefault()
+                range.setStart(parent, scOffset+2)
+                range.setEnd(parent, scOffset+2)
+                self.setSelection(range)
+            }
         }
         setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
     },
