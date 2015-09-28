@@ -236,8 +236,19 @@ function isContainer ( node ) {
     return ( type === ELEMENT_NODE || type === DOCUMENT_FRAGMENT_NODE ) &&
         !isInline( node ) && !isBlock( node );
 }
+
+// Not all nodes have isContentEditable defined, but once we find a node with it defined
+// it will search up the parentNode list for us and figure out if any are not editable
 function notEditable( node ){
-    return (node.isContentEditable === false)
+    if(!node){
+        return false
+    }
+    if(node.isContentEditable === undefined){
+        return(notEditable(node.parentNode))
+    }
+    else{
+        return (node.isContentEditable === false)
+    }
 }
 
 function getBlockWalker ( node ) {
@@ -1679,58 +1690,67 @@ var keyHandlers = {
         self.setSelection( range );
     },
     left: function ( self, event ) {
+        console.info("Left")
         self._removeZWS();
         var range = self.getSelection()
         var sc = range.startContainer
         var so = range.startOffset
-        if(sc.nodeType !== TEXT_NODE && so === 1 && notEditable(sc.childNodes[0])){
+        window.sc = sc
+        window.so = so
+        window.r = range
+        console.info(sc)
+        console.info(sc.childNodes[so])
+
+        if(sc.nodeType !== TEXT_NODE && so > 0 && notEditable(sc.childNodes[so-1])){
+            console.info("element node not editable to left")
             //firefox does not handle this properly, it jumps up a line
-            if(sc.childNodes.length == 2 && so == 1){
-                event.preventDefault()
-                so = 0;
-                range.setStart(sc, so)
-                range.setEnd(sc, so)
-                self.setSelection(range)     
+            event.preventDefault()
+            range.setStart(sc, so-1)
+            range.setEnd(sc, so-1)
+            self.setSelection(range)     
+        }       
+       
+        else if(sc.nodeType !== TEXT_NODE && so > 0 && notEditable(sc.childNodes[so])){
+            console.info("element node not editable to right")
+            event.preventDefault()
+            range.setStart(sc, so-1)
+            range.setEnd(sc, so-1)
+            self.setSelection(range) 
+        }
+        else if(sc.nodeType !== TEXT_NODE && so === 0 && notEditable(sc.childNodes[so])){
+            console.info("element node not editable to right we are at 0")
+            event.preventDefault()
+            var previousSibling = sc.previousSibling
+            var pLength, pOffset
+            window.ps = previousSibling
+            if(previousSibling){
+                
+                pLength = previousSibling.childNodes.length
+                window.pl = pLength
+                if(pLength > 0){
+                    pOffset = pLength - 1
+                }
+                else{
+                    pOffset = 0
+                }
+                range.setStart(previousSibling, pOffset)
+                range.setEnd(previousSibling, pOffset)
+                self.setSelection(range) 
             }
         }
         else if(sc.nodeType === TEXT_NODE && so === 0){
+            console.info("text node")
             var parent = sc.parentNode
             var scOffset = indexOf.call(parent.childNodes, sc)
-            if(scOffset === 1 && notEditable(parent.childNodes[0])){
+            if(scOffset > 0 && notEditable(parent.childNodes[scOffset-1])){
                 event.preventDefault()
-                range.setStart(parent, 0)
-                range.setEnd(parent, 0)
+                range.setStart(parent, scOffset-1)
+                range.setEnd(parent,scOffset-1)
                 self.setSelection(range)
             }
         }
-        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
-    },
-    right: function ( self, event ) {
-        self._removeZWS();
-        var range = self.getSelection()
-        var sc = range.startContainer
-        var so = range.startOffset
-        if(sc.nodeType != TEXT_NODE && notEditable(sc.childNodes[so])){
-            //firefox does not handle this properly, the cursor gets stuck
-            if(sc.childNodes.length > so){
-                event.preventDefault()
-                so = so + 1;
-                range.setStart(sc, so)
-                range.setEnd(sc, so)
-                self.setSelection(range)     
-            }
-
-        }
-        else if(sc.nodeType === TEXT_NODE && so === (sc.data.length) ){
-            var parent = sc.parentNode
-            var scOffset = indexOf.call(parent.childNodes, sc)
-            var scSibling = sc.nextSibling
-            if(notEditable(scSibling)){
-                event.preventDefault()
-                range.setStart(parent, scOffset+2)
-                range.setEnd(parent, scOffset+2)
-                self.setSelection(range)
-            }
+        else{
+            console.info("leaving it to the browser")
         }
         setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
     },

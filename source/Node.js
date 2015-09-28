@@ -60,8 +60,19 @@ function isContainer ( node ) {
     return ( type === ELEMENT_NODE || type === DOCUMENT_FRAGMENT_NODE ) &&
         !isInline( node ) && !isBlock( node );
 }
+
+// Not all nodes have isContentEditable defined, but once we find a node with it defined
+// it will search up the parentNode list for us and figure out if any are not editable
 function notEditable( node ){
-    return (node.isContentEditable === false)
+    if(!node){
+        return false
+    }
+    if(node.isContentEditable === undefined){
+        return(notEditable(node.parentNode))
+    }
+    else{
+        return (node.isContentEditable === false)
+    }
 }
 
 function getBlockWalker ( node ) {
