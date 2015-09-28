@@ -100,6 +100,7 @@ var mapKeyToFormat = function ( tag, remove ) {
 // you delete all text inside an inline tag, remove the inline tag.
 var afterDelete = function ( self, range ) {
     try {
+        ensureBrAtEndOfAllLines(self._body)
         if ( !range ) { range = self.getSelection(); }
         var node = range.startContainer,
             parent;
@@ -332,12 +333,12 @@ var keyHandlers = {
             var sc = range.startContainer;
             var so = range.startOffset;
             var pn = null;
+            var rootNodeOfClean = null;
+            window.s = self;
             if((sc.nodeType === TEXT_NODE)){
                 if(so>0){
                     sc.deleteData(so-1, 1)
-                    cleanTree(sc.parentNode)
-                    replaceDoubleSpace(sc.parentNode, range)
-                    replaceTrailingSingleSpace(sc.parentNode, range)
+                    rootNodeOfClean = sc.parentNode
                 }
                 else{
                     pn = w.previousNode(notEditable)
@@ -348,9 +349,7 @@ var keyHandlers = {
                     else if(!pn.isContentEditable){
                         detach(pn);
                     }
-                    cleanTree(previousParent)
-                    replaceDoubleSpace(previousParent, range)
-                    replaceTrailingSingleSpace(previousParent, range)
+                    rootNodeOfClean = previousParent
                 }
             }
             else if((sc.nodeType === ELEMENT_NODE) && (so>0)){
@@ -361,11 +360,17 @@ var keyHandlers = {
                 else if(!pn.isContentEditable){
                     detach(pn);
                 }
-                cleanTree(sc)
-                replaceDoubleSpace(sc, range)
-                replaceTrailingSingleSpace(sc, range)
+                rootNodeOfClean = sc
             }
 
+            if(rootNodeOfClean){
+                //CleanTree will trim whitespace, but it won't do this if there is a <br> tag at the end of the line
+                //We want to preserve whitespace that the user has entered so calling ensureBr is necessary
+                ensureBrAtEndOfAllLines(self._body)
+                cleanTree(rootNodeOfClean)
+                replaceDoubleSpace(rootNodeOfClean, range)
+                replaceTrailingSingleSpace(rootNodeOfClean, range)
+            }
             self.setSelection( range );
             setTimeout( function () { afterDelete( self ); }, 0 );
         }
@@ -430,7 +435,7 @@ var keyHandlers = {
                 }
             }
             self.setSelection( originalRange );
-            // setTimeout( function () { afterDelete( self ); }, 0 );
+            setTimeout( function () { afterDelete( self ); }, 0 );
         }
     },
     tab: function ( self, event, range ) {

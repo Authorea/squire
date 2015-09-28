@@ -177,6 +177,10 @@ var walker = new TreeWalker( null, SHOW_TEXT|SHOW_ELEMENT, function () {
     1. Remove nodes we don't want, such as weird <o:p> tags, comment nodes
        and whitespace nodes.
     2. Convert inline tags into our preferred format.
+
+    Nate:  This is currenty used by setHTML when importing html, which was its original useage,
+    and by the backspace key to clean up any inconsistencies.  We should look at whether or not
+    calling it from backspace is really useful.
 */
 var cleanTree = function cleanTree ( node ) {
     var children = node.childNodes,
@@ -352,6 +356,22 @@ var replaceTrailingSingleSpace = function replaceTrailingSingleSpace ( root, ran
         node = walker.nextNode()
     }
 };
+
+var ensureBrAtEndOfAllLines = function (root){
+    var lines = root.childNodes
+    var i = 0
+    var div, lastChild, br
+    for(i=0; i<lines.length; i++){
+        div = lines[i]
+        if(div.nodeName === 'DIV'){
+            lastChild = div.lastChild
+            if(lastChild.nodeName !== 'BR'){
+                br = createElement( div.ownerDocument, 'BR' )
+                div.appendChild(br)
+            }
+        }
+    }
+}
 
 // ---
 

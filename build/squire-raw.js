@@ -1298,6 +1298,7 @@ var mapKeyToFormat = function ( tag, remove ) {
 // you delete all text inside an inline tag, remove the inline tag.
 var afterDelete = function ( self, range ) {
     try {
+        ensureBrAtEndOfAllLines(self._body)
         if ( !range ) { range = self.getSelection(); }
         var node = range.startContainer,
             parent;
@@ -1530,12 +1531,12 @@ var keyHandlers = {
             var sc = range.startContainer;
             var so = range.startOffset;
             var pn = null;
+            var rootNodeOfClean = null;
+            window.s = self;
             if((sc.nodeType === TEXT_NODE)){
                 if(so>0){
                     sc.deleteData(so-1, 1)
-                    cleanTree(sc.parentNode)
-                    replaceDoubleSpace(sc.parentNode, range)
-                    replaceTrailingSingleSpace(sc.parentNode, range)
+                    rootNodeOfClean = sc.parentNode
                 }
                 else{
                     pn = w.previousNode(notEditable)
@@ -1546,9 +1547,7 @@ var keyHandlers = {
                     else if(!pn.isContentEditable){
                         detach(pn);
                     }
-                    cleanTree(previousParent)
-                    replaceDoubleSpace(previousParent, range)
-                    replaceTrailingSingleSpace(previousParent, range)
+                    rootNodeOfClean = previousParent
                 }
             }
             else if((sc.nodeType === ELEMENT_NODE) && (so>0)){
@@ -1559,11 +1558,17 @@ var keyHandlers = {
                 else if(!pn.isContentEditable){
                     detach(pn);
                 }
-                cleanTree(sc)
-                replaceDoubleSpace(sc, range)
-                replaceTrailingSingleSpace(sc, range)
+                rootNodeOfClean = sc
             }
 
+            if(rootNodeOfClean){
+                //CleanTree will trim whitespace, but it won't do this if there is a <br> tag at the end of the line
+                //We want to preserve whitespace that the user has entered so calling ensureBr is necessary
+                ensureBrAtEndOfAllLines(self._body)
+                cleanTree(rootNodeOfClean)
+                replaceDoubleSpace(rootNodeOfClean, range)
+                replaceTrailingSingleSpace(rootNodeOfClean, range)
+            }
             self.setSelection( range );
             setTimeout( function () { afterDelete( self ); }, 0 );
         }
@@ -1628,7 +1633,7 @@ var keyHandlers = {
                 }
             }
             self.setSelection( originalRange );
-            // setTimeout( function () { afterDelete( self ); }, 0 );
+            setTimeout( function () { afterDelete( self ); }, 0 );
         }
     },
     tab: function ( self, event, range ) {
@@ -1939,6 +1944,10 @@ var walker = new TreeWalker( null, SHOW_TEXT|SHOW_ELEMENT, function () {
     1. Remove nodes we don't want, such as weird <o:p> tags, comment nodes
        and whitespace nodes.
     2. Convert inline tags into our preferred format.
+
+    Nate:  This is currenty used by setHTML when importing html, which was its original useage,
+    and by the backspace key to clean up any inconsistencies.  We should look at whether or not
+    calling it from backspace is really useful.
 */
 var cleanTree = function cleanTree ( node ) {
     var children = node.childNodes,
@@ -2114,6 +2123,22 @@ var replaceTrailingSingleSpace = function replaceTrailingSingleSpace ( root, ran
         node = walker.nextNode()
     }
 };
+
+var ensureBrAtEndOfAllLines = function (root){
+    var lines = root.childNodes
+    var i = 0
+    var div, lastChild, br
+    for(i=0; i<lines.length; i++){
+        div = lines[i]
+        if(div.nodeName === 'DIV'){
+            lastChild = div.lastChild
+            if(lastChild.nodeName !== 'BR'){
+                br = createElement( div.ownerDocument, 'BR' )
+                div.appendChild(br)
+            }
+        }
+    }
+}
 
 // ---
 

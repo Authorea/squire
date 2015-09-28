@@ -39,10 +39,10 @@ var initEditors = function(){
     // editor.setHTML("is <span contentEditable='false'>non</span> edit or " + citation4 + " something else")
     //editor.setHTML("is " + citation4 + " som" + "<div>abc</div><div>xy<b>bd</b>z</div>")
     //editor.setHTML("<div>abc</div><div>xy<b>bd</b>z</div>")
-    var citation5 = '<cite contenteditable="false"><a href="#">Jenkins</a> </cite>'
+    var citation5 = '<cite contenteditable="false"><a href="#">Jenkins</a>   </cite>'
     // var citation5 = '&#8203;<cite contenteditable="false"><a href="#">Jenkins</a> </cite>&#8203;'
     editor.setHTML("<div>a b c</div>" + "<div>" + citation5 + "</div>")
-    editor.setHTML("a b c")
+    // editor.setHTML("")
   });
 }
 
