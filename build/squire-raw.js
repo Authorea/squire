@@ -1532,7 +1532,6 @@ var keyHandlers = {
             var so = range.startOffset;
             var pn = null;
             var rootNodeOfClean = null;
-            window.s = self;
             if((sc.nodeType === TEXT_NODE)){
                 if(so>0){
                     sc.deleteData(so-1, 1)
