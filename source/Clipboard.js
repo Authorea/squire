@@ -18,6 +18,7 @@ var onCut = function () {
 };
 
 var onPaste = function ( event ) {
+    console.info("PASTING")
     var clipboardData = event.clipboardData,
         items = clipboardData && clipboardData.items,
         fireDrop = false,
@@ -25,29 +26,35 @@ var onPaste = function ( event ) {
         plainItem = null,
         self = this,
         l, item, type, data;
-
     // Current HTML5 Clipboard interface
     // ---------------------------------
     // https://html.spec.whatwg.org/multipage/interaction.html
 
     if ( items ) {
+        console.info("has items")
         event.preventDefault();
         l = items.length;
         while ( l-- ) {
             item = items[l];
+            window.item = item
             type = item.type;
             if ( type === 'text/html' ) {
+                console.info("html item")
                 /*jshint loopfunc: true */
                 item.getAsString( function ( html ) {
+                    // self.s = html
+                    // console.info(html)
                     self.insertHTML( html, true );
                 });
                 /*jshint loopfunc: false */
                 return;
             }
             if ( type === 'text/plain' ) {
+                console.info("plain item")
                 plainItem = item;
             }
             if ( /^image\/.*/.test( type ) ) {
+                console.info("image")
                 hasImage = true;
             }
         }
@@ -85,6 +92,7 @@ var onPaste = function ( event ) {
             indexOf.call( clipboardData.types, 'text/html' ) > -1 || (
             indexOf.call( clipboardData.types, 'text/plain' ) > -1 &&
             indexOf.call( clipboardData.types, 'text/rtf' ) < 0 ) ) ) {
+        console.info("old interface")
         event.preventDefault();
         // Abiword on Linux copies a plain text and html version, but the HTML
         // version is the empty string! So always try to get HTML, but if none,

@@ -32,6 +32,9 @@ function TreeWalker ( root, nodeType, filter ) {
     this.filter = filter;
 }
 
+// There is a javascript TreeWalker already that I don't want to write over
+window.STreeWalker = TreeWalker
+
 TreeWalker.prototype.nextNode = function () {
     var current = this.currentNode,
         root = this.root,
@@ -46,6 +49,53 @@ TreeWalker.prototype.nextNode = function () {
             }
             node = current.nextSibling;
             if ( !node ) { current = current.parentNode; }
+        }
+        if ( !node ) {
+            return null;
+        }
+      
+        if ( ( typeToBitArray[ node.nodeType ] & nodeType ) &&
+                filter( node ) ) {
+            this.currentNode = node;
+            return node;
+        }
+        current = node;
+    }
+};
+
+// Nate:  The best way to think of this traversal is that starting from the current node it goes up one level
+// and then down one level to the right if possible, then from there down and to the left as far as possible.
+//      r
+//   a     b
+//  d  e  f g
+//
+// If the currentNode is d, nextNONode will return e.  Calling it again returns 'a' since there are no more branches
+// of a.  Calling again gives f, then g, b, and finally r.  I'm not certain if this is post order so I refrained from
+// using a completely analogous name to previousPONode.
+TreeWalker.prototype.nextNONode = function (breakoutFunction) {
+    var current = this.currentNode,
+        root = this.root,
+        nodeType = this.nodeType,
+        filter = this.filter,
+        node;
+    while ( true ) {
+        if ( current === root ) {
+            return null;
+        }
+        node = current.nextSibling;
+        //modified to let us break on an element satisfying the breakoutFunction
+        if ( node ) {
+           if(breakoutFunction && breakoutFunction(node)){
+               this.currentNode = node;
+               return node;
+           }
+           else{
+               while ( current = node.firstChild ) {
+                   node = current;
+               }
+           }
+        } else {
+            node = current.parentNode;
         }
         if ( !node ) {
             return null;
@@ -97,6 +147,8 @@ TreeWalker.prototype.previousNode = function (breakoutFunction) {
 };
 
 // Previous node in post-order.
+// Nate:  Analogous to nextNONode, this function goes up one level, then down one level to the left, 
+// and then down and to the right as far as possible.
 TreeWalker.prototype.previousPONode = function () {
     var current = this.currentNode,
         root = this.root,
