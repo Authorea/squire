@@ -19,6 +19,7 @@ var keys = {
 
 // Ref: http://unixpapa.com/js/key.html
 var onKey = function ( event ) {
+    window.k = event
     var code = event.keyCode,
         key = keys[ code ],
         modifiers = '',
@@ -72,6 +73,7 @@ var onKey = function ( event ) {
         this.setSelection( range );
         this._updatePath( range, true );
     }
+
 };
 
 var mapKeyTo = function ( method ) {
@@ -99,8 +101,13 @@ var mapKeyToFormat = function ( tag, remove ) {
 // link in Opera, it won't delete the link. Let's make things consistent. If
 // you delete all text inside an inline tag, remove the inline tag.
 var afterDelete = function ( self, range ) {
+    console.info("after delete")
     try {
         ensureBrAtEndOfAllLines(self._body)
+        ensurePreZNodesForContentEditable(self._body)
+        removeDanglingZNodes(self._body)
+        removeEmptyInlines( self._body )
+
         if ( !range ) { range = self.getSelection(); }
         var node = range.startContainer,
             parent;
@@ -110,13 +117,19 @@ var afterDelete = function ( self, range ) {
             node = node.parentNode;
         }
         parent = node;
+        window.p44 = parent
+        window.n44 = node
         while ( isInline( parent ) &&
                 ( !parent.textContent || parent.textContent === ZWS ) ) {
             node = parent;
             parent = node.parentNode;
         }
+        window.p55 = parent
+        window.n55 = parent
+
         // If focussed in empty inline element
         if ( node !== parent ) {
+            console.info("removing empty inline")
             // Move focus to just before empty inline(s)
             range.setStart( parent,
                 indexOf.call( parent.childNodes, node ) );
@@ -129,6 +142,7 @@ var afterDelete = function ( self, range ) {
             }
             fixCursor( parent );
             // Move cursor into text node
+            console.info("moving range down tree")
             moveRangeBoundariesDownTree( range );
         }
         // If you delete the last character in the sole <div> in Chrome,
@@ -268,132 +282,31 @@ var keyHandlers = {
         }
     },
     backspace: function ( self, event, range ) {
-        self._removeZWS();
-        // Record undo checkpoint.
-        self._recordUndoState( range );
-        self._getRangeAndRemoveBookmark( range );
-        // If not collapsed, delete contents
-        if ( !range.collapsed ) {
-            event.preventDefault();
-            deleteContentsOfRange( range );
-            afterDelete( self, range );
-        }
-        // If at beginning of block, merge with previous
-        else if ( rangeDoesStartAtBlockBoundary( range ) ) {
-            event.preventDefault();
-            var current = getStartBlockOfRange( range ),
-                previous = current && getPreviousBlock( current );
-            // Must not be at the very beginning of the text area.
-            if ( previous ) {
-                // If not editable, just delete whole block.
-                if ( !previous.isContentEditable ) {
-                    detach( previous );
-                    return;
-                }
-                // Otherwise merge.
-                mergeWithBlock( previous, current, range );
-                // If deleted line between containers, merge newly adjacent
-                // containers.
-                current = previous.parentNode;
-                while ( current && !current.nextSibling ) {
-                    current = current.parentNode;
-                }
-                if ( current && ( current = current.nextSibling ) ) {
-                    mergeContainers( current );
-                }
-                self.setSelection( range );
-            }
-            // If at very beginning of text area, allow backspace
-            // to break lists/blockquote.
-            else if ( current ) {
-                // Break list
-                if ( getNearest( current, 'UL' ) ||
-                        getNearest( current, 'OL' ) ) {
-                    return self.modifyBlocks( decreaseListLevel, range );
-                }
-                // Break blockquote
-                else if ( getNearest( current, 'BLOCKQUOTE' ) ) {
-                    return self.modifyBlocks( decreaseBlockQuoteLevel, range );
-                }
-                self.setSelection( range );
-                self._updatePath( range, true );
-            }
-        }
-        // Nate: previously this was left to the browser but had issues with non-editable spans.  Furthermore
-        // firefox had an odd bug where it is confused by non-editable spans causing spaces to be added
-        // inside the non-editable block rather than deleting the appropriate character inside editable
-        // text.  There is some information on what is probably the same bug here:
-        // https://bugzilla.mozilla.org/show_bug.cgi?id=685445
-        else {
-            event.preventDefault();
-            var w = new TreeWalker(self._doc.body, NodeFilter.SHOW_ALL, function(node){
-                return ((node.nodeType === TEXT_NODE) || (node.isContentEditable===false))
-            } );
-            w.currentNode = range.startContainer;
-            var sc = range.startContainer;
-            var so = range.startOffset;
-            var pn = null;
-            var rootNodeOfClean = null;
-            if((sc.nodeType === TEXT_NODE)){
-                if(so>0){
-                    sc.deleteData(so-1, 1)
-                    rootNodeOfClean = sc.parentNode
-                }
-                else{
-                    pn = w.previousNode(notEditable)
-                    var previousParent = pn.parentNode
-                    if(pn.nodeType === TEXT_NODE){
-                        pn.deleteData(pn.length - 1, 1)
-                    }
-                    else if(!pn.isContentEditable){
-                        detach(pn);
-                    }
-                    rootNodeOfClean = previousParent
-                }
-            }
-            else if((sc.nodeType === ELEMENT_NODE) && (so>0)){
-                pn = sc.childNodes[so-1]
-                if(pn.nodeType === TEXT_NODE){
-                    pn.deleteData(pn.length - 1, 1)
-                }
-                else if(!pn.isContentEditable){
-                    detach(pn);
-                }
-                rootNodeOfClean = sc
-            }
-
-            if(rootNodeOfClean){
-                //CleanTree will trim whitespace, but it won't do this if there is a <br> tag at the end of the line
-                //We want to preserve whitespace that the user has entered so calling ensureBr is necessary
-                ensureBrAtEndOfAllLines(self._body)
-                cleanTree(rootNodeOfClean)
-                replaceDoubleSpace(rootNodeOfClean, range)
-                replaceTrailingSingleSpace(rootNodeOfClean, range)
-            }
-            self.setSelection( range );
-            setTimeout( function () { afterDelete( self ); }, 0 );
-        }
+        self.backspace(self, event, range)
     },
     'delete': function ( self, event, range ) {
+        console.info("deleting")
         self._removeZWS();
         // Record undo checkpoint.
         self._recordUndoState( range );
         self._getRangeAndRemoveBookmark( range );
         // If not collapsed, delete contents
         if ( !range.collapsed ) {
+            console.info("deleting contents of range")
             event.preventDefault();
             deleteContentsOfRange( range );
             afterDelete( self, range );
         }
         // If at end of block, merge next into this block
         else if ( rangeDoesEndAtBlockBoundary( range ) ) {
+            console.info("ends at block boundary")
             event.preventDefault();
             var current = getStartBlockOfRange( range ),
                 next = current && getNextBlock( current );
             // Must not be at the very end of the text area.
             if ( next ) {
                 // If not editable, just delete whole block.
-                if ( !next.isContentEditable ) {
+                if ( notEditable(next) ) {
                     detach( next );
                     return;
                 }
@@ -412,28 +325,16 @@ var keyHandlers = {
                 self._updatePath( range, true );
             }
         }
-        // Otherwise, leave to browser but check afterwards whether it has
-        // left behind an empty inline tag.
         else {
-            // But first check if the cursor is just before an IMG tag. If so,
-            // delete it ourselves, because the browser won't if it is not
-            // inline.
-            var originalRange = range.cloneRange(),
-                cursorContainer, cursorOffset, nodeAfterCursor;
-            moveRangeBoundariesUpTree( range, self._body );
-            cursorContainer = range.endContainer;
-            cursorOffset = range.endOffset;
-            if ( cursorContainer.nodeType === ELEMENT_NODE ) {
-                nodeAfterCursor = cursorContainer.childNodes[ cursorOffset ];
-                if ( nodeAfterCursor && nodeAfterCursor.nodeName === 'IMG' ) {
-                    event.preventDefault();
-                    detach( nodeAfterCursor );
-                    moveRangeBoundariesDownTree( range );
-                    afterDelete( self, range );
-                    return;
+            var sc = range.startContainer
+            var so = range.startOffset
+            if(sc.nodeType === ELEMENT_NODE){
+                var ch = sc.childNodes[so]
+                if(notEditable(ch)){
+                    detach( next );
                 }
             }
-            self.setSelection( originalRange );
+            //else leave it to browser
             setTimeout( function () { afterDelete( self ); }, 0 );
         }
     },
@@ -464,6 +365,8 @@ var keyHandlers = {
     },
     space: function ( self, _, range ) {
         var node, parent;
+        // Nate: This record/bookmark has a side effect of putting a BR tag at the end of a line, which 
+        // currently is ok with me 
         self._recordUndoState( range );
         addLinks( range.startContainer );
         self._getRangeAndRemoveBookmark( range );
@@ -480,70 +383,11 @@ var keyHandlers = {
 
         self.setSelection( range );
     },
-    left: function ( self, event ) {
-        console.info("Left")
-        self._removeZWS();
-        var range = self.getSelection()
-        var sc = range.startContainer
-        var so = range.startOffset
-        window.sc = sc
-        window.so = so
-        window.r = range
-        console.info(sc)
-        console.info(sc.childNodes[so])
-
-        if(sc.nodeType !== TEXT_NODE && so > 0 && notEditable(sc.childNodes[so-1])){
-            console.info("element node not editable to left")
-            //firefox does not handle this properly, it jumps up a line
-            event.preventDefault()
-            range.setStart(sc, so-1)
-            range.setEnd(sc, so-1)
-            self.setSelection(range)     
-        }       
-       
-        else if(sc.nodeType !== TEXT_NODE && so > 0 && notEditable(sc.childNodes[so])){
-            console.info("element node not editable to right")
-            event.preventDefault()
-            range.setStart(sc, so-1)
-            range.setEnd(sc, so-1)
-            self.setSelection(range) 
-        }
-        else if(sc.nodeType !== TEXT_NODE && so === 0 && notEditable(sc.childNodes[so])){
-            console.info("element node not editable to right we are at 0")
-            event.preventDefault()
-            var previousSibling = sc.previousSibling
-            var pLength, pOffset
-            window.ps = previousSibling
-            if(previousSibling){
-                
-                pLength = previousSibling.childNodes.length
-                window.pl = pLength
-                if(pLength > 0){
-                    pOffset = pLength - 1
-                }
-                else{
-                    pOffset = 0
-                }
-                range.setStart(previousSibling, pOffset)
-                range.setEnd(previousSibling, pOffset)
-                self.setSelection(range) 
-            }
-        }
-        else if(sc.nodeType === TEXT_NODE && so === 0){
-            console.info("text node")
-            var parent = sc.parentNode
-            var scOffset = indexOf.call(parent.childNodes, sc)
-            if(scOffset > 0 && notEditable(parent.childNodes[scOffset-1])){
-                event.preventDefault()
-                range.setStart(parent, scOffset-1)
-                range.setEnd(parent,scOffset-1)
-                self.setSelection(range)
-            }
-        }
-        else{
-            console.info("leaving it to the browser")
-        }
-        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
+    right: function(self, event, range){
+        self.moveRight(self, event, range) 
+    },
+    left: function ( self, event, range ) {
+        self.moveLeft(self, event, range)
     },
     up: function ( self, event ) {
         self._removeZWS();
@@ -596,3 +440,413 @@ keyHandlers[ ctrlKey + ']' ] = mapKeyTo( 'increaseQuoteLevel' );
 keyHandlers[ ctrlKey + 'y' ] = mapKeyTo( 'redo' );
 keyHandlers[ ctrlKey + 'z' ] = mapKeyTo( 'undo' );
 keyHandlers[ ctrlKey + 'shift-z' ] = mapKeyTo( 'redo' );
+
+var findNextBRTag = function(root, node){
+    var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
+                        return ( node.nodeName === "BR" )
+    } );
+    window.w = w
+    w.currentNode = node;
+    return w.nextNONode()
+}
+
+var findPreviousBRTag = function(root, node){
+    var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
+                        return ( node.nodeName === "BR" )
+    } );
+    window.w = w
+    w.currentNode = node;
+    return w.previousNode()
+}
+
+var findNextTextOrNotEditable = function(root, node){
+    var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
+        return ( isText(node) || notEditable(node) )
+    } );
+    window.w = w
+    w.currentNode = node;
+    return w.nextNONode(notEditable)
+}
+
+var findPreviousTextOrNotEditable = function(root, node){
+    var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
+        return ( isText(node) || notEditable(node) )
+    } );
+    window.w = w
+    w.currentNode = node;
+    return w.previousNode(notEditable)
+}
+
+var printRange = function(range, message){
+    console.info("MESSAGE: " + message)
+    console.info(range.startContainer, range.startOffset, range.endContainer, range.endOffset)
+}
+
+Squire.prototype.backspace = function(self, event, range){
+    console.info("backspace")
+    self  = self  ? self  : this
+    event && event.preventDefault()
+    range = range ? range : self.getSelection()
+    self._removeZWS();
+    // Record undo checkpoint.
+    // console.info("recording undo state")
+    // self._recordUndoState( range );
+    // self._getRangeAndRemoveBookmark( range );
+    // If not collapsed, delete contents
+    var block = getStartBlockOfRange(range)
+    window.block = block
+    if ( !range.collapsed ) {
+        console.info("range not collapsed")
+        deleteContentsOfRange( range );
+        afterDelete( self, range );
+    }
+    // If at beginning of block, merge with previous
+    else if ( rangeDoesStartAtBlockBoundary( range ) ) {
+        console.info("range starts at block boundary")
+        var current = getStartBlockOfRange( range ),
+            previous = current && getPreviousBlock( current );
+        // Must not be at the very beginning of the text area.
+        if ( previous ) {
+            // If not editable, just delete whole block.
+            if ( notEditable(previous) ) {
+                detach( previous );
+                return;
+            }
+            // Otherwise merge.
+            mergeWithBlock( previous, current, range );
+            // If deleted line between containers, merge newly adjacent
+            // containers.
+            current = previous.parentNode;
+            while ( current && !current.nextSibling ) {
+                current = current.parentNode;
+            }
+            if ( current && ( current = current.nextSibling ) ) {
+                mergeContainers( current );
+            }
+            self.setSelection( range );
+        }
+        // If at very beginning of text area, allow backspace
+        // to break lists/blockquote.
+        else if ( current ) {
+            // Break list
+            if ( getNearest( current, 'UL' ) ||
+                    getNearest( current, 'OL' ) ) {
+                return self.modifyBlocks( decreaseListLevel, range );
+            }
+            // Break blockquote
+            else if ( getNearest( current, 'BLOCKQUOTE' ) ) {
+                return self.modifyBlocks( decreaseBlockQuoteLevel, range );
+            }
+            self.setSelection( range );
+            self._updatePath( range, true );
+        }
+    }
+    // Nate: previously this was left to the browser but had issues with non-editable spans.  Furthermore
+    // firefox had an odd bug where it is confused by non-editable spans causing spaces to be added
+    // inside the non-editable block rather than deleting the appropriate character inside editable
+    // text.  There is some information on what is probably the same bug here:
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=685445
+    else {
+        console.info("not at block boundary")
+        var sc = range.startContainer;
+        var so = range.startOffset;
+        var pn = null;
+        var pOffset
+        var parent = null;
+        window.sc33 = sc
+        window.so33 = so
+        window.r33 = range
+        window.pn = pn
+        var rootNodeOfClean = null;
+
+        if((sc.nodeType === TEXT_NODE)){
+            console.info("text node")
+            if(so>1){
+                console.info("greater than one")
+                sc.deleteData(so-1, 1)
+                parent = sc.parentNode
+                // pn = w.previousNode(notEditable)
+                // console.info(pn)
+                rootNodeOfClean = parent
+               
+            }
+            else if(so===1){
+                console.info("equal to 1")
+                sc.deleteData(so-1, 1)
+            }
+            else{ //so === 0
+                console.info("equal to 0")
+                pn = findPreviousTextOrNotEditable(block, sc)
+                var previousParent = pn.parentNode
+                window.previousParent = previousParent
+                if(pn.nodeType === TEXT_NODE){
+                    console.info("deleting data from pn")
+                    if(pn.length>0){
+                        pn.deleteData(pn.length - 1, 1)
+                    }
+                    else{
+                        detach(pn);
+                    }
+                }
+                else if(notEditable(pn)){
+                    detach(pn);
+                }
+                rootNodeOfClean = previousParent
+            }
+        }
+        else {
+            console.info("not text node")
+            var child = sc.childNodes[so]
+            pn = findPreviousTextOrNotEditable(block, child)
+            if(pn){
+                console.info("found pn")
+                window.pn33 = pn
+                if(pn.nodeType === TEXT_NODE){
+                    console.info("pn is text node")
+                    if(pn.length>0){
+                        pn.deleteData(pn.length - 1, 1)
+                        pOffset = pn.length
+                        range.setStart(pn, pOffset)
+                        range.setEnd(pn, pOffset)
+                        self.setSelectionToNode(pn, pOffset)
+                    }
+                    else{
+                        detach(pn)
+                    }
+                    
+                }
+                else if(notEditable(pn)){
+                    detach(pn);
+                }
+            }
+            
+            //Nate: Todo: Currently cleaning from this node results in the range not getting moved down the tree, not good
+            rootNodeOfClean = sc
+        }
+
+        // if(rootNodeOfClean){
+        //     window.rootNodeOfClean = rootNodeOfClean
+        //     //CleanTree will trim whitespace, but it won't do this if there is a <br> tag at the end of the line
+        //     //We want to preserve whitespace that the user has entered so calling ensureBr is necessary
+        //     ensureBrAtEndOfAllLines(self._body)
+        //     cleanTree(rootNodeOfClean)
+        //     replaceDoubleSpace(rootNodeOfClean, range)
+        //     replaceTrailingSingleSpace(rootNodeOfClean, range)
+        // }
+        self.setSelection( range );
+        // setTimeout( function () { afterDelete( self ); }, 0 );
+        afterDelete( self )
+    }
+}
+
+Squire.prototype.moveRight = function(self, event, range){
+    self  = self  ? self  : this
+    //TODO: stop looking for BR tags to designate end of lines
+    ensureBrAtEndOfAllLines(self._body)
+    console.info("Right2")
+    event && event.preventDefault()
+    range = range ? range : self.getSelection()
+    self._removeZWS();
+    var so = range.startOffset
+    var sc = range.startContainer
+    var ec = range.endContainer
+    var eo = range.endOffset
+    var parent = sc.parent
+    var root = self._body
+    var nn
+    var block = getStartBlockOfRange(range)
+    window.sc = sc
+    window.so = so
+    window.r = range
+
+    if(rangeDoesEndAtBlockBoundary(range)){
+        console.info("range ends at block boundary")
+        window.b1 = block
+        var nextBlock = getNextBlock(block)
+        window.nb1 = nextBlock
+        if(nextBlock){
+            self.setSelectionToNode(nextBlock)
+            var newRange = self.getSelection()
+            moveRangeBoundariesDownTree(newRange) 
+            self.setSelection(newRange)
+        }
+    }
+    else if(sc.nodeType === TEXT_NODE){
+        console.info("text node")
+        var l = sc.length
+        var skippedNode = false
+        //If we are in a text node and not at the end, move one character to the right
+        if(so < l){
+            so += 1
+            range.setStart(sc, so)
+            self.setSelection(r)
+        }
+        else{
+            nn = findNextTextOrNotEditable(root, sc)
+
+            // The right cursor has a special case where it should skip over the first notEditable node,
+            // otherwise it will take two right presses to go from text->notEditable->text
+            if(nn){
+                if(notEditable(nn)){
+                    console.info("neighbor not editable, skipping over")
+                    nn = findNextTextOrNotEditable(block, nn)
+                    skippedNode = true
+                }
+                //if we jump over any nodes, we want to be at the beginning of the next text node, but if they are next to each other,
+                //start one character in
+                if(isText(nn) && !skippedNode){
+                    console.info("next element is text")
+                    self.setSelectionToNode(nn, nn.length>0 ? 1:0)
+                    
+                }
+                else if(nn){
+                    console.info("next element is not text")
+                    self.setSelectionToNode(nn, 0)
+
+                }
+                else{
+                    if(nn = findNextBRTag(root, sc)){
+                        self.setSelectionToNode(nn, 0)
+                    }
+                }
+            }
+            else{
+                if(nn = findNextBRTag(root, sc)){
+                    self.setSelectionToNode(nn, 0)
+                }
+            }
+        }
+    }   
+    else{
+        console.info("element node")
+        var child = sc.childNodes[so]
+        if(child && isText(child)){
+            console.info("child is text")
+            self.setSelectionToNode(child, 0)
+        }
+        else{
+            console.info("child is not text")
+            nn = findNextTextOrNotEditable(block, child)
+            if(nn){
+                console.info("found next node")
+                self.setSelectionToNode(nn, 0)
+            }
+            else{
+                if(nn = findNextBRTag(root, child)){
+                    self.setSelectionToNode(nn, 0)
+                }
+            }
+        }
+    }  
+    //NATE TODO: There is a curious side-effect to this function which is also achieved
+    //by self.setSelection(self.getSelection()).  If you are pointing to a non-editable
+    //div or to a <BR> tag in firefox, you will not be able to enter in characters
+    //unless you do the aforementioned or the following.  Woudl love to know why
+    setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
+}
+
+
+Squire.prototype.moveLeft = function(self, event, range){
+    self  = self  ? self  : this
+    //TODO: stop looking for BR tags to designate end of lines
+    ensureBrAtEndOfAllLines(self._body)
+    event && event.preventDefault()
+    range = range ? range : self.getSelection()
+    self._removeZWS();
+    var so = range.startOffset
+    var sc = range.startContainer
+    var ec = range.endContainer
+    var eo = range.endOffset
+    var parent = sc.parent
+    var root = self._body
+    var nn
+    var block = getStartBlockOfRange(range)
+    window.sc = sc
+    window.so = so
+    window.r = range
+    if(!isText(sc) && (so > sc.childNodes.length - 1) ){
+        console.info("range is out of bounds")
+        so = so - 1
+        range.setStart(sc, so)
+        self.setSelection(range)
+    }
+
+    if(rangeDoesStartAtBlockBoundary(range)){
+        console.info("range starts at block boundary")
+        var block = getStartBlockOfRange(range)
+        var previousBlock = getPreviousBlock(block)
+        if(previousBlock){
+            self.setSelectionToNode(previousBlock)
+            var newRange = self.getSelection()
+            newRange.setStart(newRange.endContainer, newRange.endContainer.childNodes.length-1)
+            newRange.setEnd(newRange.endContainer, newRange.endContainer.childNodes.length-1)
+            moveRangeBoundariesDownTree(newRange) 
+            self.setSelection(newRange)
+        }
+    }
+    else if(sc.nodeType === TEXT_NODE){
+        var l = sc.length
+        //If we are in a text node and not at the end, move one character to the right
+        if(so > 0){
+            so -= 1
+            //TODO: looks like a pointless check
+            if(so<0){ 
+                so = 0
+            }
+            self.setSelectionToNode(sc, so)
+        }
+        else{
+            nn = findPreviousTextOrNotEditable(block, sc)
+            if(nn){
+                if(isText(nn)){
+                    var newOffset = nn.length - 1
+                    if(newOffset<0){
+                        newOffset = 0
+                    }
+                    self.setSelectionToNode(nn, newOffset)
+                }
+                else{
+                    self.setSelectionToNode(nn, 0)
+                }
+            }
+            else{
+                nn = findPreviousBRTag(root, sc)
+                if(nn){
+                    self.setSelectionToNode(nn, 0)
+                }
+            }
+        }
+    }   
+    else{
+        console.info("element node")
+        var child = sc.childNodes[so]
+        if(false){
+            console.info("child is text")
+            self.setSelectionToNode(child, 0)
+        }
+        else{
+            console.info("child is not text")
+            nn = findPreviousTextOrNotEditable(block, child)
+            if(nn){
+                if(isText(nn)){
+                    var newOffset = nn.length -1
+                    if(newOffset<0){
+                        newOffset = 0
+                    }
+                    self.setSelectionToNode(nn, newOffset)
+                }
+                else{
+                   self.setSelectionToNode(nn, 0)
+                }
+                
+            }
+            else{
+                nn = findPreviousBRTag(root, child)
+                if(nn){
+                    self.setSelectionToNode(nn, 0)
+                }
+            }
+        }
+    }  
+    setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
+}

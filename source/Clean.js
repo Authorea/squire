@@ -285,6 +285,7 @@ var cleanTree = function cleanTree ( node ) {
 // ---
 
 var removeEmptyInlines = function removeEmptyInlines ( root ) {
+    console.info("removing empty inlines")
     var children = root.childNodes,
         l = children.length,
         child;
@@ -357,21 +358,124 @@ var replaceTrailingSingleSpace = function replaceTrailingSingleSpace ( root, ran
     }
 };
 
+// Nate:  The hack I found to get chrome happy with noneditable containers is to place a zero-width-space and 
+// a dummy <z> container in front of them.  This ZWS can sometimes be absorbed by the text element preceding it.  
+// They are impossible to see.
+var removeTrailingZWS = function replaceTrailingSingleSpace ( root ) {
+    var walker = new TreeWalker(root, SHOW_TEXT, function(){return true})
+    var node = walker.currentNode
+    while(node){
+        if (isText(node) && !isLeaf( node ) ) {
+            if(node.data){
+                if(node.data.length > 1 && node.data[node.data.length-1] === ZWS){
+                    node.replaceData(node.data.length-1, 1, "")
+                
+                }
+            }
+        }
+        node = walker.nextNode()
+    }
+};
+
+// NATE: TODO: make sure this does not apply to other blocks
 var ensureBrAtEndOfAllLines = function (root){
     var lines = root.childNodes
     var i = 0
     var div, lastChild, br
+    window.r123 = root
+    window.ls = lines
     for(i=0; i<lines.length; i++){
         div = lines[i]
         if(div.nodeName === 'DIV'){
             lastChild = div.lastChild
-            if(lastChild.nodeName !== 'BR'){
+            window.lc = lastChild
+            if(!lastChild || lastChild.nodeName !== 'BR'){
                 br = createElement( div.ownerDocument, 'BR' )
                 div.appendChild(br)
             }
         }
     }
 }
+
+// The only purpose of the Z node is to protect a following non-editable container, removing it
+// if it's neighbor is missing or editable
+var removeDanglingZNodes = function(root){
+    console.info("removing dangling z nodes")
+    var walker = new TreeWalker(root, SHOW_ELEMENT, function(){return true})
+    var node = walker.currentNode
+    window.w2 = walker
+    var nodesToRemove = []
+    var ps
+
+    while(node){
+        if (node.nodeName === 'Z' ) {
+            if(!notEditable(node.nextSibling)){
+                nodesToRemove.push(node)
+                ps = node.previousSibling
+                if(isZWS(ps)){
+                    nodesToRemove.push(ps)
+                }
+            }
+        }
+        node = walker.nextNode()
+    }
+    nodesToRemove.forEach(function(node){
+        detach(node)
+    })
+};
+var removeAllZNodes = function(root){
+    var walker = new TreeWalker(root, SHOW_ELEMENT, function(){return true})
+    var node = walker.currentNode
+    var ps
+    var nodesToRemove = []
+
+    while(node){
+        if (node.nodeName === 'Z' ) {
+            nodesToRemove.push(node)
+            ps = node.previousSibling
+            if(isZWS(ps)){
+                nodesToRemove.push(ps)
+            }
+        }
+        node = walker.nextNode()
+    }
+    nodesToRemove.forEach(function(node){
+        detach(node)
+    })
+};
+var ensurePreZNodesForContentEditable = function(root){
+    console.info("ensuring pre z nodes")
+    //only uppermost not editables need the Z tag, because the lower nodes will be inaccessible
+    var walker = new TreeWalker(root, SHOW_ELEMENT, function(node){return (notEditable(node) && !notEditable(node.parentNode) )})
+    var node = walker.currentNode
+    var doc = node.ownerDocument
+    if(!walker.filter(node)){
+        node = walker.nextNode()
+    }
+    var previousNode, zwsNode
+    var n, t
+
+    while(node){
+        previousNode = node.previousSibling
+        if(!(previousNode && previousNode.nodeName === "Z")){
+            n = doc.createElement("z")
+            // node.parentNode.insertBefore(t, node)
+            node.parentNode.insertBefore(n, node)
+        }
+        else{
+            n = previousNode
+        }
+        zwsNode = n && n.previousSibling
+        if(!isZWS(zwsNode)){
+            t = doc.createTextNode( ZWS )
+            // node.parentNode.insertBefore(t, node)
+            n.parentNode.insertBefore(t, n)
+        }
+        
+        node = walker.nextNode()
+    }
+}
+
 
 // ---
 
@@ -428,3 +532,10 @@ var cleanupBRs = function ( root ) {
         }
     }
 };
+
+// Squire.Cl = function(){}
+Squire.prototype.cleanTree = cleanTree
+Squire.prototype.removeDanglingZNodes = removeDanglingZNodes
+Squire.prototype.ensurePreZNodesForContentEditable = ensurePreZNodesForContentEditable
+Squire.prototype.removeAllZNodes = removeAllZNodes
+Squire.prototype.removeEmptyInlines = removeEmptyInlines

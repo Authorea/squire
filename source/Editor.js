@@ -337,6 +337,13 @@ proto.setSelection = function ( range ) {
     return this;
 };
 
+proto.setSelectionToNode = function (node, startOffset){
+    var range = this._doc.createRange()
+    range.setStart(node, startOffset)
+    range.setEnd(node, startOffset)
+    this.setSelection(range)
+}
+
 proto.getSelection = function () {
     var sel = this._sel,
         selection, startContainer, endContainer;
@@ -360,6 +367,11 @@ proto.getSelection = function () {
     }
     return selection;
 };
+
+proto.getCurrentStartBlock = function() {
+    var r = this.getSelection()
+    return getStartBlockOfRange(r)
+}
 
 proto.getSelectedText = function () {
     var range = this.getSelection(),
@@ -740,12 +752,13 @@ proto._addFormat = function ( tag, attributes, range ) {
         // Therefore we wrap this in the tag as well, as this will then cause it
         // to apply when the user types something in the block, which is
         // presumably what was intended.
+        // Nate:  I've tried this out in chrome and firefox and neither seems to need BR tags as children of a format.
+        // I have thus removed the inclusion of br nodes in the formatting
         walker = new TreeWalker(
             range.commonAncestorContainer,
             SHOW_TEXT|SHOW_ELEMENT,
             function ( node ) {
-                return ( node.nodeType === TEXT_NODE ||
-                                                    node.nodeName === 'BR' ) &&
+                return ( node.nodeType === TEXT_NODE ) &&
                     isNodeContainedInRange( range, node, true );
             },
             false
@@ -1293,6 +1306,7 @@ proto.getHTML = function ( withBookMark ) {
 };
 
 proto.setHTML = function ( html ) {
+    console.info("calling setHTML")
     var frag = this._doc.createDocumentFragment(),
         div = this.createElement( 'DIV' ),
         child;
@@ -1347,6 +1361,8 @@ proto.setHTML = function ( html ) {
     }
     this._updatePath( range, true );
 
+    removeTrailingZWS(this._body)
+    ensurePreZNodesForContentEditable( this._body )
     return this;
 };
 

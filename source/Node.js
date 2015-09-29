@@ -1,14 +1,83 @@
 /*jshint strict:false, undef:false, unused:false */
 
-var inlineNodeNames  = /^(?:#text|A(?:BBR|CRONYM)?|B(?:R|D[IO])?|C(?:ITE|ODE)|D(?:ATA|EL|FN)|EM|FONT|HR|I(?:MG|NPUT|NS)?|KBD|Q|R(?:P|T|UBY)|S(?:AMP|MALL|PAN|TR(?:IKE|ONG)|U[BP])?|U|VAR|WBR)$/;
-
+var inlineNodeNames  = /^(?:#text|A(?:BBR|CRONYM)?|B(?:R|D[IO])?|C(?:ITE|ODE)|D(?:ATA|EL|FN)|EM|FONT|HR|I(?:MG|NPUT|NS)?|KBD|Q|R(?:P|T|UBY)|S(?:AMP|MALL|PAN|TR(?:IKE|ONG)|U[BP])?|U|VAR|WBR|Z)$/;
+window.inn = inlineNodeNames
 var leafNodeNames = {
     BR: 1,
     IMG: 1,
     INPUT: 1,
-    SPAN: 1,
-    CITE: 1
+    CITE: 1,
+    Z: 1
 };
+
+var mathMLNodeNames = {
+    MATH:1,
+    MACTION:1,
+    MALIGNGROUP:1,
+    MALIGNMARK:1,
+    MENCLOSE:1,
+    MERROR:1,
+    MFENCED:1,
+    MFRAC:1,
+    MGLYPH:1,
+    MI:1,
+    MLABELEDTR:1,
+    MLONGDIV:1,
+    MMULTISCRIPTS:1,
+    MN:1,
+    MO:1,
+    MOVER:1,
+    MPADDED:1,
+    MPHANTOM:1,
+    MROOT:1,
+    MROW:1,
+    MS:1,
+    MSCARRIES:1,
+    MSCARRY:1,
+    MSGROUP:1,
+    MSLINE:1,
+    MSPACE:1,
+    MSQRT:1,
+    MSROW:1,
+    MSTACK:1,
+    MSTYLE:1,
+    MSUB:1,
+    MSUP:1,
+    MSUBSUP:1,
+    math:1,
+    maction:1,
+    maligngroup:1,
+    malignmark:1,
+    menclose:1,
+    merror:1,
+    mfenced:1,
+    mfrac:1,
+    mglyph:1,
+    mi:1,
+    mlabeledtr:1,
+    mlongdiv:1,
+    mmultiscripts:1,
+    mn:1,
+    mo:1,
+    mover:1,
+    mpadded:1,
+    mphantom:1,
+    mroot:1,
+    mrow:1,
+    ms:1,
+    mscarries:1,
+    mscarry:1,
+    msgroup:1,
+    msline:1,
+    mspace:1,
+    msqrt:1,
+    msrow:1,
+    mstack:1,
+    mstyle:1,
+    msub:1,
+    msup:1,
+    msubsup:1
+}
 
 function every ( nodeList, fn ) {
     var l = nodeList.length;
@@ -44,11 +113,11 @@ function areAlike ( node, node2 ) {
 }
 
 function isLeaf ( node ) {
-    return node.nodeType === ELEMENT_NODE &&
-        !!leafNodeNames[ node.nodeName ];
+    return (node.nodeType === ELEMENT_NODE &&
+        (!!leafNodeNames[ node.nodeName ]) || notEditable(node));
 }
 function isInline ( node ) {
-    return inlineNodeNames.test( node.nodeName );
+    return (inlineNodeNames.test( node.nodeName ) || mathMLNodeNames[node.nodeName]);
 }
 function isBlock ( node ) {
     var type = node.nodeType;
@@ -59,6 +128,9 @@ function isContainer ( node ) {
     var type = node.nodeType;
     return ( type === ELEMENT_NODE || type === DOCUMENT_FRAGMENT_NODE ) &&
         !isInline( node ) && !isBlock( node );
+}
+function isZWS ( node ) {
+    return (isText(node) && node.data === ZWS)
 }
 
 // Not all nodes have isContentEditable defined, but once we find a node with it defined
@@ -75,10 +147,17 @@ function notEditable( node ){
     }
 }
 
+function isText( node ){
+    if(!node){
+        return false
+    }
+    return (node.nodeType === TEXT_NODE)
+}
+
 function getBlockWalker ( node ) {
     var doc = node.ownerDocument,
         walker = new TreeWalker(
-            doc.body, SHOW_ELEMENT, isBlock, false );
+            doc.body, SHOW_ELEMENT, function(node){return(isBlock(node)  && !notEditable(node))}, false );
     walker.currentNode = node;
     return walker;
 }
@@ -86,9 +165,11 @@ function getBlockWalker ( node ) {
 function getPreviousBlock ( node ) {
     return getBlockWalker( node ).previousNode();
 }
+
 function getNextBlock ( node ) {
     return getBlockWalker( node ).nextNode();
 }
+
 function getNearest ( node, tag, attributes ) {
     do {
         if ( hasTagAttributes( node, tag, attributes ) ) {
@@ -478,3 +559,13 @@ function mergeContainers ( node ) {
         fixCursor( prev );
     }
 }
+
+Squire.Node = function(){}
+Squire.Node.isInline = isInline
+Squire.Node.getBlockWalker = getBlockWalker
+Squire.Node.isText = isText
+Squire.Node.notEditable = notEditable
+Squire.Node.getPreviousBlock = getPreviousBlock
+Squire.Node.getNextBlock = getNextBlock
+Squire.Node.isBlock = isBlock
+Squire.Node.isZWS = isZWS
