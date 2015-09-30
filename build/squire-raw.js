@@ -1477,6 +1477,7 @@ var keyHandlers = {
         }
     },
     backspace: function ( self, event, range ) {
+        console.info("backspace")
         self._removeZWS();
         // Record undo checkpoint.
         self._recordUndoState( range );
@@ -1490,6 +1491,7 @@ var keyHandlers = {
         // If at beginning of block, merge with previous
         else if ( rangeDoesStartAtBlockBoundary( range ) ) {
             event.preventDefault();
+            console.info("range starts at block boundary")
             var current = getStartBlockOfRange( range ),
                 previous = current && getPreviousBlock( current );
             // Must not be at the very beginning of the text area.
@@ -1535,6 +1537,7 @@ var keyHandlers = {
         // https://bugzilla.mozilla.org/show_bug.cgi?id=685445
         else {
             event.preventDefault();
+            console.info("not at block boundary")
             var w = new TreeWalker(self._doc.body, NodeFilter.SHOW_ALL, function(node){
                 return ((node.nodeType === TEXT_NODE) || (node.isContentEditable===false))
             } );
@@ -1542,6 +1545,9 @@ var keyHandlers = {
             var sc = range.startContainer;
             var so = range.startOffset;
             var pn = null;
+            window.sc = sc
+            window.so = so
+            window.r = range
             var rootNodeOfClean = null;
             if((sc.nodeType === TEXT_NODE)){
                 if(so>0){
