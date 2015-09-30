@@ -17,7 +17,18 @@ var initEditors = function(){
     window.before = $("#before");
     window.after = $("#after");
     window.clone = $("#clone");
-
+    $(document).ready(function(){
+      vd = new ViewDom(editor._doc.body)
+    })
+    $("#source").keyup(function(e){
+      range = editor._doc.getSelection().getRangeAt(0)
+      console.info(range)
+      vd.highlightRange(vd._r, range)
+    })
+    $("#source").mouseup(function(e){
+      range = editor._doc.getSelection().getRangeAt(0)
+      vd.highlightRange(vd._r, range)
+    })
     // _.each
     editor.addEventListener("pathChange", function(newPath){
       // console.info('path changed');
@@ -34,6 +45,7 @@ var initEditors = function(){
     editor.addEventListener("mouseup", function(){
       setTimeout(updateCursor, 20)
     });
+
     
     var citation4 = '<cite contenteditable="false"><a href="#">Jen</a> </cite> this is a <div>div</div> and'
     // editor.setHTML("is <span contentEditable='false'>non</span> edit or " + citation4 + " something else")
@@ -45,23 +57,23 @@ var initEditors = function(){
     // editor.setHTML('<div>f<cite contenteditable="false"><a href="#20366120">(Jenkins 2009)</a></cite>&nbsp; This is after<br></div>')
     // editor.setHTML('<div>&nbsp;f<cite contenteditable="false"><a href="#20366120">(Jenkins 2009)</a></cite><br></div>')
     editor.setHTML('<div>a<span contenteditable="false"><span><math><semantics><mrow><mi>x</mi><mo>=</mo><mn>5</mn></mrow><annotation>x=5</annotation></semantics></math></span><span><span></span><span></span><span><span>x</span><span>=</span><span>5</span></span></span></span>d<br></div>')
-    editor.setHTML('<div>Libraries<span class="a">a<span class="b">b<span class="c">c<span class="d">d&nbsp;for<span class="e">e&nbsp;</span></span></span></span></span><br></div><div><br></div>')
+    editor.setHTML('<div>Lib<span class="a">a<span class="b">b<span class="c">c<span class="d">d&nbsp;for<span class="e">e&nbsp;</span></span></span></span></span><br></div><div><br></div>')
   });
 }
 
 var updateCursor = function(){
-  // console.info("updating cursor")
-  // setTimeout(updateCursor, 500);
-  editor._saveRangeToBookmark(editor.getSelection())
-  window.html = editor.getHTML();
-  // window.html = after.html();
-  html = html.replace('<input id="squire-selection-start" type="hidden">', '{')
-  html = html.replace('<input id="squire-selection-end" type="hidden">', '}')
-  before.text(html)
-  editor._getRangeAndRemoveBookmark(editor.getSelection())
+  // editor._saveRangeToBookmark(editor.getSelection())
+  // window.html = editor.getHTML();
+  // html = html.replace('<input id="squire-selection-start" type="hidden">', '{')
+  // html = html.replace('<input id="squire-selection-end" type="hidden">', '}')
+  // before.text(html)
+  // editor._getRangeAndRemoveBookmark(editor.getSelection())
   window.r = editor.getSelection()
   window.sc = r.startContainer
   window.so = r.startOffset
+  vd.parseRoot()
+  range = editor._doc.getSelection().getRangeAt(0)
+  vd.highlightRange(vd._r, range)
 }
 
 
