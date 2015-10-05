@@ -495,9 +495,9 @@ Squire.prototype.backspace = function(self, event, range){
     range = range ? range : self.getSelection()
     self._removeZWS();
     // Record undo checkpoint.
-    // console.info("recording undo state")
-    // self._recordUndoState( range );
-    // self._getRangeAndRemoveBookmark( range );
+    console.info("recording undo state")
+    self._recordUndoState( range );
+    self._getRangeAndRemoveBookmark( range );
     // If not collapsed, delete contents
     var block = getStartBlockOfRange(range)
     window.block = block
@@ -682,7 +682,7 @@ Squire.prototype.moveRight = function(self, event, range){
         var l = sc.length
         var skippedNode = false
         //If we are in a text node and not at the end, move one character to the right
-        if(so < l){
+        if(so < l && !isZWNBS(sc)){
             so += 1
             range.setStart(sc, so)
             self.setSelection(r)
