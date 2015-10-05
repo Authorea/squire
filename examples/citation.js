@@ -37,7 +37,7 @@ var initEditors = function(){
 
     
     runTests()
-    // test3()
+    test3()
     // makeTreeWalker()
     // testInlineNodeNames()
     setTimeout(updateCursor, 20)
@@ -262,7 +262,8 @@ runTests = function(){
 
 
 test3 = function(){
-
+  prepareTest("")
+  insertNotEditable(); insertText("a");updateCursor()
 }
 
 debuggingTests = function(){
@@ -337,6 +338,22 @@ makeTreeWalker = function(){
 insertNotEditable = function(e){
   range = editor.getSelection()
   var node = $("<span contentEditable=false>NE</span>")[0]
+  // insert the element into squire
+  editor.insertNodeInRange(
+      range,
+      node
+  )
+  // if the rich element was inserted at the current location
+  if (!range) {
+    // collapse the range
+    range.collapse(false)
+    // update the editor with the collapsed range
+    this.rich_editor.setSelection(range)
+  }
+}
+insertText = function(text){
+  range = editor.getSelection()
+  var node = editor._doc.createTextNode(text)
   // insert the element into squire
   editor.insertNodeInRange(
       range,

@@ -2094,6 +2094,10 @@ Squire.prototype.moveRight = function(self, event, range){
                     nn = findNextTextOrNotEditable(block, nn)
                     skippedNode = true
                 }
+                if(isZWNBS(nn)){
+                    console.info("skipping ZWNBS")
+                    nn = findNextTextOrNotEditable(block, nn)
+                }
                 //if we jump over any nodes, we want to be at the beginning of the next text node, but if they are next to each other,
                 //start one character in
                 if(isText(nn) && !skippedNode){
@@ -2122,6 +2126,11 @@ Squire.prototype.moveRight = function(self, event, range){
     else{
         console.info("element node")
         var child = sc.childNodes[so]
+        if(child && isZWNBS(child)){
+            console.info("skipping ZWNBS")
+            nn = findNextTextOrNotEditable(block, child)
+        }
+
         if(child && isText(child)){
             console.info("child is text")
             self.setSelectionToNode(child, 0)
@@ -2200,6 +2209,11 @@ Squire.prototype.moveLeft = function(self, event, range){
         else{
             nn = findPreviousTextOrNotEditable(block, sc)
             if(nn){
+                if(isZWNBS(nn)){
+                    console.info("skipping ZWNBS")
+                    nn = findPreviousTextOrNotEditable(block, nn)
+                }
+                
                 if(isText(nn)){
                     var newOffset = nn.length - 1
                     if(newOffset<0){
