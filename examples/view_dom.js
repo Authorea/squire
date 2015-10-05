@@ -2,7 +2,7 @@
 
 function d3NodeName(domNode){
     if(domNode.nodeType === Node.TEXT_NODE){
-        return "'" + domNode.data + "'"
+        return "'" + domNode.data.replace(/[\u200B]/g, '*') + "'"
     }
     return domNode.nodeName
 }
@@ -69,7 +69,7 @@ function highlightRange(d3Tree, range){
         if(domNode.nodeType === Node.TEXT_NODE){
             d3Node.highlighted = true
             tData = domNode.data
-            d3Node.name = "'" + tData.substr(0, so) + '|' + tData.substr(so) + "'";
+            d3Node.name = d3Node.name.substr(0, so+1) + '|' + d3Node.name.substr(so+1);
 
         }
         else{
@@ -89,10 +89,10 @@ function highlightRange(d3Tree, range){
             // Name has already been updated by d3Node if statement
             if(d3EndNode === d3Node){
                 //we'll make the assumption that the insertions are ordered with eo > so
-                d3EndNode.name = d3EndNode.name.substr(0, eo+2) + '|' + d3EndNode.name.substr(eo+2) + "'";
+                d3EndNode.name = d3EndNode.name.substr(0, eo+3) + '|' + d3EndNode.name.substr(eo+3);
             }
             else{
-                d3EndNode.name = "'" + tData.substr(0, eo) + '|' + tData.substr(eo) + "'";
+                d3EndNode.name = d3Node.name.substr(0, eo+1) + '|' + d3Node.name.substr(eo+1);
             }
 
         }

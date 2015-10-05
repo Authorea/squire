@@ -17,6 +17,7 @@ var END_TO_END = 2;     // Range.END_TO_END
 var END_TO_START = 3;   // Range.END_TO_START
 
 var ZWS = '\u200B';
+var ZWNBS = '\uFEFF'
 
 var win = doc.defaultView;
 
@@ -661,7 +662,7 @@ function mergeInlines ( node, range ) {
     while ( l-- ) {
         child = children[l];
         prev = l && children[ l - 1 ];
-        if ( l && isInline( child ) && areAlike( child, prev ) &&
+        if ( l && isInline( child ) && !isZWS(child) && areAlike( child, prev ) &&
                 !leafNodeNames[ child.nodeName ] ) {
             if ( range.startContainer === child ) {
                 range.startContainer = prev;

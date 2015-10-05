@@ -433,7 +433,7 @@ function mergeInlines ( node, range ) {
     while ( l-- ) {
         child = children[l];
         prev = l && children[ l - 1 ];
-        if ( l && isInline( child ) && areAlike( child, prev ) &&
+        if ( l && isInline( child ) && !isZWS(child) && areAlike( child, prev ) &&
                 !leafNodeNames[ child.nodeName ] ) {
             if ( range.startContainer === child ) {
                 range.startContainer = prev;
