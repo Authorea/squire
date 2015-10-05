@@ -361,7 +361,7 @@ var replaceTrailingSingleSpace = function replaceTrailingSingleSpace ( root, ran
 // Nate:  The hack I found to get chrome happy with noneditable containers is to place a zero-width-space and 
 // a dummy <z> container in front of them.  This ZWS can sometimes be absorbed by the text element preceding it.  
 // They are impossible to see.
-var removeZWS = function removeZWS ( root ) {
+var removeTrailingZWS = function removeTrailingZWS ( root ) {
     var walker = new TreeWalker(root, SHOW_TEXT, function(){return true})
     var node = walker.currentNode
     while(node){
