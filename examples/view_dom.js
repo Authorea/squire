@@ -1,9 +1,24 @@
 ( function ( doc, undefined ) {
 
+var replaceMapping = {}
+replaceMapping['\u200B'] = '*' 
+replaceMapping['\u200D'] = '\u00B7'
+replaceMapping['\uFEFF'] = '\u00B7' 
+function replaceChars(s, mapping){
+    var res = s
+    var regEx
+    $.each(mapping, function(k,v){
+        regEx = new RegExp(k, 'g')
+        res = res.replace(k, v)
+    })
+    return res
+}
 function d3NodeName(domNode){
     if(domNode.nodeType === Node.TEXT_NODE){
-        return "'" + domNode.data.replace(/[\u200B]/g, '*') + "'"
+        // return "'" + domNode.data.replace(/[\u200B]/g, '*') + "'"
+        return "'" + replaceChars(domNode.data, replaceMapping) + "'"
     }
+    
     return domNode.nodeName
 }
 
@@ -128,7 +143,15 @@ function unHighlightAll(d3Tree){
 }
 
 window.ViewDom = ViewDom;
-function ViewDom ( domNode ) {
+function ViewDom ( domNode, options ) {
+    this.self = this
+    var replaceChars = {}
+    replaceChars['\u200B'] = '*' 
+    replaceChars['\u200D'] = '\u00B7' 
+    this.options = {
+        replaceChars: replaceChars
+    }
+    $(this.options).extend(options)
     this.rootNode = domNode
     var margin = {
         top: 20,
@@ -363,10 +386,9 @@ function ViewDom ( domNode ) {
     // cache it just before it loses focus.
 }
 
-var proto = ViewDom.prototype;
-proto.highlightRange = highlightRange;
+ViewDom.prototype.highlightRange = highlightRange;
 
-proto.parseRoot = function(){
+ViewDom.prototype.parseRoot = function(){
     var domNode, oldNode
     this._new_root = parseElement(this.rootNode)
     var oldRoot = this._r

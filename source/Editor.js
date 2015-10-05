@@ -48,6 +48,55 @@ function Squire ( doc, config ) {
         this.addEventListener( 'beforedeactivate', this.getSelection );
     }
 
+    this.addEventListener("keypress", function(e){
+        var r = this.getSelection()
+        var sc = r.startContainer
+        var so = r.startOffset
+        var child = sc.childNodes && sc.childNodes[so]
+        // NATE: if the child is not editable we need to set the cursor position to behind the to protective chars, ZWNBS<Z>.
+        // So we look back to see if they exist, and to see if there is already a text node behind them.  If so then set the
+        // range to the end of that text node, otherwise insert a new text node containing the character in the keypress.
+        // I tried not inserting the char, instead starting with a blank string, but chrome will then insert the char 
+        // into the ZWNBS text, amazingly.
+        if(notEditable(child)){
+            console.info("NOT EDITABLE need to move range")
+            var z = child.previousSibling
+            var zwnbs = isZ(z) && z.previousSibling
+            var beforeZwnbs = isZWNBS(zwnbs) && zwnbs.previousSibling
+            if(isText(beforeZwnbs)){
+                var length = beforeZwnbs.length
+                window.bz = beforeZwnbs
+                this.setSelectionToNode(beforeZwnbs, length ? length : 0)
+            }
+            else if(isZWNBS(zwnbs)){
+                e.preventDefault()
+                var tn = this._doc.createTextNode(String.fromCharCode(e.charCode))
+                sc.insertBefore(tn, zwnbs)
+                this.setSelectionToNode(tn, 1)
+
+            }
+        }
+        else if(isZWNBS(child) || isZWNBS(sc)){
+           console.info("currrently focued on zwnbs")
+           var zwnbs = isZWNBS(child) && child || sc
+           var beforeZwnbs = zwnbs.previousSibling
+           var parent = (zwnbs === child) ? sc : sc.parentNode
+           if(isText(beforeZwnbs)){
+               var length = beforeZwnbs.length
+               window.bz = beforeZwnbs
+               this.setSelectionToNode(beforeZwnbs, length ? length : 0)
+           }
+           else{
+
+               e.preventDefault()
+               var tn = this._doc.createTextNode(String.fromCharCode(e.charCode))
+               parent.insertBefore(tn, zwnbs)
+               this.setSelectionToNode(tn, 1)
+
+           }
+        }     
+    });  
+
     this._hasZWS = false;
 
     this._lastAnchorNode = null;

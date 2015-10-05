@@ -20,10 +20,16 @@ var keys = {
 // Ref: http://unixpapa.com/js/key.html
 var onKey = function ( event ) {
     window.k = event
+
     var code = event.keyCode,
         key = keys[ code ],
         modifiers = '',
         range = this.getSelection();
+    var sc = range.startContainer
+    var so = range.startOffset
+    if(isZWNBS(sc)){
+        console.info("INSIDE ZWNBS")
+    }
 
     if ( event.defaultPrevented ) {
         return;

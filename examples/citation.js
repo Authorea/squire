@@ -19,8 +19,10 @@ var initEditors = function(){
 
     $("not-editable-insert").click(insertNotEditable)
 
-    editor.addEventListener("pathChange", function(newPath){
-    });
+    // editor.addEventListener("pathChange", function(newPath){
+    //   console.info("pathchange")
+    //   console.info("newpath")
+    // });
     editor.addEventListener("focus", function(){
     });
 
@@ -30,14 +32,23 @@ var initEditors = function(){
     editor.addEventListener("keydown", function(e){
       // console.info(e)
       // console.info("keydown")
-    });   
+    }); 
+    // editor.addEventListener("keypress", function(e){
+    //   console.info("keypress")
+    //   e.preventDefault()
+    //   console.info(e)
+    // });    
+    // editor.addEventListener("input", function(e){
+    //   console.info("input")
+    //   console.info(e)
+    // });    
     editor.addEventListener("mouseup", function(){
       setTimeout(updateCursor, 20)
     });
 
     
-    // runTests()
-    test3()
+    runTests()
+    // test3()
     // makeTreeWalker()
     // testInlineNodeNames()
     setTimeout(updateCursor, 20)
@@ -163,8 +174,6 @@ runTests = function(){
   editor.moveRight(editor, keyEvent, range);updateCursor()
   editor.moveRight(editor, keyEvent, range);updateCursor()
   editor.moveRight(editor, keyEvent, range);updateCursor()
-  // TODO: Now that I've protected noneditable spans there is an additional cursor press needed to pass over the ZWS<Z>.  Will fix that later
-  editor.moveRight(editor, keyEvent, range);updateCursor()
   testContent("d", 0, "right arrow over non-editable")
   editor.moveLeft(editor, keyEvent, range);updateCursor()
   editor.moveRight(editor, keyEvent, range);updateCursor()
@@ -184,8 +193,6 @@ runTests = function(){
   //TODO: without ZWS this was index 1
   testContainer(firstLine, 3, "left arrow onto non-editable")
   editor.moveLeft(editor, keyEvent, range);updateCursor()
-  //TODO: extra moveleft due to ZWS<Z>
-  editor.moveLeft(editor, keyEvent, range);updateCursor()
   testContent("ab", 1, "left arrow off of non-editable")
 
   prepareTest("<div>a<br></div><div><br></div><div>b<br></div>")
@@ -199,12 +206,10 @@ runTests = function(){
   editor.moveLeft(editor, keyEvent, range);updateCursor()
   testContent("a", 1, "left")
 
-  prepareTest("<div><span contentEditable=false>ne</span><br></div><div><br></div><div>bbb<br></div><div><span contentEditable=false>ne</span></div><div>def<br></div>")
-  editor.moveRight(editor, keyEvent, range);updateCursor()
-  //TODO: extra moveright due to ZWS<Z>
+  prepareTest("<div><span contentEditable=false>ne</span><br></div>")
+  return
   editor.moveRight(editor, keyEvent, range);updateCursor()
   testContainer(firstLine, 3, "right arrow before content editable on single line")
-
   prepareTest('<div>L<span><span class="colour" style="color:rgb(51, 51, 51)"> <span class="font" style="font-family:Helvetica, Times, serif"> <span class="size" style="font-size:16px">&nbsp;f <span class="Apple-converted-space">&nbsp;</span> </span> </span> </span></span><br></div>')
   prepareTest('<div>L<span><span class="colour" style="color:rgb(51, 51, 51)"><span class="font" style="font-family:Helvetica, Times, serif"><span class="size" style="font-size:16px">f<span class="Apple-converted-space">&nbsp;</span></span></span></span></span><br></div>')
   editor.setSelectionToNode(editor._body.childNodes[0].childNodes[2])
@@ -262,8 +267,8 @@ runTests = function(){
 
 
 test3 = function(){
-  prepareTest("")
-  insertNotEditable(); insertText("a");updateCursor()
+  prepareTest("a")
+  insertNotEditable(); insertText("b");updateCursor()
 }
 
 debuggingTests = function(){

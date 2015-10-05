@@ -135,6 +135,9 @@ function isZWS ( node ) {
 function isZWNBS ( node ) {
     return (isText(node) && node.data === ZWNBS)
 }
+function isZ ( node ) {
+    return (node && node.nodeName === 'Z')
+}
 
 // Not all nodes have isContentEditable defined, but once we find a node with it defined
 // it will search up the parentNode list for us and figure out if any are not editable
