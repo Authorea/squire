@@ -36,7 +36,7 @@ var initEditors = function(){
     });
 
     
-    runTests()
+    // runTests()
     test3()
     // makeTreeWalker()
     // testInlineNodeNames()

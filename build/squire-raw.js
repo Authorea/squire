@@ -1863,7 +1863,7 @@ var findPreviousBRTag = function(root, node){
 
 var findNextTextOrNotEditable = function(root, node){
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
-        return ( isText(node) || notEditable(node) )
+        return ( (isText(node) && !isZWNBS(node)) || notEditable(node) )
     } );
     window.w = w
     w.currentNode = node;
@@ -1872,7 +1872,7 @@ var findNextTextOrNotEditable = function(root, node){
 
 var findPreviousTextOrNotEditable = function(root, node){
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
-        return ( isText(node) || notEditable(node) )
+        return ( (isText(node) && !isZWNBS(node)) || notEditable(node) )
     } );
     window.w = w
     w.currentNode = node;
@@ -2094,10 +2094,6 @@ Squire.prototype.moveRight = function(self, event, range){
                     nn = findNextTextOrNotEditable(block, nn)
                     skippedNode = true
                 }
-                if(isZWNBS(nn)){
-                    console.info("skipping ZWNBS")
-                    nn = findNextTextOrNotEditable(block, nn)
-                }
                 //if we jump over any nodes, we want to be at the beginning of the next text node, but if they are next to each other,
                 //start one character in
                 if(isText(nn) && !skippedNode){
@@ -2126,11 +2122,6 @@ Squire.prototype.moveRight = function(self, event, range){
     else{
         console.info("element node")
         var child = sc.childNodes[so]
-        if(child && isZWNBS(child)){
-            console.info("skipping ZWNBS")
-            nn = findNextTextOrNotEditable(block, child)
-        }
-
         if(child && isText(child)){
             console.info("child is text")
             self.setSelectionToNode(child, 0)
@@ -2209,11 +2200,6 @@ Squire.prototype.moveLeft = function(self, event, range){
         else{
             nn = findPreviousTextOrNotEditable(block, sc)
             if(nn){
-                if(isZWNBS(nn)){
-                    console.info("skipping ZWNBS")
-                    nn = findPreviousTextOrNotEditable(block, nn)
-                }
-                
                 if(isText(nn)){
                     var newOffset = nn.length - 1
                     if(newOffset<0){
@@ -2628,7 +2614,7 @@ var replaceTrailingSingleSpace = function replaceTrailingSingleSpace ( root, ran
 // Nate:  The hack I found to get chrome happy with noneditable containers is to place a zero-width-space and 
 // a dummy <z> container in front of them.  This ZWS can sometimes be absorbed by the text element preceding it.  
 // They are impossible to see.
-var removeTrailingZWS = function replaceTrailingSingleSpace ( root ) {
+var removeZWS = function removeZWS ( root ) {
     var walker = new TreeWalker(root, SHOW_TEXT, function(){return true})
     var node = walker.currentNode
     while(node){
