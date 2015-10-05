@@ -361,6 +361,9 @@ function isContainer ( node ) {
 function isZWS ( node ) {
     return (isText(node) && node.data === ZWS)
 }
+function isZWNBS ( node ) {
+    return (isText(node) && node.data === ZWNBS)
+}
 
 // Not all nodes have isContentEditable defined, but once we find a node with it defined
 // it will search up the parentNode list for us and figure out if any are not editable
@@ -662,7 +665,7 @@ function mergeInlines ( node, range ) {
     while ( l-- ) {
         child = children[l];
         prev = l && children[ l - 1 ];
-        if ( l && isInline( child ) && !isZWS(child) && areAlike( child, prev ) &&
+        if ( l && isInline( child ) && !isZWNBS(child) && areAlike( child, prev ) &&
                 !leafNodeNames[ child.nodeName ] ) {
             if ( range.startContainer === child ) {
                 range.startContainer = prev;
@@ -797,7 +800,8 @@ Squire.Node.notEditable = notEditable
 Squire.Node.getPreviousBlock = getPreviousBlock
 Squire.Node.getNextBlock = getNextBlock
 Squire.Node.isBlock = isBlock
-Squire.Node.isZWS = isZWS/*jshint strict:false, undef:false, unused:false, latedef:false */
+Squire.Node.isZWS = isZWS
+Squire.Node.isZWNBS = isZWNBS/*jshint strict:false, undef:false, unused:false, latedef:false */
 
 var getNodeBefore = function ( node, offset ) {
     var children = node.childNodes;
@@ -2616,7 +2620,7 @@ var removeTrailingZWS = function replaceTrailingSingleSpace ( root ) {
     while(node){
         if (isText(node) && !isLeaf( node ) ) {
             if(node.data){
-                if(node.data.length > 1 && node.data[node.data.length-1] === ZWS){
+                if(node.data.length > 1 && node.data[node.data.length-1] === ZWNBS){
                     node.replaceData(node.data.length-1, 1, "")
                 
                 }
@@ -2661,7 +2665,7 @@ var removeDanglingZNodes = function(root){
             if(!notEditable(node.nextSibling)){
                 nodesToRemove.push(node)
                 ps = node.previousSibling
-                if(isZWS(ps)){
+                if(isZWNBS(ps)){
                     nodesToRemove.push(ps)
                 }
             }
@@ -2682,7 +2686,7 @@ var removeAllZNodes = function(root){
         if (node.nodeName === 'Z' ) {
             nodesToRemove.push(node)
             ps = node.previousSibling
-            if(isZWS(ps)){
+            if(isZWNBS(ps)){
                 nodesToRemove.push(ps)
             }
         }
@@ -2715,8 +2719,8 @@ var ensurePreZNodesForContentEditable = function(root){
             n = previousNode
         }
         zwsNode = n && n.previousSibling
-        if(!isZWS(zwsNode)){
-            t = doc.createTextNode( ZWS )
+        if(!isZWNBS(zwsNode)){
+            t = doc.createTextNode( ZWNBS )
             // node.parentNode.insertBefore(t, node)
             n.parentNode.insertBefore(t, n)
         }

@@ -367,7 +367,7 @@ var removeTrailingZWS = function replaceTrailingSingleSpace ( root ) {
     while(node){
         if (isText(node) && !isLeaf( node ) ) {
             if(node.data){
-                if(node.data.length > 1 && node.data[node.data.length-1] === ZWS){
+                if(node.data.length > 1 && node.data[node.data.length-1] === ZWNBS){
                     node.replaceData(node.data.length-1, 1, "")
                 
                 }
@@ -412,7 +412,7 @@ var removeDanglingZNodes = function(root){
             if(!notEditable(node.nextSibling)){
                 nodesToRemove.push(node)
                 ps = node.previousSibling
-                if(isZWS(ps)){
+                if(isZWNBS(ps)){
                     nodesToRemove.push(ps)
                 }
             }
@@ -433,7 +433,7 @@ var removeAllZNodes = function(root){
         if (node.nodeName === 'Z' ) {
             nodesToRemove.push(node)
             ps = node.previousSibling
-            if(isZWS(ps)){
+            if(isZWNBS(ps)){
                 nodesToRemove.push(ps)
             }
         }
@@ -466,8 +466,8 @@ var ensurePreZNodesForContentEditable = function(root){
             n = previousNode
         }
         zwsNode = n && n.previousSibling
-        if(!isZWS(zwsNode)){
-            t = doc.createTextNode( ZWS )
+        if(!isZWNBS(zwsNode)){
+            t = doc.createTextNode( ZWNBS )
             // node.parentNode.insertBefore(t, node)
             n.parentNode.insertBefore(t, n)
         }

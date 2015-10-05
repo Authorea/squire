@@ -132,6 +132,9 @@ function isContainer ( node ) {
 function isZWS ( node ) {
     return (isText(node) && node.data === ZWS)
 }
+function isZWNBS ( node ) {
+    return (isText(node) && node.data === ZWNBS)
+}
 
 // Not all nodes have isContentEditable defined, but once we find a node with it defined
 // it will search up the parentNode list for us and figure out if any are not editable
@@ -433,7 +436,7 @@ function mergeInlines ( node, range ) {
     while ( l-- ) {
         child = children[l];
         prev = l && children[ l - 1 ];
-        if ( l && isInline( child ) && !isZWS(child) && areAlike( child, prev ) &&
+        if ( l && isInline( child ) && !isZWNBS(child) && areAlike( child, prev ) &&
                 !leafNodeNames[ child.nodeName ] ) {
             if ( range.startContainer === child ) {
                 range.startContainer = prev;
@@ -569,3 +572,4 @@ Squire.Node.getPreviousBlock = getPreviousBlock
 Squire.Node.getNextBlock = getNextBlock
 Squire.Node.isBlock = isBlock
 Squire.Node.isZWS = isZWS
+Squire.Node.isZWNBS = isZWNBS
