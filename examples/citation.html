@@ -6,7 +6,9 @@
     <title>HTML Editor Test</title>
     <link href="squire-ui.css" rel="stylesheet">
     <script src="jquery.js"></script>
+    <script src="d3.js"></script>
     <script src="../build/squire-raw.js"></script>
+    <script src="view_dom.js"></script>
     <script src="citation.js"></script>
 </head>
 <body>
@@ -15,10 +17,11 @@
   <p>This is a really simple demo, with the most trivial of UI integrations</p>
   <p>
   <button id="bold">Bold</button>
+  <button id="insert-not-editable">Bold</button>
   </p>
 </header>
 <iframe width="600" height="100" src="editor_iframe.html"></iframe>
-<textarea id="before"  style="width: 800px; height: 200px;" ></textarea>
-<textarea id="after"  style="width: 400px; height: 200px;" ></textarea>
+<textarea id="before"  style="width: 400px; height: 100px; display: none" ></textarea>
+<div id="d3"  style="width: 400px; height: 200px;" ></textarea>
 </body>
 </html>

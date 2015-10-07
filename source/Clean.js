@@ -70,33 +70,85 @@ var replaceWithTag = function ( tag ) {
     };
 };
 
-var stylesRewriters = {
-    SPAN: function ( span, parent ) {
-        var style = span.style,
-            doc = span.ownerDocument,
-            attr, converter, css, newTreeBottom, newTreeTop, el;
 
-        for ( attr in spanToSemantic ) {
-            converter = spanToSemantic[ attr ];
-            css = style[ attr ];
-            if ( css && converter.regexp.test( css ) ) {
-                el = converter.replace( doc, css );
-                if ( newTreeBottom ) {
-                    newTreeBottom.appendChild( el );
-                }
-                newTreeBottom = el;
-                if ( !newTreeTop ) {
-                    newTreeTop = el;
-                }
+var filterClasses = function(node, whiteList){
+     var classes = node.classList
+     var newClasses = []
+
+     //classes are not the same in firefox and chrome, the latter returns an array, the former an object
+     if(!classes.forEach){
+         classes = $.map(classes, function(c){return c})
+     }
+     classes.forEach(function(c){
+         if(whiteList[c]){
+             newClasses.push(c)
+         }
+     })
+     node.className = newClasses.join(" ")
+     if(node.className === ""){
+         node.removeAttribute("class")
+     }   
+     return node
+}
+
+var filterSpanClasses = function(span){
+    var whiteList = {
+        "katex": 1,
+        "ltx_Math": 1
+    }
+    return filterClasses(span, whiteList)
+}
+
+// removes any attributes not matching whiteList
+// whiteList = {"class":1, "x":2}
+var filterAttributes = function(node, whiteList){
+    var attrs = node.attributes
+    var attrsToRemove = []
+    $.each(attrs, function(k, v){
+        if(whiteList[v.name]){
+        }
+        else{
+            if(whiteList["data"] && v.name.match(/^data-/)){
+
+            }
+            else{
+                // cannot do this in place because it alters the attributes array
+                attrsToRemove.push(v.name)
             }
         }
+    })
 
-        if ( newTreeTop ) {
-            newTreeBottom.appendChild( empty( span ) );
-            parent.replaceChild( newTreeTop, span );
-        }
+    attrsToRemove.forEach(function(a){
+        node.removeAttribute(a)
+    })  
+    return node  
+}
+var filterSpanAttributes = function(span){
+    var whiteList = {
+        "class": 1,
+        "contenteditable": 1,
+        "data": 1
+    }
+    return filterAttributes(span, whiteList)
+}
 
-        return newTreeBottom || span;
+//NATE: I lke the stylesRewriters, we should have sane defaults for all the elements as a first pass, and then
+// any additional complicated filtering can be done by registering filters with squire that will be executed during
+// insertHTML
+var stylesRewriters = {
+    SPAN: function ( span, parent ) {
+        //NATE: TODO: whitelist of classes for span
+        span.removeAttribute("style")
+        filterSpanClasses(span)
+        filterSpanAttributes(span)
+        return span
+        // NATE: I want to leave one line of the old code in as a reminder, this is the line that was causing
+        // one span to get broken out into many spans, but it was kind of clever and we might want to use the idea
+        // at a later time.  It looked at if something had a large font or a certain color and tried to guess what the
+        // element was and add a semantic class to the span.  For each attribute there was a separate class.  Although
+        // we don't want a bunch of spans with classes, we might want to re-order a span with certain attributes into 
+        // more sensible elements
+        // for ( attr in spanToSemantic ) 
     },
     STRONG: replaceWithTag( 'B' ),
     EM: replaceWithTag( 'I' ),
@@ -160,7 +212,20 @@ var stylesRewriters = {
         parent.replaceChild( el, node );
         el.appendChild( empty( node ) );
         return el;
+    },
+    //NATE:  I added a default rewriter so that we filter elements not specified here with a strict set of classes and attributes.
+    // Basically for the moment if we don't know what it is it will have no classes and no attributes.  
+    DEFAULT_REWRITER: function ( node, parent ){
+        filterClasses(node, {})
+        filterAttributes(node, {data: 1})
+        return node
+    },
+    A: function ( node, parent ){
+        filterClasses(node, {})
+        filterAttributes(node, {"href": 1})
+        return node
     }
+    //TODO: NATE: We probably want to map p tags to divs, it might be done already but I'm not 100% sure
 };
 
 var allowedBlock = /^(?:A(?:DDRESS|RTICLE|SIDE|UDIO)|BLOCKQUOTE|CAPTION|D(?:[DLT]|IV)|F(?:IGURE|OOTER)|H[1-6]|HEADER|L(?:ABEL|EGEND|I)|O(?:L|UTPUT)|P(?:RE)?|SECTION|T(?:ABLE|BODY|D|FOOT|H|HEAD|R)|UL)$/;
@@ -201,8 +266,13 @@ var cleanTree = function cleanTree ( node ) {
         if ( nodeType === ELEMENT_NODE ) {
             childLength = child.childNodes.length;
             if ( rewriter ) {
+                // TODO: child could technically change here and I think childLength needs to be recalculated
                 child = rewriter( child, node );
-            } else if ( blacklist.test( nodeName ) ) {
+            }
+            else{
+                child = stylesRewriters[ 'DEFAULT_REWRITER' ](child, node);
+            } 
+            if ( blacklist.test( nodeName ) ) {
                 node.removeChild( child );
                 i -= 1;
                 l -= 1;
@@ -357,6 +427,26 @@ var replaceTrailingSingleSpace = function replaceTrailingSingleSpace ( root, ran
     }
 };
 
+// Nate:  The hack I found to get chrome happy with noneditable containers is to place a zero-width-space and 
+// a dummy <z> container in front of them.  This ZWS can sometimes be absorbed by the text element preceding it.  
+// They are impossible to see.
+var removeTrailingZWS = function removeTrailingZWS ( root ) {
+    var walker = new TreeWalker(root, SHOW_TEXT, function(){return true})
+    var node = walker.currentNode
+    while(node){
+        if (isText(node) && !isLeaf( node ) ) {
+            if(node.data){
+                if(node.data.length > 1 && node.data[node.data.length-1] === ZWNBS){
+                    node.replaceData(node.data.length-1, 1, "")
+                
+                }
+            }
+        }
+        node = walker.nextNode()
+    }
+};
+
+// NATE: TODO: make sure this does not apply to other blocks
 var ensureBrAtEndOfAllLines = function (root){
     var lines = root.childNodes
     var i = 0
@@ -365,13 +455,106 @@ var ensureBrAtEndOfAllLines = function (root){
         div = lines[i]
         if(div.nodeName === 'DIV'){
             lastChild = div.lastChild
-            if(lastChild.nodeName !== 'BR'){
+            if(!lastChild || lastChild.nodeName !== 'BR'){
                 br = createElement( div.ownerDocument, 'BR' )
                 div.appendChild(br)
             }
         }
     }
 }
+
+// NATE: TODO: make sure this does not apply to other blocks
+var removeBrAtEndOfAllLines = function (root){
+    var lines = root.childNodes
+    var i = 0
+    var div, lastChild, br
+    for(i=0; i<lines.length; i++){
+        div = lines[i]
+        if(div.nodeName === 'DIV'){
+            lastChild = div.lastChild
+            if(lastChild && lastChild.nodeName === 'BR'){
+                detach(lastChild)
+            }
+        }
+    }
+}
+
+// The only purpose of the Z node is to protect a following non-editable container, removing it
+// if it's neighbor is missing or editable
+var removeDanglingZNodes = function(root){
+    var walker = new TreeWalker(root, SHOW_ELEMENT, function(){return true})
+    var node = walker.currentNode
+    var nodesToRemove = []
+    var ps
+
+    while(node){
+        if (node.nodeName === 'Z' ) {
+            if(!notEditable(node.nextSibling)){
+                nodesToRemove.push(node)
+                ps = node.previousSibling
+                if(isZWNBS(ps)){
+                    nodesToRemove.push(ps)
+                }
+            }
+        }
+        node = walker.nextNode()
+    }
+    nodesToRemove.forEach(function(node){
+        detach(node)
+    })
+};
+var removeAllZNodes = function(root){
+    var walker = new TreeWalker(root, SHOW_ELEMENT, function(){return true})
+    var node = walker.currentNode
+    var ps
+    var nodesToRemove = []
+
+    while(node){
+        if (node.nodeName === 'Z' ) {
+            nodesToRemove.push(node)
+            ps = node.previousSibling
+            if(isZWNBS(ps)){
+                nodesToRemove.push(ps)
+            }
+        }
+        node = walker.nextNode()
+    }
+    nodesToRemove.forEach(function(node){
+        detach(node)
+    })
+};
+var ensurePreZNodesForContentEditable = function(root){
+    //only uppermost not editables need the Z tag, because the lower nodes will be inaccessible
+    var walker = new TreeWalker(root, SHOW_ELEMENT, function(node){return (notEditable(node) && !notEditable(node.parentNode) )})
+    var node = walker.currentNode
+    var doc = node.ownerDocument
+    if(!walker.filter(node)){
+        node = walker.nextNode()
+    }
+    var previousNode, zwsNode
+    var n, t
+
+    while(node){
+        previousNode = node.previousSibling
+        if(!(previousNode && previousNode.nodeName === "Z")){
+            n = doc.createElement("z")
+            // node.parentNode.insertBefore(t, node)
+            node.parentNode.insertBefore(n, node)
+        }
+        else{
+            n = previousNode
+        }
+        zwsNode = n && n.previousSibling
+        if(!isZWNBS(zwsNode)){
+            t = doc.createTextNode( ZWNBS )
+            // node.parentNode.insertBefore(t, node)
+            n.parentNode.insertBefore(t, n)
+        }
+        
+        node = walker.nextNode()
+    }
+}
+
 
 // ---
 
@@ -428,3 +611,45 @@ var cleanupBRs = function ( root ) {
         }
     }
 };
+
+// If a span has no special attribute or class name, replace it with its children
+var collapseSimpleSpans = function collapseSimpleSpans( node ) {
+    if(node.nodeType === TEXT_NODE){
+        return;
+    }
+    var children = node.childNodes
+    var parent   = node.parentNode
+    var child, nextChild, frag
+    var i
+
+    var length = node.childNodes.length
+    for(i=length-1; i>-1; i--){
+        collapseSimpleSpans(node.childNodes[i])
+    }
+
+    if(node.nodeName === "SPAN"){
+        // if the span has no attributes (which includes class), remove it from the dom and replace it with its children
+        if(node.attributes.length === 0){
+            child = node.firstChild
+            while(child){
+                nextChild = child.nextSibling
+                parent.insertBefore(child, node)
+                child = nextChild
+            }
+            parent.removeChild(node)
+        }    
+    }
+  
+}
+
+Squire.Clean = function(){}
+//NATE: normally I use the editor.collapseSimpleSpans but for testing I would like to have it available from Squire.Clean
+Squire.Clean.collapseSimpleSpans = collapseSimpleSpans
+Squire.prototype.cleanTree = cleanTree
+Squire.prototype.removeDanglingZNodes = removeDanglingZNodes
+Squire.prototype.ensurePreZNodesForContentEditable = ensurePreZNodesForContentEditable
+Squire.prototype.removeAllZNodes = removeAllZNodes
+Squire.prototype.removeEmptyInlines = removeEmptyInlines
+Squire.prototype.collapseSimpleSpans = collapseSimpleSpans
+
+Squire.Clean.stylesRewriters = stylesRewriters

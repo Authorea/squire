@@ -28,6 +28,7 @@ var getNodeAfter = function ( node, offset ) {
 // ---
 
 var insertNodeInRange = function ( range, node ) {
+    // console.info("inserting node in range")
     // Insert at start.
     var startContainer = range.startContainer,
         startOffset = range.startOffset,
@@ -78,6 +79,8 @@ var insertNodeInRange = function ( range, node ) {
 
     range.setStart( startContainer, startOffset );
     range.setEnd( endContainer, endOffset );
+    ensurePreZNodesForContentEditable( node.ownerDocument.body )
+    ensureBrAtEndOfAllLines( node.ownerDocument.body )
 };
 
 var extractContentsOfRange = function ( range, common ) {
@@ -331,6 +334,8 @@ var isNodeContainedInRange = function ( range, node, partial ) {
     }
 };
 
+// If the starting and ending range offsets are collapsed and on the first element in the container, this will 
+// move down and to the left, otherwise it will move down and to the right
 var moveRangeBoundariesDownTree = function ( range ) {
     var startContainer = range.startContainer,
         startOffset = range.startOffset,
@@ -338,27 +343,54 @@ var moveRangeBoundariesDownTree = function ( range ) {
         endOffset = range.endOffset,
         child;
 
+    if( notEditable(startContainer)){
+        // console.info("start container not editable, stopping here")
+        return
+    }
+    // This loop goes down and to the left of the tree
     while ( startContainer.nodeType !== TEXT_NODE ) {
         child = startContainer.childNodes[ startOffset ];
-        if ( !child || isLeaf( child ) ) {
+        // console.info("child")
+        // console.info(child)
+        if ( !child || isLeaf( child )) {
+            // console.info("start breaking on")
+            // console.info(child)
+            break;
+        }
+        if (  notEditable( child ) ){
+            // console.info("child not editable, stopping")
             break;
         }
         startContainer = child;
         startOffset = 0;
     }
+    // If the endOffset is nonzero, this goes down and to the right of the tree starting at the node just before the end offset
     if ( endOffset ) {
+        // console.info("end offset")
         while ( endContainer.nodeType !== TEXT_NODE ) {
+            // console.info(endContainer)
             child = endContainer.childNodes[ endOffset - 1 ];
             if ( !child || isLeaf( child ) ) {
+                // console.info("breaking on")
+                console.info(child)
+                break;
+            }
+            if (  notEditable( child ) ){
+                // console.info("child not editable, stopping")
                 break;
             }
             endContainer = child;
             endOffset = getLength( endContainer );
         }
     } else {
+        // console.info("not end offset")
         while ( endContainer.nodeType !== TEXT_NODE ) {
             child = endContainer.firstChild;
             if ( !child || isLeaf( child ) ) {
+                break;
+            }
+            if (  notEditable( child ) ){
+                // console.info("child not editable, stopping")
                 break;
             }
             endContainer = child;
@@ -369,8 +401,11 @@ var moveRangeBoundariesDownTree = function ( range ) {
     // *outside* the range rather than inside, but also it flips which is
     // assigned to which.
     if ( range.collapsed ) {
+        // console.info("collapsed range flipping start and end")
         range.setStart( endContainer, endOffset );
-        range.setEnd( startContainer, startOffset );
+        range.setEnd( endContainer, endOffset );
+        //Nate:  I don't think it makes sense to have the start and end different on a collapsed range
+        // range.setEnd( startContainer, startOffset );
     } else {
         range.setStart( startContainer, startOffset );
         range.setEnd( endContainer, endOffset );
@@ -441,6 +476,7 @@ var moveRangeOutOfNotEditable = function( range ){
         } 
     }
 }
+window.moveRangeOutOfNotEditable = moveRangeOutOfNotEditable
 
 // Returns the first block at least partially contained by the range,
 // or null if no block is contained by the range.
@@ -460,6 +496,7 @@ var getStartBlockOfRange = function ( range ) {
     // Check the block actually intersects the range
     return block && isNodeContainedInRange( range, block, true ) ? block : null;
 };
+window.gsbor = getStartBlockOfRange
 
 // Returns the last block at least partially contained by the range,
 // or null if no block is contained by the range.
@@ -516,6 +553,7 @@ var rangeDoesStartAtBlockBoundary = function ( range ) {
 
     return !contentWalker.previousNode();
 };
+window.rdsabb = rangeDoesStartAtBlockBoundary
 
 var rangeDoesEndAtBlockBoundary = function ( range ) {
     var endContainer = range.endContainer,
@@ -540,6 +578,7 @@ var rangeDoesEndAtBlockBoundary = function ( range ) {
 
     return !contentWalker.nextNode();
 };
+window.rdeabb = rangeDoesEndAtBlockBoundary
 
 var expandRangeToBlockBoundaries = function ( range ) {
     var start = getStartBlockOfRange( range ),
@@ -553,3 +592,8 @@ var expandRangeToBlockBoundaries = function ( range ) {
         range.setEnd( parent, indexOf.call( parent.childNodes, end ) + 1 );
     }
 };
+
+function SquireRange(){};
+SquireRange.getNextBlock = getNextBlock
+SquireRange.getPreviousBlock = getPreviousBlock
+window.SquireRange = SquireRange

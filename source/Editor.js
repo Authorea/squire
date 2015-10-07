@@ -48,6 +48,53 @@ function Squire ( doc, config ) {
         this.addEventListener( 'beforedeactivate', this.getSelection );
     }
 
+    this.addEventListener("keypress", function(e){
+        var r = this.getSelection()
+        var sc = r.startContainer
+        var so = r.startOffset
+        var child = sc.childNodes && sc.childNodes[so]
+        // NATE: if the child is not editable we need to set the cursor position to behind the to protective chars, ZWNBS<Z>.
+        // So we look back to see if they exist, and to see if there is already a text node behind them.  If so then set the
+        // range to the end of that text node, otherwise insert a new text node containing the character in the keypress.
+        // I tried not inserting the char, instead starting with a blank string, but chrome will then insert the char 
+        // into the ZWNBS text, amazingly.
+        if(notEditable(child)){
+            console.info("NOT EDITABLE need to move range")
+            var z = child.previousSibling
+            var zwnbs = isZ(z) && z.previousSibling
+            var beforeZwnbs = isZWNBS(zwnbs) && zwnbs.previousSibling
+            if(isText(beforeZwnbs)){
+                var length = beforeZwnbs.length
+                this.setSelectionToNode(beforeZwnbs, length ? length : 0)
+            }
+            else if(isZWNBS(zwnbs)){
+                e.preventDefault()
+                var tn = this._doc.createTextNode(String.fromCharCode(e.charCode))
+                sc.insertBefore(tn, zwnbs)
+                this.setSelectionToNode(tn, 1)
+
+            }
+        }
+        else if(isZWNBS(child) || isZWNBS(sc)){
+           console.info("currrently focued on zwnbs")
+           var zwnbs = isZWNBS(child) && child || sc
+           var beforeZwnbs = zwnbs.previousSibling
+           var parent = (zwnbs === child) ? sc : sc.parentNode
+           if(isText(beforeZwnbs)){
+               var length = beforeZwnbs.length
+               this.setSelectionToNode(beforeZwnbs, length ? length : 0)
+           }
+           else{
+
+               e.preventDefault()
+               var tn = this._doc.createTextNode(String.fromCharCode(e.charCode))
+               parent.insertBefore(tn, zwnbs)
+               this.setSelectionToNode(tn, 1)
+
+           }
+        }     
+    });  
+
     this._hasZWS = false;
 
     this._lastAnchorNode = null;
@@ -337,6 +384,13 @@ proto.setSelection = function ( range ) {
     return this;
 };
 
+proto.setSelectionToNode = function (node, startOffset){
+    var range = this._doc.createRange()
+    range.setStart(node, startOffset)
+    range.setEnd(node, startOffset)
+    this.setSelection(range)
+}
+
 proto.getSelection = function () {
     var sel = this._sel,
         selection, startContainer, endContainer;
@@ -360,6 +414,11 @@ proto.getSelection = function () {
     }
     return selection;
 };
+
+proto.getCurrentStartBlock = function() {
+    var r = this.getSelection()
+    return getStartBlockOfRange(r)
+}
 
 proto.getSelectedText = function () {
     var range = this.getSelection(),
@@ -740,12 +799,13 @@ proto._addFormat = function ( tag, attributes, range ) {
         // Therefore we wrap this in the tag as well, as this will then cause it
         // to apply when the user types something in the block, which is
         // presumably what was intended.
+        // Nate:  I've tried this out in chrome and firefox and neither seems to need BR tags as children of a format.
+        // I have thus removed the inclusion of br nodes in the formatting
         walker = new TreeWalker(
             range.commonAncestorContainer,
             SHOW_TEXT|SHOW_ELEMENT,
             function ( node ) {
-                return ( node.nodeType === TEXT_NODE ||
-                                                    node.nodeName === 'BR' ) &&
+                return ( node.nodeType === TEXT_NODE ) &&
                     isNodeContainedInRange( range, node, true );
             },
             false
@@ -1263,9 +1323,31 @@ proto._setHTML = function ( html ) {
     this._ignoreChange = true;
 };
 
-proto.getHTML = function ( withBookMark ) {
+/*
+options = 
+{
+    withBookMark: 1, //will include tags for cursor position
+    stripEndBrs: 1, //remove BRs from the end of block elements
+    cleanContentEditable: 1, //remove contentEditable <ZWNBS><Z> tags
+}
+
+*/
+
+proto.getHTML = function ( options ) {
+    if(!options){
+        options = {}
+    }
     var brs = [],
         node, fixer, html, l, range;
+    var withBookMark = options["withBookMark"]
+    var root = this._doc.body
+
+    if(options["stripEndBrs"]){
+        removeBrAtEndOfAllLines(root)
+    }
+    if(options["cleanContentEditable"]){
+        removeAllZNodes(root)
+    }
     if ( withBookMark && ( range = this.getSelection() ) ) {
         this._saveRangeToBookmark( range );
     }
@@ -1288,6 +1370,12 @@ proto.getHTML = function ( withBookMark ) {
     }
     if ( range ) {
         this._getRangeAndRemoveBookmark( range );
+    }
+    if(options["stripEndBrs"]){
+        ensureBrAtEndOfAllLines(root)
+    }
+    if(options["cleanContentEditable"]){
+        ensurePreZNodesForContentEditable(root)
     }
     return html;
 };
@@ -1347,6 +1435,8 @@ proto.setHTML = function ( html ) {
     }
     this._updatePath( range, true );
 
+    removeTrailingZWS(this._body)
+    ensurePreZNodesForContentEditable( this._body )
     return this;
 };
 
@@ -1439,6 +1529,7 @@ proto.insertHTML = function ( html, isPaste ) {
     // Parse HTML into DOM tree
     div.innerHTML = html;
     frag.appendChild( empty( div ) );
+    // return
 
     // Record undo checkpoint
     this._recordUndoState( range );
@@ -1456,10 +1547,14 @@ proto.insertHTML = function ( html, isPaste ) {
 
         addLinks( frag );
         cleanTree( frag );
+        collapseSimpleSpans( frag )
+        mergeInlines( frag )
         cleanupBRs( frag );
         removeEmptyInlines( frag );
         frag.normalize();
-
+        //NATE: This is a clear spot to do something of the sort:
+        // registeredFilters.each(function(filter){filter(frag)})
+        
         while ( node = getNextBlock( node ) ) {
             fixCursor( node );
         }
