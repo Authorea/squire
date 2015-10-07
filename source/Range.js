@@ -28,7 +28,6 @@ var getNodeAfter = function ( node, offset ) {
 // ---
 
 var insertNodeInRange = function ( range, node ) {
-    // console.info("inserting node in range")
     // Insert at start.
     var startContainer = range.startContainer,
         startOffset = range.startOffset,

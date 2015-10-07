@@ -107,7 +107,7 @@ var mapKeyToFormat = function ( tag, remove ) {
 // link in Opera, it won't delete the link. Let's make things consistent. If
 // you delete all text inside an inline tag, remove the inline tag.
 var afterDelete = function ( self, range ) {
-    console.info("after delete")
+    // console.info("after delete")
     try {
         ensureBrAtEndOfAllLines(self._body)
         ensurePreZNodesForContentEditable(self._body)
@@ -489,13 +489,11 @@ var printRange = function(range, message){
 }
 
 Squire.prototype.backspace = function(self, event, range){
-    console.info("backspace")
     self  = self  ? self  : this
     event && event.preventDefault()
     range = range ? range : self.getSelection()
     self._removeZWS();
     // Record undo checkpoint.
-    console.info("recording undo state")
     self._recordUndoState( range );
     self._getRangeAndRemoveBookmark( range );
     // If not collapsed, delete contents
@@ -553,7 +551,6 @@ Squire.prototype.backspace = function(self, event, range){
     // text.  There is some information on what is probably the same bug here:
     // https://bugzilla.mozilla.org/show_bug.cgi?id=685445
     else {
-        console.info("not at block boundary")
         var sc = range.startContainer;
         var so = range.startOffset;
         var pn = null;
@@ -566,9 +563,7 @@ Squire.prototype.backspace = function(self, event, range){
         var rootNodeOfClean = null;
 
         if((sc.nodeType === TEXT_NODE)){
-            console.info("text node")
             if(so>1){
-                console.info("greater than one")
                 sc.deleteData(so-1, 1)
                 parent = sc.parentNode
                 // pn = w.previousNode(notEditable)
@@ -577,16 +572,13 @@ Squire.prototype.backspace = function(self, event, range){
                
             }
             else if(so===1){
-                console.info("equal to 1")
                 sc.deleteData(so-1, 1)
             }
             else{ //so === 0
-                console.info("equal to 0")
                 pn = findPreviousTextOrNotEditable(block, sc)
                 var previousParent = pn.parentNode
                 window.previousParent = previousParent
                 if(pn.nodeType === TEXT_NODE){
-                    console.info("deleting data from pn")
                     if(pn.length>0){
                         pn.deleteData(pn.length - 1, 1)
                     }
@@ -601,14 +593,11 @@ Squire.prototype.backspace = function(self, event, range){
             }
         }
         else {
-            console.info("not text node")
             var child = sc.childNodes[so]
             pn = findPreviousTextOrNotEditable(block, child)
             if(pn){
-                console.info("found pn")
                 window.pn33 = pn
                 if(pn.nodeType === TEXT_NODE){
-                    console.info("pn is text node")
                     if(pn.length>0){
                         pn.deleteData(pn.length - 1, 1)
                         pOffset = pn.length
@@ -649,7 +638,6 @@ Squire.prototype.moveRight = function(self, event, range){
     self  = self  ? self  : this
     //TODO: stop looking for BR tags to designate end of lines
     ensureBrAtEndOfAllLines(self._body)
-    console.info("Right2")
     event && event.preventDefault()
     range = range ? range : self.getSelection()
     self._removeZWS();
@@ -666,19 +654,21 @@ Squire.prototype.moveRight = function(self, event, range){
     window.r = range
 
     if(rangeDoesEndAtBlockBoundary(range)){
-        console.info("range ends at block boundary")
         window.b1 = block
-        var nextBlock = getNextBlock(block)
+        var nextBlock = block && getNextBlock(block)
         window.nb1 = nextBlock
+
         if(nextBlock){
-            self.setSelectionToNode(nextBlock)
-            var newRange = self.getSelection()
-            moveRangeBoundariesDownTree(newRange) 
-            self.setSelection(newRange)
+           self.setSelectionToNode(nextBlock)
+           var newRange = self.getSelection()
+           moveRangeBoundariesDownTree(newRange) 
+           self.setSelection(newRange)
+        }
+        else{
+            // console.info("no block found") 
         }
     }
     else if(sc.nodeType === TEXT_NODE){
-        console.info("text node")
         var l = sc.length
         var skippedNode = false
         //If we are in a text node and not at the end, move one character to the right
@@ -694,19 +684,16 @@ Squire.prototype.moveRight = function(self, event, range){
             // otherwise it will take two right presses to go from text->notEditable->text
             if(nn){
                 if(notEditable(nn)){
-                    console.info("neighbor not editable, skipping over")
                     nn = findNextTextOrNotEditable(block, nn)
                     skippedNode = true
                 }
                 //if we jump over any nodes, we want to be at the beginning of the next text node, but if they are next to each other,
                 //start one character in
                 if(isText(nn) && !skippedNode){
-                    console.info("next element is text")
                     self.setSelectionToNode(nn, nn.length>0 ? 1:0)
                     
                 }
                 else if(nn){
-                    console.info("next element is not text")
                     self.setSelectionToNode(nn, 0)
 
                 }
@@ -724,17 +711,13 @@ Squire.prototype.moveRight = function(self, event, range){
         }
     }   
     else{
-        console.info("element node")
         var child = sc.childNodes[so]
         if(child && isText(child)){
-            console.info("child is text")
             self.setSelectionToNode(child, 0)
         }
         else{
-            console.info("child is not text")
             nn = findNextTextOrNotEditable(block, child)
             if(nn){
-                console.info("found next node")
                 self.setSelectionToNode(nn, 0)
             }
             else{
@@ -776,18 +759,20 @@ Squire.prototype.moveLeft = function(self, event, range){
         range.setStart(sc, so)
         self.setSelection(range)
     }
-
     if(rangeDoesStartAtBlockBoundary(range)){
-        console.info("range starts at block boundary")
         var block = getStartBlockOfRange(range)
-        var previousBlock = getPreviousBlock(block)
-        if(previousBlock){
+
+        var previousBlock = block && getPreviousBlock(block)
+        if(block && previousBlock){
             self.setSelectionToNode(previousBlock)
             var newRange = self.getSelection()
             newRange.setStart(newRange.endContainer, newRange.endContainer.childNodes.length-1)
             newRange.setEnd(newRange.endContainer, newRange.endContainer.childNodes.length-1)
             moveRangeBoundariesDownTree(newRange) 
             self.setSelection(newRange)
+        }
+        else{
+            // console.info("no block found")
         }
     }
     else if(sc.nodeType === TEXT_NODE){
@@ -824,14 +809,11 @@ Squire.prototype.moveLeft = function(self, event, range){
         }
     }   
     else{
-        console.info("element node")
         var child = sc.childNodes[so]
         if(false){
-            console.info("child is text")
             self.setSelectionToNode(child, 0)
         }
         else{
-            console.info("child is not text")
             nn = findPreviousTextOrNotEditable(block, child)
             if(nn){
                 if(isText(nn)){

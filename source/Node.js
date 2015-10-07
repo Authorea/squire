@@ -1,13 +1,14 @@
 /*jshint strict:false, undef:false, unused:false */
 
-var inlineNodeNames  = /^(?:#text|A(?:BBR|CRONYM)?|B(?:R|D[IO])?|C(?:ITE|ODE)|D(?:ATA|EL|FN)|EM|FONT|HR|I(?:MG|NPUT|NS)?|KBD|Q|R(?:P|T|UBY)|S(?:AMP|MALL|PAN|TR(?:IKE|ONG)|U[BP])?|U|VAR|WBR|Z)$/;
+var inlineNodeNames  = /^(?:#text|A(?:BBR|CRONYM)?|B(?:R|D[IO])?|C(?:ITE|ODE)|D(?:ATA|EL|FN)|EM|FONT|HR|I(?:MG|NPUT|NS)?|KBD|Q|R(?:P|T|UBY)|S(?:AMP|MALL|PAN|TR(?:IKE|ONG)|U[BP])?|TABLE|TD|TR|TBODY|U|VAR|WBR|Z)$/;
 window.inn = inlineNodeNames
 var leafNodeNames = {
     BR: 1,
     IMG: 1,
     INPUT: 1,
     CITE: 1,
-    Z: 1
+    Z: 1,
+    TABLE: 1
 };
 
 var mathMLNodeNames = {
@@ -163,7 +164,9 @@ function isText( node ){
 function getBlockWalker ( node ) {
     var doc = node.ownerDocument,
         walker = new TreeWalker(
-            doc.body, SHOW_ELEMENT, function(node){return(isBlock(node)  && !notEditable(node))}, false );
+            doc.body, SHOW_ELEMENT, function(node){
+                return(isBlock(node)  && !notEditable(node))
+            }, false );
     walker.currentNode = node;
     return walker;
 }
@@ -579,3 +582,4 @@ Squire.Node.isBlock = isBlock
 Squire.Node.isZWS = isZWS
 Squire.Node.isZWNBS = isZWNBS
 Squire.Node.empty = empty
+Squire.Node.isLeaf = isLeaf

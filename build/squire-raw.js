@@ -229,14 +229,15 @@ TreeWalker.prototype.previousPONode = function () {
     }
 };
 
-var inlineNodeNames  = /^(?:#text|A(?:BBR|CRONYM)?|B(?:R|D[IO])?|C(?:ITE|ODE)|D(?:ATA|EL|FN)|EM|FONT|HR|I(?:MG|NPUT|NS)?|KBD|Q|R(?:P|T|UBY)|S(?:AMP|MALL|PAN|TR(?:IKE|ONG)|U[BP])?|U|VAR|WBR|Z)$/;
+var inlineNodeNames  = /^(?:#text|A(?:BBR|CRONYM)?|B(?:R|D[IO])?|C(?:ITE|ODE)|D(?:ATA|EL|FN)|EM|FONT|HR|I(?:MG|NPUT|NS)?|KBD|Q|R(?:P|T|UBY)|S(?:AMP|MALL|PAN|TR(?:IKE|ONG)|U[BP])?|TABLE|TD|TR|TBODY|U|VAR|WBR|Z)$/;
 window.inn = inlineNodeNames
 var leafNodeNames = {
     BR: 1,
     IMG: 1,
     INPUT: 1,
     CITE: 1,
-    Z: 1
+    Z: 1,
+    TABLE: 1
 };
 
 var mathMLNodeNames = {
@@ -392,7 +393,9 @@ function isText( node ){
 function getBlockWalker ( node ) {
     var doc = node.ownerDocument,
         walker = new TreeWalker(
-            doc.body, SHOW_ELEMENT, function(node){return(isBlock(node)  && !notEditable(node))}, false );
+            doc.body, SHOW_ELEMENT, function(node){
+                return(isBlock(node)  && !notEditable(node))
+            }, false );
     walker.currentNode = node;
     return walker;
 }
@@ -807,7 +810,8 @@ Squire.Node.getNextBlock = getNextBlock
 Squire.Node.isBlock = isBlock
 Squire.Node.isZWS = isZWS
 Squire.Node.isZWNBS = isZWNBS
-Squire.Node.empty = empty/*jshint strict:false, undef:false, unused:false, latedef:false */
+Squire.Node.empty = empty
+Squire.Node.isLeaf = isLeaf
 
 var getNodeBefore = function ( node, offset ) {
     var children = node.childNodes;
@@ -837,7 +841,6 @@ var getNodeAfter = function ( node, offset ) {
 // ---
 
 var insertNodeInRange = function ( range, node ) {
-    // console.info("inserting node in range")
     // Insert at start.
     var startContainer = range.startContainer,
         startOffset = range.startOffset,
@@ -1514,7 +1517,7 @@ var mapKeyToFormat = function ( tag, remove ) {
 // link in Opera, it won't delete the link. Let's make things consistent. If
 // you delete all text inside an inline tag, remove the inline tag.
 var afterDelete = function ( self, range ) {
-    console.info("after delete")
+    // console.info("after delete")
     try {
         ensureBrAtEndOfAllLines(self._body)
         ensurePreZNodesForContentEditable(self._body)
@@ -1896,13 +1899,11 @@ var printRange = function(range, message){
 }
 
 Squire.prototype.backspace = function(self, event, range){
-    console.info("backspace")
     self  = self  ? self  : this
     event && event.preventDefault()
     range = range ? range : self.getSelection()
     self._removeZWS();
     // Record undo checkpoint.
-    console.info("recording undo state")
     self._recordUndoState( range );
     self._getRangeAndRemoveBookmark( range );
     // If not collapsed, delete contents
@@ -1960,7 +1961,6 @@ Squire.prototype.backspace = function(self, event, range){
     // text.  There is some information on what is probably the same bug here:
     // https://bugzilla.mozilla.org/show_bug.cgi?id=685445
     else {
-        console.info("not at block boundary")
         var sc = range.startContainer;
         var so = range.startOffset;
         var pn = null;
@@ -1973,9 +1973,7 @@ Squire.prototype.backspace = function(self, event, range){
         var rootNodeOfClean = null;
 
         if((sc.nodeType === TEXT_NODE)){
-            console.info("text node")
             if(so>1){
-                console.info("greater than one")
                 sc.deleteData(so-1, 1)
                 parent = sc.parentNode
                 // pn = w.previousNode(notEditable)
@@ -1984,16 +1982,13 @@ Squire.prototype.backspace = function(self, event, range){
                
             }
             else if(so===1){
-                console.info("equal to 1")
                 sc.deleteData(so-1, 1)
             }
             else{ //so === 0
-                console.info("equal to 0")
                 pn = findPreviousTextOrNotEditable(block, sc)
                 var previousParent = pn.parentNode
                 window.previousParent = previousParent
                 if(pn.nodeType === TEXT_NODE){
-                    console.info("deleting data from pn")
                     if(pn.length>0){
                         pn.deleteData(pn.length - 1, 1)
                     }
@@ -2008,14 +2003,11 @@ Squire.prototype.backspace = function(self, event, range){
             }
         }
         else {
-            console.info("not text node")
             var child = sc.childNodes[so]
             pn = findPreviousTextOrNotEditable(block, child)
             if(pn){
-                console.info("found pn")
                 window.pn33 = pn
                 if(pn.nodeType === TEXT_NODE){
-                    console.info("pn is text node")
                     if(pn.length>0){
                         pn.deleteData(pn.length - 1, 1)
                         pOffset = pn.length
@@ -2056,7 +2048,6 @@ Squire.prototype.moveRight = function(self, event, range){
     self  = self  ? self  : this
     //TODO: stop looking for BR tags to designate end of lines
     ensureBrAtEndOfAllLines(self._body)
-    console.info("Right2")
     event && event.preventDefault()
     range = range ? range : self.getSelection()
     self._removeZWS();
@@ -2073,19 +2064,21 @@ Squire.prototype.moveRight = function(self, event, range){
     window.r = range
 
     if(rangeDoesEndAtBlockBoundary(range)){
-        console.info("range ends at block boundary")
         window.b1 = block
-        var nextBlock = getNextBlock(block)
+        var nextBlock = block && getNextBlock(block)
         window.nb1 = nextBlock
+
         if(nextBlock){
-            self.setSelectionToNode(nextBlock)
-            var newRange = self.getSelection()
-            moveRangeBoundariesDownTree(newRange) 
-            self.setSelection(newRange)
+           self.setSelectionToNode(nextBlock)
+           var newRange = self.getSelection()
+           moveRangeBoundariesDownTree(newRange) 
+           self.setSelection(newRange)
+        }
+        else{
+            // console.info("no block found") 
         }
     }
     else if(sc.nodeType === TEXT_NODE){
-        console.info("text node")
         var l = sc.length
         var skippedNode = false
         //If we are in a text node and not at the end, move one character to the right
@@ -2101,19 +2094,16 @@ Squire.prototype.moveRight = function(self, event, range){
             // otherwise it will take two right presses to go from text->notEditable->text
             if(nn){
                 if(notEditable(nn)){
-                    console.info("neighbor not editable, skipping over")
                     nn = findNextTextOrNotEditable(block, nn)
                     skippedNode = true
                 }
                 //if we jump over any nodes, we want to be at the beginning of the next text node, but if they are next to each other,
                 //start one character in
                 if(isText(nn) && !skippedNode){
-                    console.info("next element is text")
                     self.setSelectionToNode(nn, nn.length>0 ? 1:0)
                     
                 }
                 else if(nn){
-                    console.info("next element is not text")
                     self.setSelectionToNode(nn, 0)
 
                 }
@@ -2131,17 +2121,13 @@ Squire.prototype.moveRight = function(self, event, range){
         }
     }   
     else{
-        console.info("element node")
         var child = sc.childNodes[so]
         if(child && isText(child)){
-            console.info("child is text")
             self.setSelectionToNode(child, 0)
         }
         else{
-            console.info("child is not text")
             nn = findNextTextOrNotEditable(block, child)
             if(nn){
-                console.info("found next node")
                 self.setSelectionToNode(nn, 0)
             }
             else{
@@ -2183,18 +2169,20 @@ Squire.prototype.moveLeft = function(self, event, range){
         range.setStart(sc, so)
         self.setSelection(range)
     }
-
     if(rangeDoesStartAtBlockBoundary(range)){
-        console.info("range starts at block boundary")
         var block = getStartBlockOfRange(range)
-        var previousBlock = getPreviousBlock(block)
-        if(previousBlock){
+
+        var previousBlock = block && getPreviousBlock(block)
+        if(block && previousBlock){
             self.setSelectionToNode(previousBlock)
             var newRange = self.getSelection()
             newRange.setStart(newRange.endContainer, newRange.endContainer.childNodes.length-1)
             newRange.setEnd(newRange.endContainer, newRange.endContainer.childNodes.length-1)
             moveRangeBoundariesDownTree(newRange) 
             self.setSelection(newRange)
+        }
+        else{
+            // console.info("no block found")
         }
     }
     else if(sc.nodeType === TEXT_NODE){
@@ -2231,14 +2219,11 @@ Squire.prototype.moveLeft = function(self, event, range){
         }
     }   
     else{
-        console.info("element node")
         var child = sc.childNodes[so]
         if(false){
-            console.info("child is text")
             self.setSelectionToNode(child, 0)
         }
         else{
-            console.info("child is not text")
             nn = findPreviousTextOrNotEditable(block, child)
             if(nn){
                 if(isText(nn)){
@@ -2481,7 +2466,7 @@ var stylesRewriters = {
     // Basically for the moment if we don't know what it is it will have no classes and no attributes.  
     DEFAULT_REWRITER: function ( node, parent ){
         filterClasses(node, {})
-        filterAttributes(node, {data: 1})
+        filterAttributes(node, {data: 1, class: 1, contenteditable: 1})
         return node
     },
     A: function ( node, parent ){
@@ -2717,7 +2702,7 @@ var ensureBrAtEndOfAllLines = function (root){
     var div, lastChild, br
     for(i=0; i<lines.length; i++){
         div = lines[i]
-        if(div.nodeName === 'DIV'){
+        if(isBlock(div)){
             lastChild = div.lastChild
             if(!lastChild || lastChild.nodeName !== 'BR'){
                 br = createElement( div.ownerDocument, 'BR' )
@@ -2734,7 +2719,7 @@ var removeBrAtEndOfAllLines = function (root){
     var div, lastChild, br
     for(i=0; i<lines.length; i++){
         div = lines[i]
-        if(div.nodeName === 'DIV'){
+        if(isBlock(div)){
             lastChild = div.lastChild
             if(lastChild && lastChild.nodeName === 'BR'){
                 detach(lastChild)
@@ -2767,6 +2752,7 @@ var removeDanglingZNodes = function(root){
         detach(node)
     })
 };
+
 var removeAllZNodes = function(root){
     var walker = new TreeWalker(root, SHOW_ELEMENT, function(){return true})
     var node = walker.currentNode
@@ -2915,6 +2901,7 @@ Squire.prototype.ensurePreZNodesForContentEditable = ensurePreZNodesForContentEd
 Squire.prototype.removeAllZNodes = removeAllZNodes
 Squire.prototype.removeEmptyInlines = removeEmptyInlines
 Squire.prototype.collapseSimpleSpans = collapseSimpleSpans
+Squire.prototype.ensureBrAtEndOfAllLines = ensureBrAtEndOfAllLines
 
 Squire.Clean.stylesRewriters = stylesRewriters
 
@@ -4189,7 +4176,6 @@ proto.modifyBlocks = function ( modify, range ) {
 
     // 2. Expand range to block boundaries
     expandRangeToBlockBoundaries( range );
-
     // 3. Remove range.
     var body = this._body,
         frag;
@@ -4198,6 +4184,7 @@ proto.modifyBlocks = function ( modify, range ) {
 
     // 4. Modify tree of fragment and reinsert.
     insertNodeInRange( range, modify.call( this, frag ) );
+    // return
 
     // 5. Merge containers at edges
     if ( range.endOffset < range.endContainer.childNodes.length ) {
@@ -4249,12 +4236,22 @@ var removeBlockQuote = function (/* frag */) {
 };
 
 var makeList = function ( self, frag, type ) {
+    console.info("making list")
     var walker = getBlockWalker( frag ),
         node, tag, prev, newLi,
         tagAttributes = self._config.tagAttributes,
         listAttrs = tagAttributes[ type.toLowerCase() ],
         listItemAttrs = tagAttributes.li;
-
+    var div = frag.childNodes[0]
+    var addedContentEditable = false
+    // Nate: We need to do this due to an addition I made to isBlock, which returns false for noneditable nodes.
+    // This function is dealing with a frag that has been removed from the editor dom, thus it loses the 
+    // contenteditable=true inherited from the editor body.  I temporarily set that here and remove it again
+    // at the end of the function once the frag has been re-inserted into the editor.
+    if(div && !div.hasAttribute("contenteditable")){
+        div.setAttribute("contenteditable", true)
+        addedContentEditable = true
+    }
     while ( node = walker.nextNode() ) {
         tag = node.parentNode.nodeName;
         if ( tag !== 'LI' ) {
@@ -4287,6 +4284,9 @@ var makeList = function ( self, frag, type ) {
                 );
             }
         }
+    }
+    if(addedContentEditable){
+        div.removeAttribute("contenteditable")
     }
 };
 
@@ -4611,6 +4611,7 @@ var addLinks = function ( frag ) {
 // insertTreeFragmentIntoRange will delete the selection so that it is replaced
 // by the html being inserted.
 proto.insertHTML = function ( html, isPaste ) {
+    console.info("INSERTHTML")
     var range = this.getSelection(),
         frag = this._doc.createDocumentFragment(),
         div = this.createElement( 'DIV' );
@@ -4641,6 +4642,8 @@ proto.insertHTML = function ( html, isPaste ) {
         cleanupBRs( frag );
         removeEmptyInlines( frag );
         frag.normalize();
+        ensurePreZNodesForContentEditable(frag)
+        ensureBrAtEndOfAllLines(frag)
         //NATE: This is a clear spot to do something of the sort:
         // registeredFilters.each(function(filter){filter(frag)})
         
