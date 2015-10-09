@@ -1160,7 +1160,6 @@ var removeBlockQuote = function (/* frag */) {
 };
 
 var makeList = function ( self, frag, type ) {
-    console.info("making list")
     var walker = getBlockWalker( frag ),
         node, tag, prev, newLi,
         tagAttributes = self._config.tagAttributes,

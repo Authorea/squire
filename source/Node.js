@@ -146,11 +146,26 @@ function notEditable( node ){
     if(!node){
         return false
     }
+    //likely a text node
     if(node.isContentEditable === undefined){
         return(notEditable(node.parentNode))
     }
+    // chrome has a bug that will return false for isContentEditable if the node is not visible on the
+    // page: https://code.google.com/p/chromium/issues/detail?id=313082, thus we have to check for the
+    // attribute
     else{
-        return (node.isContentEditable === false)
+        // return (node.isContentEditable === false)
+        if(node.hasAttribute('contenteditable')){
+            if(node.getAttribute('contenteditable') === "false"){
+                return true
+            }
+            else{
+                return false
+            }
+        }
+        else{
+            return(notEditable(node.parentNode))
+        }
     }
 }
 

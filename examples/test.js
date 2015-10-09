@@ -64,6 +64,8 @@ var initEditors = function(){
 
     testSetup()
 
+    // quickTest()
+
     runTests()
     testGetHTML()
     testInlineNodeNames()
@@ -71,8 +73,23 @@ var initEditors = function(){
     testLists()
     testTables()
     testResults()
+
     setTimeout(updateCursor, 20)
   });
+}
+
+quickTest = function(){
+  prepareTest('a')
+  addedContentEditable = false
+  df = document.createDocumentFragment()
+  div = editor._body.childNodes[0]
+  if(div && !div.hasAttribute("contenteditable")){
+      console.info("adding contenteditable")
+      div.setAttribute("contenteditable", true)
+      addedContentEditable = true
+  }
+  df.appendChild(div)
+  w = Squire.Node.getBlockWalker( df )
 }
 
 var updateCursor = function(){
@@ -313,7 +330,7 @@ testLists = function(){
   prepareTest("a")
   editor.makeOrderedList();updateCursor()
   s1 = '<ol><li><div>a<br></div></li></ol><div><br></div>'
-  test(editor.getHTML() === s1, "can make table")
+  test(editor.getHTML() === s1, "can make list")
   editor.increaseListLevel();updateCursor()
   s2 = '<ol><li><ol><li><div>a<br></div></li></ol></li></ol><div><br></div>'
   test(editor.getHTML() === s2, "can increase list level")
