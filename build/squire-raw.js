@@ -2344,7 +2344,7 @@ var filterClasses = function(node, whiteList){
          classes = $.map(classes, function(c){return c})
      }
      classes.forEach(function(c){
-         if(whiteList[c]){
+         if(whiteList[c] || c.match(/^au/) || c.match(/^ltx_/)){
              newClasses.push(c)
          }
      })

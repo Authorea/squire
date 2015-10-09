@@ -378,6 +378,14 @@ testCleaner = function(){
   Squire.Clean.stylesRewriters["SPAN"](el, el.parentNode)
   test(el.className==="ltx_Math katex", "keeps whitelisted classes")
 
+  el = editor.createElement("span", {style: 'background-color: blue', class: "ltx_blah"})
+  Squire.Clean.stylesRewriters["SPAN"](el, el.parentNode)
+  test(el.className==="ltx_blah", "keeps random latexML classes")
+
+  el = editor.createElement("span", {style: 'background-color: blue', class: "au-blah"})
+  Squire.Clean.stylesRewriters["SPAN"](el, el.parentNode)
+  test(el.className==="au-blah", "keeps random authorea classes")
+
   el = editor.createElement("span", {contenteditable: "false"})
   Squire.Clean.stylesRewriters["SPAN"](el, el.parentNode)
   test(el.getAttribute("contenteditable") === "false", "allows contenteditable attr")
