@@ -1100,7 +1100,6 @@ proto.modifyBlocks = function ( modify, range ) {
 
     // 2. Expand range to block boundaries
     expandRangeToBlockBoundaries( range );
-
     // 3. Remove range.
     var body = this._body,
         frag;
@@ -1109,6 +1108,7 @@ proto.modifyBlocks = function ( modify, range ) {
 
     // 4. Modify tree of fragment and reinsert.
     insertNodeInRange( range, modify.call( this, frag ) );
+    // return
 
     // 5. Merge containers at edges
     if ( range.endOffset < range.endContainer.childNodes.length ) {
@@ -1160,12 +1160,22 @@ var removeBlockQuote = function (/* frag */) {
 };
 
 var makeList = function ( self, frag, type ) {
+    console.info("making list")
     var walker = getBlockWalker( frag ),
         node, tag, prev, newLi,
         tagAttributes = self._config.tagAttributes,
         listAttrs = tagAttributes[ type.toLowerCase() ],
         listItemAttrs = tagAttributes.li;
-
+    var div = frag.childNodes[0]
+    var addedContentEditable = false
+    // Nate: We need to do this due to an addition I made to isBlock, which returns false for noneditable nodes.
+    // This function is dealing with a frag that has been removed from the editor dom, thus it loses the 
+    // contenteditable=true inherited from the editor body.  I temporarily set that here and remove it again
+    // at the end of the function once the frag has been re-inserted into the editor.
+    if(div && !div.hasAttribute("contenteditable")){
+        div.setAttribute("contenteditable", true)
+        addedContentEditable = true
+    }
     while ( node = walker.nextNode() ) {
         tag = node.parentNode.nodeName;
         if ( tag !== 'LI' ) {
@@ -1198,6 +1208,9 @@ var makeList = function ( self, frag, type ) {
                 );
             }
         }
+    }
+    if(addedContentEditable){
+        div.removeAttribute("contenteditable")
     }
 };
 
@@ -1522,6 +1535,7 @@ var addLinks = function ( frag ) {
 // insertTreeFragmentIntoRange will delete the selection so that it is replaced
 // by the html being inserted.
 proto.insertHTML = function ( html, isPaste ) {
+    console.info("INSERTHTML")
     var range = this.getSelection(),
         frag = this._doc.createDocumentFragment(),
         div = this.createElement( 'DIV' );
@@ -1552,6 +1566,8 @@ proto.insertHTML = function ( html, isPaste ) {
         cleanupBRs( frag );
         removeEmptyInlines( frag );
         frag.normalize();
+        ensurePreZNodesForContentEditable(frag)
+        ensureBrAtEndOfAllLines(frag)
         //NATE: This is a clear spot to do something of the sort:
         // registeredFilters.each(function(filter){filter(frag)})
         

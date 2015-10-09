@@ -16,6 +16,22 @@ var initEditors = function(){
     $(document).ready(function(){
       vd = new ViewDom(editor._doc.body)
     })
+    $("#increase-list-level").click(function(e){
+      // editor.increaseListLevel()
+      editor.increaseListLevel();updateCursor()
+    })
+    $("#decrease-list-level").click(function(e){
+      // editor.increaseListLevel()
+      editor.decreaseListLevel();updateCursor()
+    })
+    $("#make-list").click(function(e){
+      // editor.increaseListLevel()
+      editor.makeOrderedList();updateCursor()
+    })
+    $("#remove-list").click(function(e){
+      // editor.increaseListLevel()
+      editor.removeList();updateCursor()
+    })
 
     $("not-editable-insert").click(insertNotEditable)
 
@@ -47,11 +63,14 @@ var initEditors = function(){
     });
 
     testSetup()
-    // runTests()
+
+    runTests()
     testGetHTML()
-    // testInlineNodeNames()
-    // testCleaner()
-    // testResults()
+    testInlineNodeNames()
+    testCleaner()
+    testLists()
+    testTables()
+    testResults()
     setTimeout(updateCursor, 20)
   });
 }
@@ -97,6 +116,7 @@ document.addEventListener('ViewDom::NodeClicked', function (e) {
   }
   editor.setSelection(r)
   vd.highlightRange(vd._r, r)
+  updateCursor()
 
 });
 
@@ -273,6 +293,7 @@ runTests = function(){
   testPreviousSibling(function(node){return (node.nodeName !== 'B')}, "properly cleans up when backspace")
   prepareTest("")
   insertNotEditable(); updateCursor()
+  return
   testNode(firstLine, function(node){
     var fc = node.firstChild
     var ns = fc.nextSibling
@@ -280,8 +301,37 @@ runTests = function(){
     "inserts ZWS and Z node before notEditable when insertNodeInRange")
 }
 
+testTables = function(){
+  prepareTest('')
+  s = '<table  contenteditable="false" data-toggle="context" data-target="#tableContextMenu" class="ltx_tabular ltx_tabular_fullpage"><tbody><tr><td class="ltx_framed ltx_align_center">x</td></tr></tbody></table>'
+  t = $(s)[0]
+  editor.insertNodeInRange(editor.getSelection(), t) 
+  test(editor._body.childNodes[0].childNodes[2] === t, "can insert table")
+  test(editor._body.childNodes[0].childNodes[1].nodeName === 'Z', "table has pre Z node")
+}
+testLists = function(){
+  prepareTest("a")
+  editor.makeOrderedList();updateCursor()
+  s1 = '<ol><li><div>a<br></div></li></ol><div><br></div>'
+  test(editor.getHTML() === s1, "can make table")
+  editor.increaseListLevel();updateCursor()
+  s2 = '<ol><li><ol><li><div>a<br></div></li></ol></li></ol><div><br></div>'
+  test(editor.getHTML() === s2, "can increase list level")
+  editor.decreaseListLevel();updateCursor()
+  test(editor.getHTML() === s1, "can decrease list level")
+  editor.removeList();updateCursor()
+  s = '<div>a<br></div><div><br></div>'
+  test(editor.getHTML() === s, "can remove list")
+  return
 
-test3 = function(){
+
+  // editor.insertHTML(s)
+  // editor.moveRight()
+  // editor.moveRight()
+
+  // df = document.createDocumentFragment()
+  // df.appendChild(editor._body.childNodes[0])
+  // w = Squire.Node.getBlockWalker( df )
 }
 
 testGetHTML = function(){

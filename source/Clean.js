@@ -217,7 +217,7 @@ var stylesRewriters = {
     // Basically for the moment if we don't know what it is it will have no classes and no attributes.  
     DEFAULT_REWRITER: function ( node, parent ){
         filterClasses(node, {})
-        filterAttributes(node, {data: 1})
+        filterAttributes(node, {data: 1, class: 1, contenteditable: 1})
         return node
     },
     A: function ( node, parent ){
@@ -453,7 +453,7 @@ var ensureBrAtEndOfAllLines = function (root){
     var div, lastChild, br
     for(i=0; i<lines.length; i++){
         div = lines[i]
-        if(div.nodeName === 'DIV'){
+        if(isBlock(div)){
             lastChild = div.lastChild
             if(!lastChild || lastChild.nodeName !== 'BR'){
                 br = createElement( div.ownerDocument, 'BR' )
@@ -470,7 +470,7 @@ var removeBrAtEndOfAllLines = function (root){
     var div, lastChild, br
     for(i=0; i<lines.length; i++){
         div = lines[i]
-        if(div.nodeName === 'DIV'){
+        if(isBlock(div)){
             lastChild = div.lastChild
             if(lastChild && lastChild.nodeName === 'BR'){
                 detach(lastChild)
@@ -503,6 +503,7 @@ var removeDanglingZNodes = function(root){
         detach(node)
     })
 };
+
 var removeAllZNodes = function(root){
     var walker = new TreeWalker(root, SHOW_ELEMENT, function(){return true})
     var node = walker.currentNode
@@ -651,5 +652,6 @@ Squire.prototype.ensurePreZNodesForContentEditable = ensurePreZNodesForContentEd
 Squire.prototype.removeAllZNodes = removeAllZNodes
 Squire.prototype.removeEmptyInlines = removeEmptyInlines
 Squire.prototype.collapseSimpleSpans = collapseSimpleSpans
+Squire.prototype.ensureBrAtEndOfAllLines = ensureBrAtEndOfAllLines
 
 Squire.Clean.stylesRewriters = stylesRewriters
