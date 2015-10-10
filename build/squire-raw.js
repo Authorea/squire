@@ -2500,6 +2500,13 @@ var walker = new TreeWalker( null, SHOW_TEXT|SHOW_ELEMENT, function () {
     return true;
 });
 
+var doNotCleanNode = function(node){
+    // The easiest thing to determine whether or not we should clean something is if it is editable or not.
+    // return notEditable(node).  Unfortunately I have introduced a jquery dependence here but the inconsistencies
+    // between firefox and chrome have broken me down.
+    return $(node).hasClass("ltx_Math")
+}
+
 /*
     Two purposes:
 
@@ -2510,12 +2517,19 @@ var walker = new TreeWalker( null, SHOW_TEXT|SHOW_ELEMENT, function () {
     Nate:  This is currenty used by setHTML when importing html, which was its original useage,
     and by the backspace key to clean up any inconsistencies.  We should look at whether or not
     calling it from backspace is really useful.
+
+    Nate:  There are certain nodes which would be very difficult to clean as we do not have a well-defined
+    structure for them.  I am adding a function 'doNotCleanNode' which simply returns the node if true.
+    That function in principle could be replaced by a user-supplied function.
 */
 var cleanTree = function cleanTree ( node ) {
     var children = node.childNodes,
         nonInlineParent, i, l, child, nodeName, nodeType, rewriter, childLength,
         startsWithWS, endsWithWS, data, sibling;
 
+    if(doNotCleanNode(node)){
+        return node
+    }
     nonInlineParent = node;
     while ( isInline( nonInlineParent ) ) {
         nonInlineParent = nonInlineParent.parentNode;

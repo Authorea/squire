@@ -369,6 +369,13 @@ testGetHTML = function(){
 }
 
 testCleaner = function(){
+  prepareTest("")
+  s = '<span class="katex ltx_Math"><span class="strut" style="height:1em;">a</span></span>'
+  editor.insertHTML(s)
+  s2 = editor.getHTML()
+  test(s2 === '<div><span class="katex ltx_Math"><span class="strut" style="height:1em;">a</span></span><br></div>', "does not filter math elements")
+  return
+
   el = editor.createElement("span", {style: 'background-color: blue', class: "a b c"})
   Squire.Clean.stylesRewriters["SPAN"](el, el.parentNode)
   test(el.attributes["style"]===undefined, "Removes styles from span")
