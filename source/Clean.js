@@ -460,8 +460,9 @@ var removeTrailingZWS = function removeTrailingZWS ( root ) {
     }
 };
 
-// NATE: TODO: make sure this does not apply to other blocks
 var ensureBrAtEndOfAllLines = function (root){
+    //NATE: even divs which are not lines need to have brs at their end for chrome to happily play with spaces
+    ensureBrAtEndOfAllDivs(root)
     var lines = root.childNodes
     var i = 0
     var div, lastChild, br
@@ -476,6 +477,18 @@ var ensureBrAtEndOfAllLines = function (root){
         }
     }
 }
+var ensureBrAtEndOfAllDivs = function (root){
+    var divs = $(root).find("div")
+    var lastChild, br
+    divs.each(function(i, div){
+        lastChild = div.lastChild
+        if(!lastChild || lastChild.nodeName !== 'BR'){
+            br = createElement( div.ownerDocument, 'BR' )
+            div.appendChild(br)
+        }
+    })
+}
+
 
 // NATE: TODO: make sure this does not apply to other blocks
 var removeBrAtEndOfAllLines = function (root){
