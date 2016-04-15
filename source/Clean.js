@@ -153,6 +153,7 @@ var stylesRewriters = {
     STRONG: replaceWithTag( 'B' ),
     EM: replaceWithTag( 'I' ),
     STRIKE: replaceWithTag( 'S' ),
+    P: replaceWithTag('DIV'),
     FONT: function ( node, parent ) {
         var face = node.face,
             size = node.size,

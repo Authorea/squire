@@ -72,6 +72,7 @@ var initEditors = function(){
     testCleaner()
     testLists()
     testTables()
+    testInsertHTML()
     testResults()
 
     setTimeout(updateCursor, 20)
@@ -408,7 +409,12 @@ testCleaner = function(){
   el = $("<div><span><span>a</span><span>b</span><span>c</span></span></div>")[0]
   Squire.Clean.collapseSimpleSpans(el)
   test(el.innerHTML === "abc", "collapses simple spans")
+}
 
+testInsertHTML = function(){
+  prepareTest('')
+  editor.insertHTML("<p>p tag</p>")
+  test(editor._body.childNodes[0].nodeName === "DIV", "p tags are converted to divs")
 }
 
 debuggingTests = function(){
