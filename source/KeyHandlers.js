@@ -371,8 +371,8 @@ var keyHandlers = {
     },
     space: function ( self, _, range ) {
         var node, parent;
-        // Nate: This record/bookmark has a side effect of putting a BR tag at the end of a line, which 
-        // currently is ok with me 
+        // Nate: This record/bookmark has a side effect of putting a BR tag at the end of a line, which
+        // currently is ok with me
         self._recordUndoState( range );
         addLinks( range.startContainer );
         self._getRangeAndRemoveBookmark( range );
@@ -390,7 +390,7 @@ var keyHandlers = {
         self.setSelection( range );
     },
     right: function(self, event, range){
-        self.moveRight(self, event, range) 
+        self.moveRight(self, event, range)
     },
     left: function ( self, event, range ) {
         self.moveLeft(self, event, range)
@@ -569,7 +569,7 @@ Squire.prototype.backspace = function(self, event, range){
                 // pn = w.previousNode(notEditable)
                 // console.info(pn)
                 rootNodeOfClean = parent
-               
+
             }
             else if(so===1){
                 sc.deleteData(so-1, 1)
@@ -608,13 +608,13 @@ Squire.prototype.backspace = function(self, event, range){
                     else{
                         detach(pn)
                     }
-                    
+
                 }
                 else if(notEditable(pn)){
                     detach(pn);
                 }
             }
-            
+
             //Nate: Todo: Currently cleaning from this node results in the range not getting moved down the tree, not good
             rootNodeOfClean = sc
         }
@@ -661,11 +661,11 @@ Squire.prototype.moveRight = function(self, event, range){
         if(nextBlock){
            self.setSelectionToNode(nextBlock)
            var newRange = self.getSelection()
-           moveRangeBoundariesDownTree(newRange) 
+           moveRangeBoundariesDownTree(newRange)
            self.setSelection(newRange)
         }
         else{
-            // console.info("no block found") 
+            // console.info("no block found")
         }
     }
     else if(sc.nodeType === TEXT_NODE){
@@ -691,7 +691,7 @@ Squire.prototype.moveRight = function(self, event, range){
                 //start one character in
                 if(isText(nn) && !skippedNode){
                     self.setSelectionToNode(nn, nn.length>0 ? 1:0)
-                    
+
                 }
                 else if(nn){
                     self.setSelectionToNode(nn, 0)
@@ -709,7 +709,7 @@ Squire.prototype.moveRight = function(self, event, range){
                 }
             }
         }
-    }   
+    }
     else{
         var child = sc.childNodes[so]
         if(child && isText(child)){
@@ -726,7 +726,7 @@ Squire.prototype.moveRight = function(self, event, range){
                 }
             }
         }
-    }  
+    }
     //NATE TODO: There is a curious side-effect to this function which is also achieved
     //by self.setSelection(self.getSelection()).  If you are pointing to a non-editable
     //div or to a <BR> tag in firefox, you will not be able to enter in characters
@@ -768,7 +768,7 @@ Squire.prototype.moveLeft = function(self, event, range){
             var newRange = self.getSelection()
             newRange.setStart(newRange.endContainer, newRange.endContainer.childNodes.length-1)
             newRange.setEnd(newRange.endContainer, newRange.endContainer.childNodes.length-1)
-            moveRangeBoundariesDownTree(newRange) 
+            moveRangeBoundariesDownTree(newRange)
             self.setSelection(newRange)
         }
         else{
@@ -781,7 +781,7 @@ Squire.prototype.moveLeft = function(self, event, range){
         if(so > 0){
             so -= 1
             //TODO: looks like a pointless check
-            if(so<0){ 
+            if(so<0){
                 so = 0
             }
             self.setSelectionToNode(sc, so)
@@ -807,7 +807,7 @@ Squire.prototype.moveLeft = function(self, event, range){
                 }
             }
         }
-    }   
+    }
     else{
         var child = sc.childNodes[so]
         if(false){
@@ -826,7 +826,7 @@ Squire.prototype.moveLeft = function(self, event, range){
                 else{
                    self.setSelectionToNode(nn, 0)
                 }
-                
+
             }
             else{
                 nn = findPreviousBRTag(root, child)
@@ -835,6 +835,6 @@ Squire.prototype.moveLeft = function(self, event, range){
                 }
             }
         }
-    }  
+    }
     setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
 }

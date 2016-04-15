@@ -44,20 +44,20 @@ var initEditors = function(){
 
     editor.addEventListener("keyup", function(e){
       setTimeout(updateCursor, 20)
-    });  
+    });
     editor.addEventListener("keydown", function(e){
       // console.info(e)
       // console.info("keydown")
-    }); 
+    });
     // editor.addEventListener("keypress", function(e){
     //   console.info("keypress")
     //   e.preventDefault()
     //   console.info(e)
-    // });    
+    // });
     // editor.addEventListener("input", function(e){
     //   console.info("input")
     //   console.info(e)
-    // });    
+    // });
     editor.addEventListener("mouseup", function(){
       setTimeout(updateCursor, 20)
     });
@@ -102,14 +102,14 @@ var updateCursor = function(){
   vd.highlightRange(vd._r, range)
 }
 
-document.addEventListener('ViewDom::NodeClicked', function (e) { 
+document.addEventListener('ViewDom::NodeClicked', function (e) {
   var node = e.detail.node
   var source = e.detail.sourceNode
   var target = e.detail.targetNode
 
   editor.focus()
   var r = editor.getSelection()
-  
+
   /* Every time we set the start node we should also set the end node to make it easy to collapse ranges */
   if(e.detail.startOfRange){
     if(e.detail.link){
@@ -272,7 +272,7 @@ runTests = function(){
   //   editor.backspace(editor, keyEvent, range);
   //   setTimeout(function(){testContent("f", 1, "blah");updateCursor()}, 100)
   // }, 100)
-  
+
   // NATE: this was content that alberto was having trouble with and is useful for debugging
   // prepareTest('<div>Libraries and institutions (our customers in academia) love to see an alternative to traditional publishers. In the corporate market, we haven\'t done enough research to understand the timeliness of Authorea, but given the interest we are receiving and the requirements we are gathering, we have noticed that there is a growing need for a tool<span class="highlight" style="background-color: rgb(255, 255, 255)"><span class="colour" style="color:rgb(51, 51, 51)">  <span class="font" style="font-family:Helvetica, Times, serif">     <span class="size" style="font-size:16px">&nbsp;for technical writing and auditing purposes)       <span class="Apple-converted-space">&nbsp;</span>     </span>   </span> </span></span><br></div><div><br></div>')
   // prepareTest('<div class="remove_me"><span class="katex ltx_Math" contenteditable="false" data-equation="x"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">x</span></span></span></span><br></div>')
@@ -322,7 +322,7 @@ testTables = function(){
   prepareTest('')
   s = '<table  contenteditable="false" data-toggle="context" data-target="#tableContextMenu" class="ltx_tabular ltx_tabular_fullpage"><tbody><tr><td class="ltx_framed ltx_align_center">x</td></tr></tbody></table>'
   t = $(s)[0]
-  editor.insertNodeInRange(editor.getSelection(), t) 
+  editor.insertNodeInRange(editor.getSelection(), t)
   test(editor._body.childNodes[0].childNodes[2] === t, "can insert table")
   test(editor._body.childNodes[0].childNodes[1].nodeName === 'Z', "table has pre Z node")
 }
@@ -379,7 +379,7 @@ testCleaner = function(){
   Squire.Clean.stylesRewriters["SPAN"](el, el.parentNode)
   test(el.attributes["style"]===undefined, "Removes styles from span")
   test(el.attributes["class"]===undefined, "Removes non whitelisted classes from span")
-  
+
   el = editor.createElement("span", {style: 'background-color: blue', class: "ltx_Math katex"})
   Squire.Clean.stylesRewriters["SPAN"](el, el.parentNode)
   test(el.className==="ltx_Math katex", "keeps whitelisted classes")
@@ -401,14 +401,14 @@ testCleaner = function(){
   test(!!el.getAttribute("r1") === false, "removes random attr")
 
   el = editor.createElement("div", {r1: "true", r2: "false", r3: "blah", class:"katex"})
-  var rewriter = Squire.Clean.stylesRewriters[el.nodeName] || 
+  var rewriter = Squire.Clean.stylesRewriters[el.nodeName] ||
   Squire.Clean.stylesRewriters["SPAN"](el, el.parentNode)
   test(!!el.getAttribute("r1") === false, "removes random attr")
 
   el = $("<div><span><span>a</span><span>b</span><span>c</span></span></div>")[0]
   Squire.Clean.collapseSimpleSpans(el)
   test(el.innerHTML === "abc", "collapses simple spans")
-  
+
 }
 
 debuggingTests = function(){
@@ -431,10 +431,10 @@ debuggingTests = function(){
   // prepareTest('<div>tool<span class="a">a<span class="b">b<span class="f">c<span class="s"><span class="A"></span></span></span>d</span></span><br></div><div><br></div>')
   // prepareTest('<div>tool<span style="background-color: rgb(255, 255, 255)" class="highlight"><span style="color:rgb(51, 51, 51)" class="colour">&nbsp;<span style="font-family:Helvetica,Times,serif" class="font"><span style="font-size:16px" class="size"><span class="Apple-converted-space"></span></span></span></span></span><br></div>')
   // prepareTest('<div>tool<span style="background-color: rgb(255, 255, 255)" class="highlight"><span style="color:rgb(51, 51, 51)" class="colour">  <span style="font-family:Helvetica,Times,serif" class="font"><span style="font-size:16px" class="size"><span class="Apple-converted-space"></span></span></span></span></span><br></div>')
-  // editor.setSelectionToNode(editor._body.childNodes[0].childNodes[2]) 
+  // editor.setSelectionToNode(editor._body.childNodes[0].childNodes[2])
 
   // prepareTest('<div><span class="katex ltx_Math" contenteditable="false" data-equation="x=5"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi><mo>=</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">x=5</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.64444em;"></span><span class="strut bottom" style="height:0.64444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">x</span><span class="mrel">=</span><span class="mord mathrm">5</span></span></span></span><br></div>')
-  
+
   // prepareTest("abc&#8203;&#8203;<span contentEditable=false>x</span>&#8203;&#8203;<span contentEditable=false>y</span>&#8203;&#8203;def")
   // prepareTest("a<z></z>b<z></z>c<z></z><span contentEditable=false>x</span><z></z><span contentEditable=false>y</span><z></z>def")
   // prepareTest("a<z></z>b<z></z>c<z></z><z></z><span contentEditable=false>blah</span><span contentEditable=false>blah</span>")
@@ -459,9 +459,9 @@ debuggingTests = function(){
 
 
 testInlineNodeNames = function(){
-  mathMLNames = ["math", "maction", "maligngroup", "malignmark", "menclose", "merror", 
+  mathMLNames = ["math", "maction", "maligngroup", "malignmark", "menclose", "merror",
   "mfenced", "mfrac", "mglyph", "mi", "mlabeledtr", "mlongdiv", "mmultiscripts", "mn", "mo", "mover", "mpadded",
-  "mphantom", "mroot", "mrow", "ms", "mscarries", "mscarry", "msgroup", "msline", "mspace", "msqrt", "msrow", 
+  "mphantom", "mroot", "mrow", "ms", "mscarries", "mscarry", "msgroup", "msline", "mspace", "msqrt", "msrow",
   "mstack", "mstyle", "msub", "msup", "msubsup"]
   var nodeNames = ["span"].concat(mathMLNames)
   nodeNames.forEach(function(n){

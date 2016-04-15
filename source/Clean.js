@@ -87,7 +87,7 @@ var filterClasses = function(node, whiteList){
      node.className = newClasses.join(" ")
      if(node.className === ""){
          node.removeAttribute("class")
-     }   
+     }
      return node
 }
 
@@ -120,8 +120,8 @@ var filterAttributes = function(node, whiteList){
 
     attrsToRemove.forEach(function(a){
         node.removeAttribute(a)
-    })  
-    return node  
+    })
+    return node
 }
 var filterSpanAttributes = function(span){
     var whiteList = {
@@ -146,9 +146,9 @@ var stylesRewriters = {
         // one span to get broken out into many spans, but it was kind of clever and we might want to use the idea
         // at a later time.  It looked at if something had a large font or a certain color and tried to guess what the
         // element was and add a semantic class to the span.  For each attribute there was a separate class.  Although
-        // we don't want a bunch of spans with classes, we might want to re-order a span with certain attributes into 
+        // we don't want a bunch of spans with classes, we might want to re-order a span with certain attributes into
         // more sensible elements
-        // for ( attr in spanToSemantic ) 
+        // for ( attr in spanToSemantic )
     },
     STRONG: replaceWithTag( 'B' ),
     EM: replaceWithTag( 'I' ),
@@ -214,7 +214,7 @@ var stylesRewriters = {
         return el;
     },
     //NATE:  I added a default rewriter so that we filter elements not specified here with a strict set of classes and attributes.
-    // Basically for the moment if we don't know what it is it will have no classes and no attributes.  
+    // Basically for the moment if we don't know what it is it will have no classes and no attributes.
     DEFAULT_REWRITER: function ( node, parent ){
         filterClasses(node, {})
         filterAttributes(node, {data: 1, class: 1, contenteditable: 1})
@@ -285,7 +285,7 @@ var cleanTree = function cleanTree ( node ) {
             }
             else{
                 child = stylesRewriters[ 'DEFAULT_REWRITER' ](child, node);
-            } 
+            }
             if ( blacklist.test( nodeName ) ) {
                 node.removeChild( child );
                 i -= 1;
@@ -346,11 +346,11 @@ var cleanTree = function cleanTree ( node ) {
                     }
                 }
                 if ( data ) {
-                    //TODO: This is resetting the range info for the editor, I had a pointer to that range 
-                    //inside of backspace.  Calls to cleanTree were causing the cursor to jump around 
+                    //TODO: This is resetting the range info for the editor, I had a pointer to that range
+                    //inside of backspace.  Calls to cleanTree were causing the cursor to jump around
                     //if a space was at the end of an element even though data and child.data were the same,
                     //ie this was a no-op.  cleanTree should probably store a clone of the range initially,
-                    //and at the end of execution either restore the range or figure out what the knew range 
+                    //and at the end of execution either restore the range or figure out what the knew range
                     //should be based on the cleanup actions taken.
                     if(child.data !== data){
                         child.data = data
@@ -427,7 +427,7 @@ var replaceTrailingSingleSpace = function replaceTrailingSingleSpace ( root, ran
                 // Nate: Chrome does not do well with trailing spaces
                 if(node.data[node.data.length-1] === ' '){
                     node.replaceData(node.data.length-1, 1, "\u00A0")
-                
+
                     if(startNode === node){
                         range.setStart(startNode, startOffset)
                     }
@@ -441,8 +441,8 @@ var replaceTrailingSingleSpace = function replaceTrailingSingleSpace ( root, ran
     }
 };
 
-// Nate:  The hack I found to get chrome happy with noneditable containers is to place a zero-width-space and 
-// a dummy <z> container in front of them.  This ZWS can sometimes be absorbed by the text element preceding it.  
+// Nate:  The hack I found to get chrome happy with noneditable containers is to place a zero-width-space and
+// a dummy <z> container in front of them.  This ZWS can sometimes be absorbed by the text element preceding it.
 // They are impossible to see.
 var removeTrailingZWS = function removeTrailingZWS ( root ) {
     var walker = new TreeWalker(root, SHOW_TEXT, function(){return true})
@@ -452,7 +452,7 @@ var removeTrailingZWS = function removeTrailingZWS ( root ) {
             if(node.data){
                 if(node.data.length > 1 && node.data[node.data.length-1] === ZWNBS){
                     node.replaceData(node.data.length-1, 1, "")
-                
+
                 }
             }
         }
@@ -578,7 +578,7 @@ var ensurePreZNodesForContentEditable = function(root){
             // node.parentNode.insertBefore(t, node)
             n.parentNode.insertBefore(t, n)
         }
-        
+
         node = walker.nextNode()
     }
 }
@@ -665,9 +665,9 @@ var collapseSimpleSpans = function collapseSimpleSpans( node ) {
                 child = nextChild
             }
             parent.removeChild(node)
-        }    
+        }
     }
-  
+
 }
 
 Squire.Clean = function(){}

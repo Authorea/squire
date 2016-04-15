@@ -1,9 +1,9 @@
 ( function ( doc, undefined ) {
 
 var replaceMapping = {}
-replaceMapping['\u200B'] = '*' 
+replaceMapping['\u200B'] = '*'
 replaceMapping['\u200D'] = '\u00B7'
-replaceMapping['\uFEFF'] = '\u00B7' 
+replaceMapping['\uFEFF'] = '\u00B7'
 function replaceChars(s, mapping){
     var res = s
     var regEx
@@ -18,7 +18,7 @@ function d3NodeName(domNode){
         // return "'" + domNode.data.replace(/[\u200B]/g, '*') + "'"
         return "'" + replaceChars(domNode.data, replaceMapping) + "'"
     }
-    
+
     return domNode.nodeName
 }
 
@@ -38,7 +38,7 @@ function parseElement(el){
         res["isContentEditable"] = el.isContentEditable
     }
     for(i=0; i<numChildren; i++){
-        childNode = children[i]        
+        childNode = children[i]
         res["children"][i] = parseElement(childNode)
     }
     return res
@@ -65,7 +65,7 @@ function findD3Node(d3Tree, domNode){
     }
 
     return null
-    
+
 }
 
 function highlightRange(d3Tree, range){
@@ -117,7 +117,7 @@ function highlightRange(d3Tree, range){
                 d3EndNode.highlightedEndChild = d3EndNode.children[eo]
             }
             else if(d3EndNode.children && ( d3EndNode.children.length > (eo - 1))   ){
-               d3EndNode.highlightedEndChild = d3EndNode.children[eo-1] 
+               d3EndNode.highlightedEndChild = d3EndNode.children[eo-1]
             }
         }
 
@@ -146,8 +146,8 @@ window.ViewDom = ViewDom;
 function ViewDom ( domNode, options ) {
     this.self = this
     var replaceChars = {}
-    replaceChars['\u200B'] = '*' 
-    replaceChars['\u200D'] = '\u00B7' 
+    replaceChars['\u200B'] = '*'
+    replaceChars['\u200D'] = '\u00B7'
     this.options = {
         replaceChars: replaceChars
     }
@@ -302,7 +302,7 @@ function ViewDom ( domNode, options ) {
             .data(links, function (d) {
             return d.target.id;
         });
-            
+
         // Enter any new links at the parent's previous position.
         link.enter().insert("path", "g")
             .attr("class", "link")
@@ -370,8 +370,8 @@ function ViewDom ( domNode, options ) {
     window.update = update
 
     function click(d) {
-        var event = new CustomEvent('ViewDom::NodeClicked', 
-            { 'detail': 
+        var event = new CustomEvent('ViewDom::NodeClicked',
+            { 'detail':
                 {
                     'd3Node': d,
                     'link': d.source,
@@ -379,9 +379,9 @@ function ViewDom ( domNode, options ) {
                     'sourceNode': d.source,
                     'targetNode': d.target,
                     'startOfRange': !(d3.event.ctrlKey || d3.event.shiftKey)
-                } 
+                }
         });
-      
+
         document.dispatchEvent(event);
         update(d);
     }

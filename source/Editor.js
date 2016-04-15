@@ -56,7 +56,7 @@ function Squire ( doc, config ) {
         // NATE: if the child is not editable we need to set the cursor position to behind the to protective chars, ZWNBS<Z>.
         // So we look back to see if they exist, and to see if there is already a text node behind them.  If so then set the
         // range to the end of that text node, otherwise insert a new text node containing the character in the keypress.
-        // I tried not inserting the char, instead starting with a blank string, but chrome will then insert the char 
+        // I tried not inserting the char, instead starting with a blank string, but chrome will then insert the char
         // into the ZWNBS text, amazingly.
         if(notEditable(child)){
             console.info("NOT EDITABLE need to move range")
@@ -92,8 +92,8 @@ function Squire ( doc, config ) {
                this.setSelectionToNode(tn, 1)
 
            }
-        }     
-    });  
+        }
+    });
 
     this._hasZWS = false;
 
@@ -1168,7 +1168,7 @@ var makeList = function ( self, frag, type ) {
     var div = frag.childNodes[0]
     var addedContentEditable = false
     // Nate: We need to do this due to an addition I made to isBlock, which returns false for noneditable nodes.
-    // This function is dealing with a frag that has been removed from the editor dom, thus it loses the 
+    // This function is dealing with a frag that has been removed from the editor dom, thus it loses the
     // contenteditable=true inherited from the editor body.  I temporarily set that here and remove it again
     // at the end of the function once the frag has been re-inserted into the editor.
     if(div && !div.hasAttribute("contenteditable")){
@@ -1336,7 +1336,7 @@ proto._setHTML = function ( html ) {
 };
 
 /*
-options = 
+options =
 {
     withBookMark: 1, //will include tags for cursor position
     stripEndBrs: 1, //remove BRs from the end of block elements
@@ -1569,7 +1569,7 @@ proto.insertHTML = function ( html, isPaste ) {
         ensureBrAtEndOfAllLines(frag)
         //NATE: This is a clear spot to do something of the sort:
         // registeredFilters.each(function(filter){filter(frag)})
-        
+
         while ( node = getNextBlock( node ) ) {
             fixCursor( node );
         }

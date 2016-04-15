@@ -106,7 +106,7 @@ TreeWalker.prototype.nextNode = function () {
         if ( !node ) {
             return null;
         }
-      
+
         if ( ( typeToBitArray[ node.nodeType ] & nodeType ) &&
                 filter( node ) ) {
             this.currentNode = node;
@@ -200,7 +200,7 @@ TreeWalker.prototype.previousNode = function (breakoutFunction) {
 };
 
 // Previous node in post-order.
-// Nate:  Analogous to nextNONode, this function goes up one level, then down one level to the left, 
+// Nate:  Analogous to nextNONode, this function goes up one level, then down one level to the left,
 // and then down and to the right as far as possible.
 TreeWalker.prototype.previousPONode = function () {
     var current = this.currentNode,
@@ -1161,7 +1161,7 @@ var isNodeContainedInRange = function ( range, node, partial ) {
     }
 };
 
-// If the starting and ending range offsets are collapsed and on the first element in the container, this will 
+// If the starting and ending range offsets are collapsed and on the first element in the container, this will
 // move down and to the left, otherwise it will move down and to the right
 var moveRangeBoundariesDownTree = function ( range ) {
     var startContainer = range.startContainer,
@@ -1268,7 +1268,7 @@ var moveRangeBoundariesUpTree = function ( range, common ) {
 };
 
 var moveRangeOutOfNotEditable = function( range ){
-    
+
     var startContainer = range.startContainer
     var endContainer = range.endContainer
     var moveRight = false
@@ -1278,7 +1278,7 @@ var moveRangeOutOfNotEditable = function( range ){
             var currentParent = startContainer.parentNode
             var newParent = currentParent
             var textLength = startContainer.data.length
-            // if we are for some reason, likely an up or down arrow, finding ourselves in the middle of a 
+            // if we are for some reason, likely an up or down arrow, finding ourselves in the middle of a
             // text area that isn't editable, we need to decide if we should be in front of that element
             // or to the right of it.  At the moment this will only work for a single text element in a series
             // of non-editable structures, but it can be extended to work for all cases if necessary.
@@ -1300,7 +1300,7 @@ var moveRangeOutOfNotEditable = function( range ){
                 range.setStart( newParent, offset );
                 range.setEnd( newParent, offset );
             }
-        } 
+        }
     }
 }
 window.moveRangeOutOfNotEditable = moveRangeOutOfNotEditable
@@ -1796,8 +1796,8 @@ var keyHandlers = {
     },
     space: function ( self, _, range ) {
         var node, parent;
-        // Nate: This record/bookmark has a side effect of putting a BR tag at the end of a line, which 
-        // currently is ok with me 
+        // Nate: This record/bookmark has a side effect of putting a BR tag at the end of a line, which
+        // currently is ok with me
         self._recordUndoState( range );
         addLinks( range.startContainer );
         self._getRangeAndRemoveBookmark( range );
@@ -1815,7 +1815,7 @@ var keyHandlers = {
         self.setSelection( range );
     },
     right: function(self, event, range){
-        self.moveRight(self, event, range) 
+        self.moveRight(self, event, range)
     },
     left: function ( self, event, range ) {
         self.moveLeft(self, event, range)
@@ -1994,7 +1994,7 @@ Squire.prototype.backspace = function(self, event, range){
                 // pn = w.previousNode(notEditable)
                 // console.info(pn)
                 rootNodeOfClean = parent
-               
+
             }
             else if(so===1){
                 sc.deleteData(so-1, 1)
@@ -2033,13 +2033,13 @@ Squire.prototype.backspace = function(self, event, range){
                     else{
                         detach(pn)
                     }
-                    
+
                 }
                 else if(notEditable(pn)){
                     detach(pn);
                 }
             }
-            
+
             //Nate: Todo: Currently cleaning from this node results in the range not getting moved down the tree, not good
             rootNodeOfClean = sc
         }
@@ -2086,11 +2086,11 @@ Squire.prototype.moveRight = function(self, event, range){
         if(nextBlock){
            self.setSelectionToNode(nextBlock)
            var newRange = self.getSelection()
-           moveRangeBoundariesDownTree(newRange) 
+           moveRangeBoundariesDownTree(newRange)
            self.setSelection(newRange)
         }
         else{
-            // console.info("no block found") 
+            // console.info("no block found")
         }
     }
     else if(sc.nodeType === TEXT_NODE){
@@ -2116,7 +2116,7 @@ Squire.prototype.moveRight = function(self, event, range){
                 //start one character in
                 if(isText(nn) && !skippedNode){
                     self.setSelectionToNode(nn, nn.length>0 ? 1:0)
-                    
+
                 }
                 else if(nn){
                     self.setSelectionToNode(nn, 0)
@@ -2134,7 +2134,7 @@ Squire.prototype.moveRight = function(self, event, range){
                 }
             }
         }
-    }   
+    }
     else{
         var child = sc.childNodes[so]
         if(child && isText(child)){
@@ -2151,7 +2151,7 @@ Squire.prototype.moveRight = function(self, event, range){
                 }
             }
         }
-    }  
+    }
     //NATE TODO: There is a curious side-effect to this function which is also achieved
     //by self.setSelection(self.getSelection()).  If you are pointing to a non-editable
     //div or to a <BR> tag in firefox, you will not be able to enter in characters
@@ -2193,7 +2193,7 @@ Squire.prototype.moveLeft = function(self, event, range){
             var newRange = self.getSelection()
             newRange.setStart(newRange.endContainer, newRange.endContainer.childNodes.length-1)
             newRange.setEnd(newRange.endContainer, newRange.endContainer.childNodes.length-1)
-            moveRangeBoundariesDownTree(newRange) 
+            moveRangeBoundariesDownTree(newRange)
             self.setSelection(newRange)
         }
         else{
@@ -2206,7 +2206,7 @@ Squire.prototype.moveLeft = function(self, event, range){
         if(so > 0){
             so -= 1
             //TODO: looks like a pointless check
-            if(so<0){ 
+            if(so<0){
                 so = 0
             }
             self.setSelectionToNode(sc, so)
@@ -2232,7 +2232,7 @@ Squire.prototype.moveLeft = function(self, event, range){
                 }
             }
         }
-    }   
+    }
     else{
         var child = sc.childNodes[so]
         if(false){
@@ -2251,7 +2251,7 @@ Squire.prototype.moveLeft = function(self, event, range){
                 else{
                    self.setSelectionToNode(nn, 0)
                 }
-                
+
             }
             else{
                 nn = findPreviousBRTag(root, child)
@@ -2260,7 +2260,7 @@ Squire.prototype.moveLeft = function(self, event, range){
                 }
             }
         }
-    }  
+    }
     setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
 }
 
@@ -2351,7 +2351,7 @@ var filterClasses = function(node, whiteList){
      node.className = newClasses.join(" ")
      if(node.className === ""){
          node.removeAttribute("class")
-     }   
+     }
      return node
 }
 
@@ -2384,8 +2384,8 @@ var filterAttributes = function(node, whiteList){
 
     attrsToRemove.forEach(function(a){
         node.removeAttribute(a)
-    })  
-    return node  
+    })
+    return node
 }
 var filterSpanAttributes = function(span){
     var whiteList = {
@@ -2410,9 +2410,9 @@ var stylesRewriters = {
         // one span to get broken out into many spans, but it was kind of clever and we might want to use the idea
         // at a later time.  It looked at if something had a large font or a certain color and tried to guess what the
         // element was and add a semantic class to the span.  For each attribute there was a separate class.  Although
-        // we don't want a bunch of spans with classes, we might want to re-order a span with certain attributes into 
+        // we don't want a bunch of spans with classes, we might want to re-order a span with certain attributes into
         // more sensible elements
-        // for ( attr in spanToSemantic ) 
+        // for ( attr in spanToSemantic )
     },
     STRONG: replaceWithTag( 'B' ),
     EM: replaceWithTag( 'I' ),
@@ -2478,7 +2478,7 @@ var stylesRewriters = {
         return el;
     },
     //NATE:  I added a default rewriter so that we filter elements not specified here with a strict set of classes and attributes.
-    // Basically for the moment if we don't know what it is it will have no classes and no attributes.  
+    // Basically for the moment if we don't know what it is it will have no classes and no attributes.
     DEFAULT_REWRITER: function ( node, parent ){
         filterClasses(node, {})
         filterAttributes(node, {data: 1, class: 1, contenteditable: 1})
@@ -2549,7 +2549,7 @@ var cleanTree = function cleanTree ( node ) {
             }
             else{
                 child = stylesRewriters[ 'DEFAULT_REWRITER' ](child, node);
-            } 
+            }
             if ( blacklist.test( nodeName ) ) {
                 node.removeChild( child );
                 i -= 1;
@@ -2610,11 +2610,11 @@ var cleanTree = function cleanTree ( node ) {
                     }
                 }
                 if ( data ) {
-                    //TODO: This is resetting the range info for the editor, I had a pointer to that range 
-                    //inside of backspace.  Calls to cleanTree were causing the cursor to jump around 
+                    //TODO: This is resetting the range info for the editor, I had a pointer to that range
+                    //inside of backspace.  Calls to cleanTree were causing the cursor to jump around
                     //if a space was at the end of an element even though data and child.data were the same,
                     //ie this was a no-op.  cleanTree should probably store a clone of the range initially,
-                    //and at the end of execution either restore the range or figure out what the knew range 
+                    //and at the end of execution either restore the range or figure out what the knew range
                     //should be based on the cleanup actions taken.
                     if(child.data !== data){
                         child.data = data
@@ -2691,7 +2691,7 @@ var replaceTrailingSingleSpace = function replaceTrailingSingleSpace ( root, ran
                 // Nate: Chrome does not do well with trailing spaces
                 if(node.data[node.data.length-1] === ' '){
                     node.replaceData(node.data.length-1, 1, "\u00A0")
-                
+
                     if(startNode === node){
                         range.setStart(startNode, startOffset)
                     }
@@ -2705,8 +2705,8 @@ var replaceTrailingSingleSpace = function replaceTrailingSingleSpace ( root, ran
     }
 };
 
-// Nate:  The hack I found to get chrome happy with noneditable containers is to place a zero-width-space and 
-// a dummy <z> container in front of them.  This ZWS can sometimes be absorbed by the text element preceding it.  
+// Nate:  The hack I found to get chrome happy with noneditable containers is to place a zero-width-space and
+// a dummy <z> container in front of them.  This ZWS can sometimes be absorbed by the text element preceding it.
 // They are impossible to see.
 var removeTrailingZWS = function removeTrailingZWS ( root ) {
     var walker = new TreeWalker(root, SHOW_TEXT, function(){return true})
@@ -2716,7 +2716,7 @@ var removeTrailingZWS = function removeTrailingZWS ( root ) {
             if(node.data){
                 if(node.data.length > 1 && node.data[node.data.length-1] === ZWNBS){
                     node.replaceData(node.data.length-1, 1, "")
-                
+
                 }
             }
         }
@@ -2842,7 +2842,7 @@ var ensurePreZNodesForContentEditable = function(root){
             // node.parentNode.insertBefore(t, node)
             n.parentNode.insertBefore(t, n)
         }
-        
+
         node = walker.nextNode()
     }
 }
@@ -2929,9 +2929,9 @@ var collapseSimpleSpans = function collapseSimpleSpans( node ) {
                 child = nextChild
             }
             parent.removeChild(node)
-        }    
+        }
     }
-  
+
 }
 
 Squire.Clean = function(){}
@@ -3174,7 +3174,7 @@ function Squire ( doc, config ) {
         // NATE: if the child is not editable we need to set the cursor position to behind the to protective chars, ZWNBS<Z>.
         // So we look back to see if they exist, and to see if there is already a text node behind them.  If so then set the
         // range to the end of that text node, otherwise insert a new text node containing the character in the keypress.
-        // I tried not inserting the char, instead starting with a blank string, but chrome will then insert the char 
+        // I tried not inserting the char, instead starting with a blank string, but chrome will then insert the char
         // into the ZWNBS text, amazingly.
         if(notEditable(child)){
             console.info("NOT EDITABLE need to move range")
@@ -3210,8 +3210,8 @@ function Squire ( doc, config ) {
                this.setSelectionToNode(tn, 1)
 
            }
-        }     
-    });  
+        }
+    });
 
     this._hasZWS = false;
 
@@ -4286,7 +4286,7 @@ var makeList = function ( self, frag, type ) {
     var div = frag.childNodes[0]
     var addedContentEditable = false
     // Nate: We need to do this due to an addition I made to isBlock, which returns false for noneditable nodes.
-    // This function is dealing with a frag that has been removed from the editor dom, thus it loses the 
+    // This function is dealing with a frag that has been removed from the editor dom, thus it loses the
     // contenteditable=true inherited from the editor body.  I temporarily set that here and remove it again
     // at the end of the function once the frag has been re-inserted into the editor.
     if(div && !div.hasAttribute("contenteditable")){
@@ -4454,7 +4454,7 @@ proto._setHTML = function ( html ) {
 };
 
 /*
-options = 
+options =
 {
     withBookMark: 1, //will include tags for cursor position
     stripEndBrs: 1, //remove BRs from the end of block elements
@@ -4687,7 +4687,7 @@ proto.insertHTML = function ( html, isPaste ) {
         ensureBrAtEndOfAllLines(frag)
         //NATE: This is a clear spot to do something of the sort:
         // registeredFilters.each(function(filter){filter(frag)})
-        
+
         while ( node = getNextBlock( node ) ) {
             fixCursor( node );
         }

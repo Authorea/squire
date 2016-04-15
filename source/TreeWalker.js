@@ -53,7 +53,7 @@ TreeWalker.prototype.nextNode = function () {
         if ( !node ) {
             return null;
         }
-      
+
         if ( ( typeToBitArray[ node.nodeType ] & nodeType ) &&
                 filter( node ) ) {
             this.currentNode = node;
@@ -147,7 +147,7 @@ TreeWalker.prototype.previousNode = function (breakoutFunction) {
 };
 
 // Previous node in post-order.
-// Nate:  Analogous to nextNONode, this function goes up one level, then down one level to the left, 
+// Nate:  Analogous to nextNONode, this function goes up one level, then down one level to the left,
 // and then down and to the right as far as possible.
 TreeWalker.prototype.previousPONode = function () {
     var current = this.currentNode,
