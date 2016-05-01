@@ -2166,6 +2166,10 @@ Squire.prototype.moveRight = function(self, event, range){
     setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
 }
 
+
+// Still using the default browser behavior unless we are on the first line, where
+// we send an event notifying the up key on the first line, to be intercepted by
+// a handler who will then set the previous block as active on the last line
 Squire.prototype.moveUp = function(self, event, range){
   self  = self  ? self  : this
   //TODO: stop looking for BR tags to designate end of lines
