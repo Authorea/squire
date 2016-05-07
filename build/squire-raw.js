@@ -1820,10 +1820,10 @@ var keyHandlers = {
     left: function ( self, event, range ) {
         self.moveLeft(self, event, range)
     },
-    up: function ( self, event ) {
+    up: function ( self, event, range ) {
         self.moveUp(self, event, range)
     },
-    down: function ( self, event ) {
+    down: function ( self, event, range ) {
         self.moveDown(self, event, range)
     }
 
