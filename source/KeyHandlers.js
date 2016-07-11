@@ -410,14 +410,18 @@ var keyHandlers = {
 // it goes back/forward in history! Override to do the right
 // thing.
 // https://bugzilla.mozilla.org/show_bug.cgi?id=289384
-if ( isMac && isGecko && win.getSelection().modify ) {
-    keyHandlers[ 'meta-left' ] = function ( self, event ) {
-        event.preventDefault();
+if ( isMac && isGecko ) {
+      keyHandlers[ 'meta-left' ] = function ( self, event ) {
+      event.preventDefault();
+      if (self._sel && self._sel.modify) {
         self._sel.modify( 'move', 'backward', 'lineboundary' );
+      }
     };
     keyHandlers[ 'meta-right' ] = function ( self, event ) {
         event.preventDefault();
+      if (self._sel && self._sel.modify) {
         self._sel.modify( 'move', 'forward', 'lineboundary' );
+      }
     };
 }
 
