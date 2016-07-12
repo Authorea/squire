@@ -411,14 +411,16 @@ var keyHandlers = {
 if ( isMac && isGecko ) {
       keyHandlers[ 'meta-left' ] = function ( self, event ) {
       event.preventDefault();
-      if (self._sel && self._sel.modify) {
-        self._sel.modify( 'move', 'backward', 'lineboundary' );
+      var sel = getWindowSelection( self )
+      if (sel && sel.modify) {
+        sel.modify( 'move', 'backward', 'lineboundary' );
       }
     };
     keyHandlers[ 'meta-right' ] = function ( self, event ) {
-        event.preventDefault();
-      if (self._sel && self._sel.modify) {
-        self._sel.modify( 'move', 'forward', 'lineboundary' );
+      event.preventDefault();
+      var sel = getWindowSelection( self )
+      if (sel && sel.modify) {
+        sel.modify( 'move', 'forward', 'lineboundary' );
       }
     };
 }

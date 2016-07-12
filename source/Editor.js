@@ -39,7 +39,6 @@ function Squire ( doc, config ) {
 
     this._events = {};
 
-    this._sel = win.getSelection();
     this._lastSelection = null;
 
     // IE loses selection state of iframe on blur, so make sure we
@@ -368,8 +367,13 @@ proto.moveCursorToEnd = function () {
     return this._moveCursorTo( false );
 };
 
+var getWindowSelection = function ( self ) {
+    return self._win.getSelection() || null;
+};
+
 proto.setSelection = function ( range ) {
     if ( range ) {
+        this._lastSelection = range
         // iOS bug: if you don't focus the iframe before setting the
         // selection, you can end up in a state where you type but the input
         // doesn't get directed into the contenteditable area but is instead
@@ -377,8 +381,7 @@ proto.setSelection = function ( range ) {
         if ( isIOS ) {
             this._win.focus();
         }
-        var sel = this._sel;
-
+        var sel = getWindowSelection( this );
         if ( sel ) {
           sel.removeAllRanges();
           sel.addRange( range );
@@ -395,8 +398,9 @@ proto.setSelectionToNode = function (node, startOffset){
 }
 
 proto.getSelection = function () {
-    var sel = this._sel,
-        selection, startContainer, endContainer;
+    var sel = getWindowSelection( this );
+    var root = this._body;
+    var selection, startContainer, endContainer;
     if ( sel && sel.rangeCount ) {
         selection  = sel.getRangeAt( 0 ).cloneRange();
         startContainer = selection.startContainer;
@@ -408,12 +412,15 @@ proto.getSelection = function () {
         if ( endContainer && isLeaf( endContainer ) ) {
             selection.setEndBefore( endContainer );
         }
+    }
+    if ( selection &&
+            isOrContains( root, selection.commonAncestorContainer ) ) {
         this._lastSelection = selection;
     } else {
         selection = this._lastSelection;
     }
     if ( !selection ) {
-        selection = this._createRange( this._body.firstChild, 0 );
+        selection = this._createRange( root.firstChild, 0 );
     }
     return selection;
 };
