@@ -1833,14 +1833,18 @@ var keyHandlers = {
 // it goes back/forward in history! Override to do the right
 // thing.
 // https://bugzilla.mozilla.org/show_bug.cgi?id=289384
-if ( isMac && isGecko && win.getSelection().modify ) {
-    keyHandlers[ 'meta-left' ] = function ( self, event ) {
-        event.preventDefault();
+if ( isMac && isGecko ) {
+      keyHandlers[ 'meta-left' ] = function ( self, event ) {
+      event.preventDefault();
+      if (self._sel && self._sel.modify) {
         self._sel.modify( 'move', 'backward', 'lineboundary' );
+      }
     };
     keyHandlers[ 'meta-right' ] = function ( self, event ) {
         event.preventDefault();
+      if (self._sel && self._sel.modify) {
         self._sel.modify( 'move', 'forward', 'lineboundary' );
+      }
     };
 }
 
@@ -3550,8 +3554,11 @@ proto.setSelection = function ( range ) {
             this._win.focus();
         }
         var sel = this._sel;
-        sel.removeAllRanges();
-        sel.addRange( range );
+
+        if ( sel ) {
+          sel.removeAllRanges();
+          sel.addRange( range );
+        }
     }
     return this;
 };
@@ -3566,7 +3573,7 @@ proto.setSelectionToNode = function (node, startOffset){
 proto.getSelection = function () {
     var sel = this._sel,
         selection, startContainer, endContainer;
-    if ( sel.rangeCount ) {
+    if ( sel && sel.rangeCount ) {
         selection  = sel.getRangeAt( 0 ).cloneRange();
         startContainer = selection.startContainer;
         endContainer = selection.endContainer;
