@@ -378,8 +378,11 @@ proto.setSelection = function ( range ) {
             this._win.focus();
         }
         var sel = this._sel;
-        sel.removeAllRanges();
-        sel.addRange( range );
+
+        if ( sel ) {
+          sel.removeAllRanges();
+          sel.addRange( range );
+        }
     }
     return this;
 };
@@ -394,7 +397,7 @@ proto.setSelectionToNode = function (node, startOffset){
 proto.getSelection = function () {
     var sel = this._sel,
         selection, startContainer, endContainer;
-    if ( sel.rangeCount ) {
+    if ( sel && sel.rangeCount ) {
         selection  = sel.getRangeAt( 0 ).cloneRange();
         startContainer = selection.startContainer;
         endContainer = selection.endContainer;
