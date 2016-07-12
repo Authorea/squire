@@ -1820,13 +1820,11 @@ var keyHandlers = {
     left: function ( self, event, range ) {
         self.moveLeft(self, event, range)
     },
-    up: function ( self, event ) {
-        self._removeZWS();
-        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
+    up: function ( self, event, range ) {
+        self.moveUp(self, event, range)
     },
-    down: function ( self, event ) {
-        self._removeZWS();
-        setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
+    down: function ( self, event, range ) {
+        self.moveDown(self, event, range)
     }
 
 };
@@ -1871,6 +1869,15 @@ keyHandlers[ ctrlKey + ']' ] = mapKeyTo( 'increaseQuoteLevel' );
 keyHandlers[ ctrlKey + 'y' ] = mapKeyTo( 'redo' );
 keyHandlers[ ctrlKey + 'z' ] = mapKeyTo( 'undo' );
 keyHandlers[ ctrlKey + 'shift-z' ] = mapKeyTo( 'redo' );
+
+var getLineNumber = function(root, node){
+  if(node.parentNode === root){
+    return indexOf.call(root.childNodes, node)
+  }
+  else{
+    return getLineNumber(root, node.parentNode)
+  }
+}
 
 var findNextBRTag = function(root, node){
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
@@ -2159,6 +2166,52 @@ Squire.prototype.moveRight = function(self, event, range){
     setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
 }
 
+
+// Still using the default browser behavior unless we are on the first line, where
+// we send an event notifying the up key on the first line, to be intercepted by
+// a handler who will then set the previous block as active on the last line
+Squire.prototype.moveUp = function(self, event, range){
+  self  = self  ? self  : this
+  //TODO: stop looking for BR tags to designate end of lines
+  ensureBrAtEndOfAllLines(self._body)
+  range = range ? range : self.getSelection()
+  self._removeZWS();
+  var so = range.startOffset
+  var sc = range.startContainer
+  var root = self._body
+
+  var lineNumber = getLineNumber(root, sc)
+  if(lineNumber === 0){
+    console.info("on line 0")
+    event && event.preventDefault()
+    var e = new CustomEvent('squire::up-on-first-line', { 'detail': {range: range} });
+    self._doc.dispatchEvent(e);
+    // return
+  }
+  setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
+}
+
+
+Squire.prototype.moveDown = function(self, event, range){
+  self  = self  ? self  : this
+  //TODO: stop looking for BR tags to designate end of lines
+  ensureBrAtEndOfAllLines(self._body)
+  range = range ? range : self.getSelection()
+  self._removeZWS();
+  var so = range.startOffset
+  var sc = range.startContainer
+  var root = self._body
+
+  var lineNumber = getLineNumber(root, sc)
+  if(lineNumber === root.childNodes.length - 1){
+    console.info("on last line")
+    event && event.preventDefault()
+    var e = new CustomEvent('squire::down-on-last-line', { 'detail': {range: range} });
+    self._doc.dispatchEvent(e);
+    // return
+  }
+  setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
+}
 
 Squire.prototype.moveLeft = function(self, event, range){
     self  = self  ? self  : this

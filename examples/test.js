@@ -64,33 +64,33 @@ var initEditors = function(){
 
     testSetup()
 
-    // quickTest()
+    quickTest()
 
-    runTests()
-    testGetHTML()
-    testInlineNodeNames()
-    testCleaner()
-    testLists()
-    testTables()
-    testInsertHTML()
-    testResults()
+    // runTests()
+    // testGetHTML()
+    // testInlineNodeNames()
+    // testCleaner()
+    // testLists()
+    // testTables()
+    // testInsertHTML()
+    // testResults()
 
     setTimeout(updateCursor, 20)
   });
 }
 
 quickTest = function(){
-  prepareTest('a')
-  addedContentEditable = false
-  df = document.createDocumentFragment()
-  div = editor._body.childNodes[0]
-  if(div && !div.hasAttribute("contenteditable")){
-      console.info("adding contenteditable")
-      div.setAttribute("contenteditable", true)
-      addedContentEditable = true
-  }
-  df.appendChild(div)
-  w = Squire.Node.getBlockWalker( df )
+  prepareTest("<div>a<br></div><div><br></div><div>b<br></div>")
+  editor.addEventListener('squire::up-on-first-line', function(e){
+    console.info('UP EVENT')
+    console.info(e)
+    window.e = e
+  })
+  editor.addEventListener('squire::down-on-last-line', function(e){
+    console.info('UP EVENT')
+    console.info(e)
+    window.e = e
+  })
 }
 
 var updateCursor = function(){
