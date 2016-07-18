@@ -10,13 +10,13 @@ var fontSizes = {
     7: 48
 };
 
-var spanToSemantic = {
+var styleToSemantic = {
     backgroundColor: {
         regexp: notWS,
         replace: function ( doc, colour ) {
             return createElement( doc, 'SPAN', {
-                'class': 'highlight',
-                style: 'background-color: ' + colour
+                'class': HIGHLIGHT_CLASS,
+                style: 'background-color:' + colour
             });
         }
     },
@@ -24,7 +24,7 @@ var spanToSemantic = {
         regexp: notWS,
         replace: function ( doc, colour ) {
             return createElement( doc, 'SPAN', {
-                'class': 'colour',
+                'class': COLOUR_CLASS,
                 style: 'color:' + colour
             });
         }
@@ -45,7 +45,7 @@ var spanToSemantic = {
         regexp: notWS,
         replace: function ( doc, family ) {
             return createElement( doc, 'SPAN', {
-                'class': 'font',
+                'class': FONT_FAMILY_CLASS,
                 style: 'font-family:' + family
             });
         }
@@ -54,9 +54,15 @@ var spanToSemantic = {
         regexp: notWS,
         replace: function ( doc, size ) {
             return createElement( doc, 'SPAN', {
-                'class': 'size',
+                'class': FONT_SIZE_CLASS,
                 style: 'font-size:' + size
             });
+        }
+    },
+    textDecoration: {
+        regexp: /^underline/i,
+        replace: function ( doc ) {
+            return createElement( doc, 'U' );
         }
     }
 };
@@ -70,9 +76,8 @@ var replaceWithTag = function ( tag ) {
     };
 };
 
-
 var filterClasses = function(node, whiteList){
-     var classes = node.classList
+  var classes = node.classList
      var newClasses = []
 
      //classes are not the same in firefox and chrome, the latter returns an array, the former an object
@@ -132,26 +137,28 @@ var filterSpanAttributes = function(span){
     return filterAttributes(span, whiteList)
 }
 
-//NATE: I lke the stylesRewriters, we should have sane defaults for all the elements as a first pass, and then
+var replaceStyles = function ( node, parent ) {
+  //NATE: TODO: whitelist of classes for span
+  span.removeAttribute("style")
+  filterSpanClasses(span)
+  filterSpanAttributes(span)
+  return span
+  // NATE: I want to leave one line of the old code in as a reminder, this is the line that was causing
+  // one span to get broken out into many spans, but it was kind of clever and we might want to use the idea
+  // at a later time.  It looked at if something had a large font or a certain color and tried to guess what the
+  // element was and add a semantic class to the span.  For each attribute there was a separate class.  Although
+  // we don't want a bunch of spans with classes, we might want to re-order a span with certain attributes into
+  // more sensible elements
+  // for ( attr in spanToSemantic )
+};
+//NATE: I like the stylesRewriters, we should have sane defaults for all the elements as a first pass, and then
 // any additional complicated filtering can be done by registering filters with squire that will be executed during
 // insertHTML
 var stylesRewriters = {
-    SPAN: function ( span, parent ) {
-        //NATE: TODO: whitelist of classes for span
-        span.removeAttribute("style")
-        filterSpanClasses(span)
-        filterSpanAttributes(span)
-        return span
-        // NATE: I want to leave one line of the old code in as a reminder, this is the line that was causing
-        // one span to get broken out into many spans, but it was kind of clever and we might want to use the idea
-        // at a later time.  It looked at if something had a large font or a certain color and tried to guess what the
-        // element was and add a semantic class to the span.  For each attribute there was a separate class.  Although
-        // we don't want a bunch of spans with classes, we might want to re-order a span with certain attributes into
-        // more sensible elements
-        // for ( attr in spanToSemantic )
-    },
+    SPAN: replaceStyles,
     STRONG: replaceWithTag( 'B' ),
     EM: replaceWithTag( 'I' ),
+    INS: replaceWithTag( 'U' ),
     STRIKE: replaceWithTag( 'S' ),
     P: replaceWithTag('DIV'),
     FONT: function ( node, parent ) {
@@ -229,7 +236,7 @@ var stylesRewriters = {
     //TODO: NATE: We probably want to map p tags to divs, it might be done already but I'm not 100% sure
 };
 
-var allowedBlock = /^(?:A(?:DDRESS|RTICLE|SIDE|UDIO)|BLOCKQUOTE|CAPTION|D(?:[DLT]|IV)|F(?:IGURE|OOTER)|H[1-6]|HEADER|L(?:ABEL|EGEND|I)|O(?:L|UTPUT)|P(?:RE)?|SECTION|T(?:ABLE|BODY|D|FOOT|H|HEAD|R)|UL)$/;
+var allowedBlock = /^(?:A(?:DDRESS|RTICLE|SIDE|UDIO)|BLOCKQUOTE|CAPTION|D(?:[DLT]|IV)|F(?:IGURE|IGCAPTION|OOTER)|H[1-6]|HEADER|L(?:ABEL|EGEND|I)|O(?:L|UTPUT)|P(?:RE)?|SECTION|T(?:ABLE|BODY|D|FOOT|H|HEAD|R)|UL)$/;
 
 var blacklist = /^(?:HEAD|META|STYLE)/;
 
@@ -259,7 +266,7 @@ var doNotCleanNode = function(node){
     structure for them.  I am adding a function 'doNotCleanNode' which simply returns the node if true.
     That function in principle could be replaced by a user-supplied function.
 */
-var cleanTree = function cleanTree ( node ) {
+var cleanTree = function cleanTree ( node, preserveWS ) {
     var children = node.childNodes,
         nonInlineParent, i, l, child, nodeName, nodeType, rewriter, childLength,
         startsWithWS, endsWithWS, data, sibling;
@@ -299,14 +306,14 @@ var cleanTree = function cleanTree ( node ) {
                 continue;
             }
             if ( childLength ) {
-                cleanTree( child );
+                cleanTree( child, preserveWS || ( nodeName === 'PRE' ) );
             }
         } else {
             if ( nodeType === TEXT_NODE ) {
                 data = child.data;
                 startsWithWS = !notWS.test( data.charAt( 0 ) );
                 endsWithWS = !notWS.test( data.charAt( data.length - 1 ) );
-                if ( !startsWithWS && !endsWithWS ) {
+                if ( preserveWS || ( !startsWithWS && !endsWithWS ) ) {
                     continue;
                 }
                 // Iterate through the nodes; if we hit some other content
@@ -325,9 +332,7 @@ var cleanTree = function cleanTree ( node ) {
                             break;
                         }
                     }
-                    if ( !sibling ) {
-                        data = data.replace( /^\s+/g, '' );
-                    }
+                    data = data.replace( /^\s+/g, sibling ? ' ' : '' );
                 }
                 if ( endsWithWS ) {
                     walker.currentNode = child;
@@ -342,9 +347,7 @@ var cleanTree = function cleanTree ( node ) {
                             break;
                         }
                     }
-                    if ( !sibling ) {
-                        data = data.replace( /^\s+/g, '' );
-                    }
+                    data = data.replace( /\s+$/g, sibling ? ' ' : '' );
                 }
                 if ( data ) {
                     //TODO: This is resetting the range info for the editor, I had a pointer to that range
@@ -369,8 +372,8 @@ var cleanTree = function cleanTree ( node ) {
 
 // ---
 
-var removeEmptyInlines = function removeEmptyInlines ( root ) {
-    var children = root.childNodes,
+var removeEmptyInlines = function removeEmptyInlines ( node ) {
+    var children = node.childNodes,
         l = children.length,
         child;
     while ( l-- ) {
@@ -378,10 +381,10 @@ var removeEmptyInlines = function removeEmptyInlines ( root ) {
         if ( child.nodeType === ELEMENT_NODE && !isLeaf( child ) ) {
             removeEmptyInlines( child );
             if ( isInline( child ) && !child.firstChild ) {
-                root.removeChild( child );
+                node.removeChild( child );
             }
         } else if ( child.nodeType === TEXT_NODE && !child.data ) {
-            root.removeChild( child );
+            node.removeChild( child );
         }
     }
 };
@@ -610,8 +613,8 @@ var isLineBreak = function ( br ) {
 // line breaks by wrapping the inline text in a <div>. Browsers that want <br>
 // elements at the end of each block will then have them added back in a later
 // fixCursor method call.
-var cleanupBRs = function ( root ) {
-    var brs = root.querySelectorAll( 'BR' ),
+var cleanupBRs = function ( node, root ) {
+    var brs = node.querySelectorAll( 'BR' ),
         brBreaksLine = [],
         l = brs.length,
         i, br, parent;
@@ -636,7 +639,7 @@ var cleanupBRs = function ( root ) {
         if ( !brBreaksLine[l] ) {
             detach( br );
         } else if ( !isInline( parent ) ) {
-            fixContainer( parent );
+            fixContainer( parent, root );
         }
     }
 };

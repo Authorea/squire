@@ -32,6 +32,88 @@ describe('Squire RTE', function () {
         editor.setSelection(range);
     }
 
+    describe('hasFormat', function () {
+        var startHTML;
+        beforeEach( function () {
+            startHTML = '<div>one <b>two three</b> four <i>five</i></div>';
+            editor.setHTML(startHTML);
+        });
+
+        it('returns false when range not touching format', function () {
+            var range = doc.createRange();
+            range.setStart(doc.body.childNodes.item(0), 0);
+            range.setEnd(doc.body.childNodes.item(0), 1);
+            editor.setSelection(range);
+            expect(editor.hasFormat('b'), 'to be false');
+        });
+
+        it('returns false when range inside other format', function () {
+            var range = doc.createRange();
+            range.setStart(doc.querySelector('i').childNodes[0], 1);
+            range.setEnd(doc.querySelector('i').childNodes[0], 2);
+            editor.setSelection(range);
+            expect(editor.hasFormat('b'), 'to be false');
+        });
+
+        it('returns false when range covers anything outside format', function () {
+            var range = doc.createRange();
+            range.setStart(doc.querySelector('b').previousSibling, 2);
+            range.setEnd(doc.querySelector('b').childNodes[0], 8);
+            editor.setSelection(range);
+            expect(editor.hasFormat('b'), 'to be false');
+        });
+
+        it('returns true when range inside format', function () {
+            var range = doc.createRange();
+            range.setStart(doc.querySelector('b').childNodes[0], 2);
+            range.setEnd(doc.querySelector('b').childNodes[0], 8);
+            editor.setSelection(range);
+            expect(editor.hasFormat('b'), 'to be true');
+        });
+
+        it('returns true when range covers start of format', function () {
+            var range = doc.createRange();
+            range.setStartBefore(doc.querySelector('b'));
+            range.setEnd(doc.querySelector('b').childNodes[0], 8);
+            editor.setSelection(range);
+            expect(editor.hasFormat('b'), 'to be true');
+        });
+
+        it('returns true when range covers start of format, even in weird cases', function () {
+            var range = doc.createRange();
+            var prev = doc.querySelector('b').previousSibling;
+            range.setStart(prev, prev.length);
+            range.setEnd(doc.querySelector('b').childNodes[0], 8);
+            editor.setSelection(range);
+            expect(editor.hasFormat('b'), 'to be true');
+        });
+
+        it('returns true when range covers end of format', function () {
+            var range = doc.createRange();
+            range.setStart(doc.querySelector('b').childNodes[0], 2);
+            range.setEndAfter(doc.querySelector('b'));
+            editor.setSelection(range);
+            expect(editor.hasFormat('b'), 'to be true');
+        });
+
+        it('returns true when range covers end of format, even in weird cases', function () {
+            var range = doc.createRange();
+            range.setStart(doc.querySelector('b').childNodes[0], 2);
+            var next = doc.querySelector('b').nextSibling;
+            range.setEnd(next, 0);
+            editor.setSelection(range);
+            expect(editor.hasFormat('b'), 'to be true');
+        });
+
+        it('returns true when range covers all of format', function () {
+            var range = doc.createRange();
+            range.setStartBefore(doc.querySelector('b'));
+            range.setEndAfter(doc.querySelector('b'));
+            editor.setSelection(range);
+            expect(editor.hasFormat('b'), 'to be true');
+        });
+    });
+
     describe('removeAllFormatting', function () {
         // Trivial cases
         it('removes inline styles', function () {
@@ -110,6 +192,82 @@ describe('Squire RTE', function () {
                 '<div>two</div>' +
                 '<div>three</div>' +
                 '<table><tbody><tr><td>four</td><td>five</td></tr></tbody></table>');
+        });
+    });
+
+    describe('getPath', function () {
+        var startHTML;
+        beforeEach( function () {
+            startHTML = '<div>one <b>two three</b> four <i>five</i></div>';
+            editor.setHTML(startHTML);
+
+            var range = doc.createRange();
+            range.setStart(doc.body.childNodes.item(0), 0);
+            range.setEnd(doc.body.childNodes.item(0), 1);
+            editor.setSelection(range);
+        });
+
+        it('returns the path to the selection', function () {
+            var range = doc.createRange();
+            range.setStart(doc.body.childNodes.item(0).childNodes.item(1), 0);
+            range.setEnd(doc.body.childNodes.item(0).childNodes.item(1), 0);
+            editor.setSelection(range);
+
+            //Manually tell it to update the path
+            editor._updatePath(range);
+            expect(editor.getPath(), 'to be', 'DIV>B');
+        });
+
+        it('includes id in the path', function () {
+            editor.insertHTML('<div id="spanId">Text</div>');
+            expect(editor.getPath(), 'to be', 'DIV#spanId');
+        });
+
+        it('includes class name in the path', function () {
+            editor.insertHTML('<div class="myClass">Text</div>');
+            expect(editor.getPath(), 'to be', 'DIV.myClass');
+        });
+
+        it('includes all class names in the path', function () {
+            editor.insertHTML('<div class="myClass myClass2 myClass3">Text</div>');
+            expect(editor.getPath(), 'to be', 'DIV.myClass.myClass2.myClass3');
+        });
+
+        it('includes direction in the path', function () {
+            editor.insertHTML('<div dir="rtl">Text</div>');
+            expect(editor.getPath(), 'to be', 'DIV[dir=rtl]');
+        });
+
+        it('includes highlight value in the path', function () {
+            editor.insertHTML('<div class="highlight" style="background-color: rgb(255, 0, 0)">Text</div>');
+            expect(editor.getPath(), 'to be', 'DIV.highlight[backgroundColor=rgb(255,0,0)]');
+        });
+
+        it('includes color value in the path', function () {
+            editor.insertHTML('<div class="colour" style="color: rgb(255, 0, 0)">Text</div>');
+            expect(editor.getPath(), 'to be', 'DIV.colour[color=rgb(255,0,0)]');
+        });
+
+        it('includes font family value in the path', function () {
+            editor.insertHTML('<div class="font" style="font-family: Arial, sans-serif">Text</div>');
+            expect(editor.getPath(), 'to be', 'DIV.font[fontFamily=Arial,sans-serif]');
+        });
+
+        it('includes font size value in the path', function () {
+            editor.insertHTML('<div class="size" style="font-size: 12pt">Text</div>');
+            expect(editor.getPath(), 'to be', 'DIV.size[fontSize=12pt]');
+        });
+
+        it('is (selection) when the selection is a range', function() {
+            var range = doc.createRange();
+            range.setStart(doc.body.childNodes.item(0).childNodes.item(0), 0);
+            range.setEnd(doc.body.childNodes.item(0).childNodes.item(3), 0);
+            editor.setSelection(range);
+
+            //Manually tell it to update the path
+            editor._updatePath(range);
+
+            expect(editor.getPath(), 'to be', '(selection)');
         });
     });
 
