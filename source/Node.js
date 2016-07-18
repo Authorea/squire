@@ -203,6 +203,16 @@ function getNearest ( node, tag, attributes ) {
     return null;
 }
 
+function isOrContains ( parent, node ) {
+    while ( node ) {
+        if ( node === parent ) {
+            return true;
+        }
+        node = node.parentNode;
+    }
+    return false;
+}
+
 function getPath ( node ) {
     var parent = node.parentNode,
         path, id, className, classNames, dir;
