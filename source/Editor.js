@@ -1680,7 +1680,7 @@ proto.setHTML = function ( html ) {
     enableRestoreSelection.call( this );
     this._updatePath( range, true );
 
-    removeTrailingZWS(this._body)
+    removeTrailingZWS(this._root)
     ensurePreZNodesForContentEditable( root )
     return this;
 };

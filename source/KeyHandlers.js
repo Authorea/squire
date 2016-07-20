@@ -108,10 +108,10 @@ var mapKeyToFormat = function ( tag, remove ) {
 var afterDelete = function ( self, range ) {
     // console.info("after delete")
     try {
-        ensureBrAtEndOfAllLines(self._body)
-        ensurePreZNodesForContentEditable(self._body)
-        removeDanglingZNodes(self._body)
-        removeEmptyInlines( self._body )
+        ensureBrAtEndOfAllLines(self._root)
+        ensurePreZNodesForContentEditable(self._root)
+        removeDanglingZNodes(self._root)
+        removeEmptyInlines( self._root )
 
         if ( !range ) { range = self.getSelection(); }
         var node = range.startContainer,
@@ -650,7 +650,7 @@ Squire.prototype.backspace = function(self, event, range){
         //     window.rootNodeOfClean = rootNodeOfClean
         //     //CleanTree will trim whitespace, but it won't do this if there is a <br> tag at the end of the line
         //     //We want to preserve whitespace that the user has entered so calling ensureBr is necessary
-        //     ensureBrAtEndOfAllLines(self._body)
+        //     ensureBrAtEndOfAllLines(self._root)
         //     cleanTree(rootNodeOfClean)
         //     replaceDoubleSpace(rootNodeOfClean, range)
         //     replaceTrailingSingleSpace(rootNodeOfClean, range)
@@ -664,7 +664,7 @@ Squire.prototype.backspace = function(self, event, range){
 Squire.prototype.moveRight = function(self, event, range){
     self  = self  ? self  : this
     //TODO: stop looking for BR tags to designate end of lines
-    ensureBrAtEndOfAllLines(self._body)
+    ensureBrAtEndOfAllLines(self._root)
     event && event.preventDefault()
     range = range ? range : self.getSelection()
     self._removeZWS();
@@ -673,7 +673,7 @@ Squire.prototype.moveRight = function(self, event, range){
     var ec = range.endContainer
     var eo = range.endOffset
     var parent = sc.parent
-    var root = self._body
+    var root = self._root
     var nn
     var block = getStartBlockOfRange(range)
     window.sc = sc
@@ -768,19 +768,19 @@ Squire.prototype.moveRight = function(self, event, range){
 Squire.prototype.moveUp = function(self, event, range){
   self  = self  ? self  : this
   //TODO: stop looking for BR tags to designate end of lines
-  ensureBrAtEndOfAllLines(self._body)
+  ensureBrAtEndOfAllLines(self._root)
   range = range ? range : self.getSelection()
   self._removeZWS();
   var so = range.startOffset
   var sc = range.startContainer
-  var root = self._body
+  var root = self._root
 
   var lineNumber = getLineNumber(root, sc)
   if(lineNumber === 0){
     console.info("on line 0")
     event && event.preventDefault()
     var e = new CustomEvent('squire::up-on-first-line', { 'detail': {range: range} });
-    self._doc.dispatchEvent(e);
+    root.dispatchEvent(e);
     // return
   }
   setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
@@ -790,19 +790,19 @@ Squire.prototype.moveUp = function(self, event, range){
 Squire.prototype.moveDown = function(self, event, range){
   self  = self  ? self  : this
   //TODO: stop looking for BR tags to designate end of lines
-  ensureBrAtEndOfAllLines(self._body)
+  ensureBrAtEndOfAllLines(self._root)
   range = range ? range : self.getSelection()
   self._removeZWS();
   var so = range.startOffset
   var sc = range.startContainer
-  var root = self._body
+  var root = self._root
 
   var lineNumber = getLineNumber(root, sc)
   if(lineNumber === root.childNodes.length - 1){
     console.info("on last line")
     event && event.preventDefault()
     var e = new CustomEvent('squire::down-on-last-line', { 'detail': {range: range} });
-    self._doc.dispatchEvent(e);
+    root.dispatchEvent(e);
     // return
   }
   setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
@@ -811,7 +811,7 @@ Squire.prototype.moveDown = function(self, event, range){
 Squire.prototype.moveLeft = function(self, event, range){
     self  = self  ? self  : this
     //TODO: stop looking for BR tags to designate end of lines
-    ensureBrAtEndOfAllLines(self._body)
+    ensureBrAtEndOfAllLines(self._root)
     event && event.preventDefault()
     range = range ? range : self.getSelection()
     self._removeZWS();
@@ -820,7 +820,7 @@ Squire.prototype.moveLeft = function(self, event, range){
     var ec = range.endContainer
     var eo = range.endOffset
     var parent = sc.parent
-    var root = self._body
+    var root = self._root
     var nn
     var block = getStartBlockOfRange(range)
     window.sc = sc
