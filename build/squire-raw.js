@@ -1964,10 +1964,10 @@ keyHandlers[ ctrlKey + 'z' ] = mapKeyTo( 'undo' );
 keyHandlers[ ctrlKey + 'shift-z' ] = mapKeyTo( 'redo' );
 
 var getLineNumber = function(root, node){
-  if(node.parentNode === root){
+  if(root.isSameNode(node.parentNode)) {
     return indexOf.call(root.childNodes, node)
   }
-  else{
+  else {
     return getLineNumber(root, node.parentNode)
   }
 }
