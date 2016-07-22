@@ -1964,7 +1964,7 @@ keyHandlers[ ctrlKey + 'z' ] = mapKeyTo( 'undo' );
 keyHandlers[ ctrlKey + 'shift-z' ] = mapKeyTo( 'redo' );
 
 var getLineNumber = function(root, node){
-  if(root.isSameNode(node.parentNode)) {
+  if(root === node.parentNode) {
     return indexOf.call(root.childNodes, node)
   }
   else {
@@ -2033,7 +2033,7 @@ Squire.prototype.backspace = function(self, event, range){
     else if ( rangeDoesStartAtBlockBoundary( range ) ) {
         console.info("range starts at block boundary")
         var current = getStartBlockOfRange( range ),
-            previous = current && getPreviousBlock( current );
+            previous = current && getPreviousBlock( current, self._root );
         // Must not be at the very beginning of the text area.
         if ( previous ) {
             // If not editable, just delete whole block.
@@ -2312,6 +2312,7 @@ Squire.prototype.moveLeft = function(self, event, range){
     ensureBrAtEndOfAllLines(self._root)
     event && event.preventDefault()
     range = range ? range : self.getSelection()
+
     self._removeZWS();
     var so = range.startOffset
     var sc = range.startContainer
@@ -2333,7 +2334,7 @@ Squire.prototype.moveLeft = function(self, event, range){
     if(rangeDoesStartAtBlockBoundary(range)){
         var block = getStartBlockOfRange(range)
 
-        var previousBlock = block && getPreviousBlock(block)
+        var previousBlock = block && getPreviousBlock(block, root)
         if(block && previousBlock){
             self.setSelectionToNode(previousBlock)
             var newRange = self.getSelection()
