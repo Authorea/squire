@@ -397,6 +397,8 @@ function isText( node ){
 }
 
 function getBlockWalker ( node, root ) {
+    console.info("BLOCKWALKER ROOT: ")
+    console.info(root)
     var walker = new TreeWalker( root, SHOW_ELEMENT, function (node) {
       return(isBlock(node)  && !notEditable(node))
     });
@@ -1225,6 +1227,7 @@ var isNodeContainedInRange = function ( range, node, partial ) {
 // If the starting and ending range offsets are collapsed and on the first element in the container, this will
 // move down and to the left, otherwise it will move down and to the right
 var moveRangeBoundariesDownTree = function ( range ) {
+    console.info("MOVING RANGE DOWN TREE")
     var startContainer = range.startContainer,
         startOffset = range.startOffset,
         endContainer = range.endContainer,
@@ -1328,6 +1331,8 @@ var moveRangeBoundariesUpTree = function ( range, common ) {
     range.setEnd( endContainer, endOffset );
 };
 
+// Nate: This has no root argument, but I would think it needs to terminate at
+// the root node if nothing is found
 var moveRangeOutOfNotEditable = function( range ){
 
     var startContainer = range.startContainer
@@ -2173,14 +2178,14 @@ Squire.prototype.moveRight = function(self, event, range){
     var parent = sc.parent
     var root = self._root
     var nn
-    var block = getStartBlockOfRange(range)
+    var block = getStartBlockOfRange(range, root)
     window.sc = sc
     window.so = so
     window.r = range
 
-    if(rangeDoesEndAtBlockBoundary(range)){
+    if(rangeDoesEndAtBlockBoundary(range, root)){
         window.b1 = block
-        var nextBlock = block && getNextBlock(block)
+        var nextBlock = block && getNextBlock(block, root)
         window.nb1 = nextBlock
 
         if(nextBlock){
@@ -2307,6 +2312,7 @@ Squire.prototype.moveDown = function(self, event, range){
 }
 
 Squire.prototype.moveLeft = function(self, event, range){
+    console.info("MOVING LEFT")
     self  = self  ? self  : this
     //TODO: stop looking for BR tags to designate end of lines
     ensureBrAtEndOfAllLines(self._root)
@@ -2320,7 +2326,7 @@ Squire.prototype.moveLeft = function(self, event, range){
     var parent = sc.parent
     var root = self._root
     var nn
-    var block = getStartBlockOfRange(range)
+    var block = getStartBlockOfRange(range, root)
     window.sc = sc
     window.so = so
     window.r = range
@@ -2330,11 +2336,15 @@ Squire.prototype.moveLeft = function(self, event, range){
         range.setStart(sc, so)
         self.setSelection(range)
     }
-    if(rangeDoesStartAtBlockBoundary(range)){
+    if(rangeDoesStartAtBlockBoundary(range, root)){
+        console.info("RANGE STARTS AT BLOCK BOUNDARY")
         var block = getStartBlockOfRange(range)
 
-        var previousBlock = block && getPreviousBlock(block)
+        var previousBlock = block && getPreviousBlock(block, root)
         if(block && previousBlock){
+          console.info("previousBlock:")
+          console.info(previousBlock)
+
             self.setSelectionToNode(previousBlock)
             var newRange = self.getSelection()
             newRange.setStart(newRange.endContainer, newRange.endContainer.childNodes.length-1)
@@ -2343,10 +2353,13 @@ Squire.prototype.moveLeft = function(self, event, range){
             self.setSelection(newRange)
         }
         else{
-            // console.info("no block found")
+          console.info("no block found")
         }
     }
     else if(sc.nodeType === TEXT_NODE){
+        console.info("TEXT_NODE")
+
+
         var l = sc.length
         //If we are in a text node and not at the end, move one character to the right
         if(so > 0){
@@ -2549,10 +2562,10 @@ var filterSpanAttributes = function(span){
 
 var replaceStyles = function ( node, parent ) {
   //NATE: TODO: whitelist of classes for span
-  span.removeAttribute("style")
-  filterSpanClasses(span)
-  filterSpanAttributes(span)
-  return span
+  node.removeAttribute("style")
+  filterSpanClasses(node)
+  filterSpanAttributes(node)
+  return node
   // NATE: I want to leave one line of the old code in as a reminder, this is the line that was causing
   // one span to get broken out into many spans, but it was kind of clever and we might want to use the idea
   // at a later time.  It looked at if something had a large font or a certain color and tried to guess what the

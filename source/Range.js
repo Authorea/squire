@@ -341,6 +341,7 @@ var isNodeContainedInRange = function ( range, node, partial ) {
 // If the starting and ending range offsets are collapsed and on the first element in the container, this will
 // move down and to the left, otherwise it will move down and to the right
 var moveRangeBoundariesDownTree = function ( range ) {
+    console.info("MOVING RANGE DOWN TREE")
     var startContainer = range.startContainer,
         startOffset = range.startOffset,
         endContainer = range.endContainer,
@@ -444,6 +445,8 @@ var moveRangeBoundariesUpTree = function ( range, common ) {
     range.setEnd( endContainer, endOffset );
 };
 
+// Nate: This has no root argument, but I would think it needs to terminate at
+// the root node if nothing is found
 var moveRangeOutOfNotEditable = function( range ){
 
     var startContainer = range.startContainer
