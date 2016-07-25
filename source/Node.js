@@ -159,6 +159,8 @@ function isText( node ){
 }
 
 function getBlockWalker ( node, root ) {
+    console.info("BLOCKWALKER ROOT: ")
+    console.info(root)
     var walker = new TreeWalker( root, SHOW_ELEMENT, function (node) {
       return(isBlock(node)  && !notEditable(node))
     });

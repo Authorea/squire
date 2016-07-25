@@ -73,24 +73,34 @@ var initEditors = function(){
     // testLists()
     // testTables()
     // testInsertHTML()
-    // testResults()
+    testResults()
 
     setTimeout(updateCursor, 20)
   });
 }
 
 quickTest = function(){
+  // prepareTest("<div>a<br></div><div><br></div><div>b<br></div>")
+  // editor.addEventListener('squire::up-on-first-line', function(e){
+  //   console.info('UP EVENT')
+  //   console.info(e)
+  //   window.e = e
+  // })
+  // editor.addEventListener('squire::down-on-last-line', function(e){
+  //   console.info('UP EVENT')
+  //   console.info(e)
+  //   window.e = e
+  // })
+  console.info("starting quick test")
+  keyEvent = new KeyboardEvent("keydown", {key : "a", keyCode: 65, code: "KeyA", cancelable: true});
   prepareTest("<div>a<br></div><div><br></div><div>b<br></div>")
-  editor.addEventListener('squire::up-on-first-line', function(e){
-    console.info('UP EVENT')
-    console.info(e)
-    window.e = e
-  })
-  editor.addEventListener('squire::down-on-last-line', function(e){
-    console.info('UP EVENT')
-    console.info(e)
-    window.e = e
-  })
+  // editor.moveRight(editor, keyEvent, range);updateCursor()
+  // editor.moveRight(editor, keyEvent, range);updateCursor()
+  // editor.moveRight(editor, keyEvent, range);updateCursor()
+  // editor.moveRight(editor, keyEvent, range);updateCursor()
+  // testBlock(SquireRange.getNextBlock(firstLine), "right arrow from end of text at end of line")
+
+  console.info("ended quick test")
 }
 
 var updateCursor = function(){
@@ -167,8 +177,8 @@ prepareTest = function(html){
   editor.setHTML(html)
   updateCursor()
   editor.focus()
-  range = editor.getSelection()
-  firstLine = editor._doc.body.childNodes[0]
+  // range = editor.getSelection()
+  // firstLine = editor._doc.body.childNodes[0]
 }
 
 testContent = function(content, offset, message){
@@ -229,6 +239,7 @@ runTests = function(){
   editor.moveRight(editor, keyEvent, range);
   editor.moveRight(editor, keyEvent, range);
   editor.moveRight(editor, keyEvent, range);
+  return
   testContent("d", 0, "right arrow over non-editable")
   editor.moveLeft(editor, keyEvent, range);
   editor.moveRight(editor, keyEvent, range);
