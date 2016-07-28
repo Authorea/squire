@@ -1139,6 +1139,14 @@ var increaseBlockQuoteLevel = function ( frag ) {
         ]);
 };
 
+var increaseIndentLevel = function ( frag ) {
+  var props = this._config.tagAttributes.blockquote || {};
+
+  props.class = 'no-left-border';
+
+  return this.createElement( 'BLOCKQUOTE', props, [frag])
+}
+
 var decreaseBlockQuoteLevel = function ( frag ) {
     var blockquotes = frag.querySelectorAll( 'blockquote' );
     Array.prototype.filter.call( blockquotes, function ( el ) {
@@ -1865,6 +1873,9 @@ proto.removeAllFormatting = function ( range ) {
 
 proto.increaseQuoteLevel = command( 'modifyBlocks', increaseBlockQuoteLevel );
 proto.decreaseQuoteLevel = command( 'modifyBlocks', decreaseBlockQuoteLevel );
+
+proto.increaseIndentLevel = command( 'modifyBlocks', increaseIndentLevel )
+proto.decreaseIndentLevel = proto.decreaseQuoteLevel
 
 proto.makeUnorderedList = command( 'modifyBlocks', makeUnorderedList );
 proto.makeOrderedList = command( 'modifyBlocks', makeOrderedList );
