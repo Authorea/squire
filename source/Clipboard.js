@@ -39,11 +39,33 @@ var onCopy = function ( event ) {
     var range = this.getSelection();
     var node = this.createElement( 'div' );
 
+    var commonAncestor = range.commonAncestorContainer
+    var blacklist = /^(div|body)$/
+    var newContents;
+    var outerTagName;
+    var outerHTML;
+
     // Edge only seems to support setting plain text as of 2016-03-11.
     // Mobile Safari flat out doesn't work:
     // https://bugs.webkit.org/show_bug.cgi?id=143776
     if ( !isEdge && !isIOS && clipboardData ) {
-        node.appendChild( range.cloneContents() );
+        newContents = range.cloneContents()
+        node.appendChild( newContents );
+
+        //
+        // MILO: Perplexing Squire doesn't have code for this already
+        //       but hey. Now if you copy from within a tag it will be
+        //       replicated.
+        //
+        if(commonAncestor && commonAncestor.parentNode) {
+          outerTagName = commonAncestor.parentNode.tagName.toLowerCase()
+          outerHTML = commonAncestor.parentNode.outerHTML
+
+          if(!blacklist.test(outerTagName)) {
+            node.innerHTML = '<' + outerTagName + '>' + node.innerHTML + '</' + outerTagName + '>'
+          }
+        }
+
         clipboardData.setData( 'text/html', node.innerHTML );
         clipboardData.setData( 'text/plain',
             node.innerText || node.textContent );
