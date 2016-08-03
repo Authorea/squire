@@ -40,8 +40,7 @@ var onCopy = function ( event ) {
     var node = this.createElement( 'div' );
 
     var commonAncestor = range.commonAncestorContainer
-    var blacklist = /^(div|body)$/
-    var newContents;
+    var whitelist = /^(i|b)$/
     var outerTagName;
     var outerHTML;
 
@@ -49,19 +48,12 @@ var onCopy = function ( event ) {
     // Mobile Safari flat out doesn't work:
     // https://bugs.webkit.org/show_bug.cgi?id=143776
     if ( !isEdge && !isIOS && clipboardData ) {
-        newContents = range.cloneContents()
-        node.appendChild( newContents );
-
-        //
-        // MILO: Perplexing Squire doesn't have code for this already
-        //       but hey. Now if you copy from within a tag it will be
-        //       replicated.
-        //
+        node.appendChild( range.cloneContents() );
         if(commonAncestor && commonAncestor.parentNode) {
           outerTagName = commonAncestor.parentNode.tagName.toLowerCase()
           outerHTML = commonAncestor.parentNode.outerHTML
 
-          if(!blacklist.test(outerTagName)) {
+          if(whitelist.test(outerTagName)) {
             node.innerHTML = '<' + outerTagName + '>' + node.innerHTML + '</' + outerTagName + '>'
           }
         }
