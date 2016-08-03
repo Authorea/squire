@@ -2026,7 +2026,7 @@ Squire.prototype.backspace = function(self, event, range){
     window.block = block
     if ( !range.collapsed ) {
         console.info("range not collapsed")
-        deleteContentsOfRange( range );
+        deleteContentsOfRange( range, self._root );
         afterDelete( self, range );
     }
     // If at beginning of block, merge with previous
