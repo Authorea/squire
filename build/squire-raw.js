@@ -2019,8 +2019,8 @@ Squire.prototype.backspace = function(self, event, range){
     range = range ? range : self.getSelection()
     self._removeZWS();
     // Record undo checkpoint.
-    self._recordUndoState( range );
-    self._getRangeAndRemoveBookmark( range );
+    self._recordUndoState( range.cloneRange() );
+    self._getRangeAndRemoveBookmark( range.cloneRange() );
     // If not collapsed, delete contents
     var block = getStartBlockOfRange(range)
     window.block = block
@@ -2030,7 +2030,7 @@ Squire.prototype.backspace = function(self, event, range){
         afterDelete( self, range );
     }
     // If at beginning of block, merge with previous
-    else if ( rangeDoesStartAtBlockBoundary( range ) ) {
+    else if ( rangeDoesStartAtBlockBoundary( range, self._root ) ) {
         console.info("range starts at block boundary")
         var current = getStartBlockOfRange( range ),
             previous = current && getPreviousBlock( current, self._root );
@@ -2331,7 +2331,7 @@ Squire.prototype.moveLeft = function(self, event, range){
         range.setStart(sc, so)
         self.setSelection(range)
     }
-    if(rangeDoesStartAtBlockBoundary(range)){
+  if(rangeDoesStartAtBlockBoundary(range, self._root)){
         var block = getStartBlockOfRange(range)
 
         var previousBlock = block && getPreviousBlock(block, root)
