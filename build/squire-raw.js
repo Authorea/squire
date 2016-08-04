@@ -2550,10 +2550,10 @@ var filterSpanAttributes = function(span){
 
 var replaceStyles = function ( node, parent ) {
   //NATE: TODO: whitelist of classes for span
-  span.removeAttribute("style")
-  filterSpanClasses(span)
-  filterSpanAttributes(span)
-  return span
+  node.removeAttribute("style")
+  filterSpanClasses(node)
+  filterSpanAttributes(node)
+  return node
   // NATE: I want to leave one line of the old code in as a reminder, this is the line that was causing
   // one span to get broken out into many spans, but it was kind of clever and we might want to use the idea
   // at a later time.  It looked at if something had a large font or a certain color and tried to guess what the
@@ -3138,7 +3138,7 @@ var onCopy = function ( event ) {
     var node = this.createElement( 'div' );
 
     var commonAncestor = range.commonAncestorContainer
-    var whitelist = /^(em|b)$/
+    var whitelist = /^(i|b)$/
     var outerTagName;
     var outerHTML;
 
@@ -3602,7 +3602,7 @@ proto.createDefaultBlock = function ( children ) {
 };
 
 proto.didError = function ( error ) {
-    console.log( error );
+    console.error( error );
 };
 
 proto.getDocument = function () {
