@@ -99,7 +99,8 @@ var filterClasses = function(node, whiteList){
 var filterSpanClasses = function(span){
     var whiteList = {
         "katex": 1,
-        "ltx_Math": 1
+        "ltx_Math": 1,
+        "not-editable": 1
     }
     return filterClasses(span, whiteList)
 }
@@ -131,7 +132,6 @@ var filterAttributes = function(node, whiteList){
 var filterSpanAttributes = function(span){
     var whiteList = {
         "class": 1,
-        "contenteditable": 1,
         "data": 1
     }
     return filterAttributes(span, whiteList)
@@ -225,7 +225,7 @@ var stylesRewriters = {
     // Basically for the moment if we don't know what it is it will have no classes and no attributes.
     DEFAULT_REWRITER: function ( node, parent ){
         filterClasses(node, {})
-        filterAttributes(node, {data: 1, class: 1, contenteditable: 1})
+        filterAttributes(node, {data: 1, class: 1})
         return node
     },
     A: function ( node, parent ){
@@ -445,25 +445,6 @@ var replaceTrailingSingleSpace = function replaceTrailingSingleSpace ( root, ran
     }
 };
 
-// Nate:  The hack I found to get chrome happy with noneditable containers is to place a zero-width-space and
-// a dummy <z> container in front of them.  This ZWS can sometimes be absorbed by the text element preceding it.
-// They are impossible to see.
-var removeTrailingZWS = function removeTrailingZWS ( root ) {
-    var walker = new TreeWalker(root, SHOW_TEXT, function(){return true})
-    var node = walker.currentNode
-    while(node){
-        if (isText(node) && !isLeaf( node ) ) {
-            if(node.data){
-                if(node.data.length > 1 && node.data[node.data.length-1] === ZWNBS){
-                    node.replaceData(node.data.length-1, 1, "")
-
-                }
-            }
-        }
-        node = walker.nextNode()
-    }
-};
-
 var ensureBrAtEndOfAllLines = function (root){
     //NATE: even divs which are not lines need to have brs at their end for chrome to happily play with spaces
     ensureBrAtEndOfAllDivs(root)
@@ -509,84 +490,6 @@ var removeBrAtEndOfAllLines = function (root){
         }
     }
 }
-
-// The only purpose of the Z node is to protect a following non-editable container, removing it
-// if it's neighbor is missing or editable
-var removeDanglingZNodes = function(root){
-    var walker = new TreeWalker(root, SHOW_ELEMENT, function(){return true})
-    var node = walker.currentNode
-    var nodesToRemove = []
-    var ps
-
-    while(node){
-        if (node.nodeName === 'Z' ) {
-            if(!notEditable(node.nextSibling)){
-                nodesToRemove.push(node)
-                ps = node.previousSibling
-                if(isZWNBS(ps)){
-                    nodesToRemove.push(ps)
-                }
-            }
-        }
-        node = walker.nextNode()
-    }
-    nodesToRemove.forEach(function(node){
-        detach(node)
-    })
-};
-
-var removeAllZNodes = function(root){
-    var walker = new TreeWalker(root, SHOW_ELEMENT, function(){return true})
-    var node = walker.currentNode
-    var ps
-    var nodesToRemove = []
-
-    while(node){
-        if (node.nodeName === 'Z' ) {
-            nodesToRemove.push(node)
-            ps = node.previousSibling
-            if(isZWNBS(ps)){
-                nodesToRemove.push(ps)
-            }
-        }
-        node = walker.nextNode()
-    }
-    nodesToRemove.forEach(function(node){
-        detach(node)
-    })
-};
-var ensurePreZNodesForContentEditable = function(root){
-    //only uppermost not editables need the Z tag, because the lower nodes will be inaccessible
-    var walker = new TreeWalker(root, SHOW_ELEMENT, function(node){return (notEditable(node) && !notEditable(node.parentNode) )})
-    var node = walker.currentNode
-    var doc = node.ownerDocument
-    if(!walker.filter(node)){
-        node = walker.nextNode()
-    }
-    var previousNode, zwsNode
-    var n, t
-
-    while(node){
-        previousNode = node.previousSibling
-        if(!(previousNode && previousNode.nodeName === "Z")){
-            n = doc.createElement("z")
-            // node.parentNode.insertBefore(t, node)
-            node.parentNode.insertBefore(n, node)
-        }
-        else{
-            n = previousNode
-        }
-        zwsNode = n && n.previousSibling
-        if(!isZWNBS(zwsNode)){
-            t = doc.createTextNode( ZWNBS )
-            // node.parentNode.insertBefore(t, node)
-            n.parentNode.insertBefore(t, n)
-        }
-
-        node = walker.nextNode()
-    }
-}
-
 
 // ---
 
@@ -678,9 +581,6 @@ Squire.Clean = function(){}
 //NATE: normally I use the editor.collapseSimpleSpans but for testing I would like to have it available from Squire.Clean
 Squire.Clean.collapseSimpleSpans = collapseSimpleSpans
 Squire.prototype.cleanTree = cleanTree
-Squire.prototype.removeDanglingZNodes = removeDanglingZNodes
-Squire.prototype.ensurePreZNodesForContentEditable = ensurePreZNodesForContentEditable
-Squire.prototype.removeAllZNodes = removeAllZNodes
 Squire.prototype.removeEmptyInlines = removeEmptyInlines
 Squire.prototype.collapseSimpleSpans = collapseSimpleSpans
 Squire.prototype.ensureBrAtEndOfAllLines = ensureBrAtEndOfAllLines

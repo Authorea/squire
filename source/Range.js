@@ -78,7 +78,6 @@ var insertNodeInRange = function ( range, node ) {
 
     range.setStart( startContainer, startOffset );
     range.setEnd( endContainer, endOffset );
-    ensurePreZNodesForContentEditable( node.ownerDocument.body )
     ensureBrAtEndOfAllLines( node.ownerDocument.body )
 };
 
@@ -448,13 +447,16 @@ var moveRangeBoundariesUpTree = function ( range, common ) {
 // Nate: This has no root argument, but I would think it needs to terminate at
 // the root node if nothing is found
 var moveRangeOutOfNotEditable = function( range ){
-
+    console.info("MOVING RANGE OUT OF")
     var startContainer = range.startContainer
     var endContainer = range.endContainer
     var moveRight = false
     var nextSibling
+
+    window.mrange = range
     if(range.collapsed){
         if(startContainer.nodeType === TEXT_NODE){
+            console.info("IS TEXT NODE")
             var currentParent = startContainer.parentNode
             var newParent = currentParent
             var textLength = startContainer.data.length

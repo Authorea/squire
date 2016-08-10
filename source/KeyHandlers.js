@@ -109,8 +109,6 @@ var afterDelete = function ( self, range ) {
     // console.info("after delete")
     try {
         ensureBrAtEndOfAllLines(self._root)
-        ensurePreZNodesForContentEditable(self._root)
-        removeDanglingZNodes(self._root)
         removeEmptyInlines( self._root )
 
         if ( !range ) { range = self.getSelection(); }
@@ -251,7 +249,7 @@ var keyHandlers = {
             }
 
 
-            if ( nodeAfterSplit.nodeType !== TEXT_NODE && notEditable(nodeAfterSplit)) {
+            if ( nodeAfterSplit.nodeType !== TEXT_NODE && notEditable(nodeAfterSplit, root)) {
                 break;
             }
             while ( child && child.nodeType === TEXT_NODE && !child.data ) {
@@ -306,7 +304,7 @@ var keyHandlers = {
             // Must not be at the very end of the text area.
             if ( next ) {
                 // If not editable, just delete whole block.
-                if ( notEditable(next) ) {
+                if ( notEditable(next, root) ) {
                     detach( next );
                     return;
                 }
@@ -330,7 +328,7 @@ var keyHandlers = {
             var so = range.startOffset
             if(sc.nodeType === ELEMENT_NODE){
                 var ch = sc.childNodes[so]
-                if(notEditable(ch)){
+                if(notEditable(ch, root)){
                     detach( next );
                 }
             }
@@ -478,7 +476,6 @@ var findNextBRTag = function(root, node){
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
                         return ( node.nodeName === "BR" )
     } );
-    window.w = w
     w.currentNode = node;
     return w.nextNONode()
 }
@@ -487,25 +484,23 @@ var findPreviousBRTag = function(root, node){
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
                         return ( node.nodeName === "BR" )
     } );
-    window.w = w
     w.currentNode = node;
     return w.previousNode()
 }
 
 var findNextTextOrNotEditable = function(root, node){
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
-        return ( (isText(node) && !isZWNBS(node)) || notEditable(node) )
+        return ( (isText(node) && !isZWNBS(node)) || notEditable(node, root) )
     } );
-    window.w = w
     w.currentNode = node;
+    //NATE: TODO: call this with root
     return w.nextNONode(notEditable)
 }
 
 var findPreviousTextOrNotEditable = function(root, node){
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
-        return ( (isText(node) && !isZWNBS(node)) || notEditable(node) )
+        return ( (isText(node) && !isZWNBS(node)) || notEditable(node, root) )
     } );
-    window.w = w
     w.currentNode = node;
     return w.previousNode(notEditable)
 }
@@ -517,6 +512,7 @@ var printRange = function(range, message){
 
 Squire.prototype.backspace = function(self, event, range){
     self  = self  ? self  : this
+    var root = self._root;
     event && event.preventDefault()
     range = range ? range : self.getSelection()
     self._removeZWS();
@@ -539,7 +535,7 @@ Squire.prototype.backspace = function(self, event, range){
         // Must not be at the very beginning of the text area.
         if ( previous ) {
             // If not editable, just delete whole block.
-            if ( notEditable(previous) ) {
+            if ( notEditable(previous, root) ) {
                 detach( previous );
                 return;
             }
@@ -613,7 +609,7 @@ Squire.prototype.backspace = function(self, event, range){
                         detach(pn);
                     }
                 }
-                else if(notEditable(pn)){
+                else if(notEditable(pn, root)){
                     detach(pn);
                 }
                 rootNodeOfClean = previousParent
@@ -637,7 +633,7 @@ Squire.prototype.backspace = function(self, event, range){
                     }
 
                 }
-                else if(notEditable(pn)){
+                else if(notEditable(pn, root)){
                     detach(pn);
                 }
             }
@@ -710,7 +706,7 @@ Squire.prototype.moveRight = function(self, event, range){
             // The right cursor has a special case where it should skip over the first notEditable node,
             // otherwise it will take two right presses to go from text->notEditable->text
             if(nn){
-                if(notEditable(nn)){
+                if(notEditable(nn, root)){
                     nn = findNextTextOrNotEditable(block, nn)
                     skippedNode = true
                 }

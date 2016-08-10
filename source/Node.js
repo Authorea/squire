@@ -95,9 +95,20 @@ function every ( nodeList, fn ) {
 
 // ---
 
-function isLeaf ( node ) {
+function isLeaf ( node, root ) {
+  console.info("ISLEAF")
+    //NATE: TODO: replace all occurrences of isLeaf(node) with isLeaf(node, root)
+    if (typeof root === 'undefined'){
+      console.info("UNDEFINED ROOT IN isLeaf")
+      // console.info(node)
+      // console.info(console.trace())
+      // console.info(document)
+      // console.info(document.body)
+      root = document.body
+      // window.d = document
+    }
     return (node.nodeType === ELEMENT_NODE &&
-        (!!leafNodeNames[ node.nodeName ]) || notEditable(node));
+        (!!leafNodeNames[ node.nodeName ]) || notEditable(node, root));
 }
 function isInline ( node ) {
     return (inlineNodeNames.test( node.nodeName ) || mathMLNodeNames[node.nodeName]);
@@ -118,37 +129,28 @@ function isZWS ( node ) {
 function isZWNBS ( node ) {
     return (isText(node) && node.data === ZWNBS)
 }
-function isZ ( node ) {
-    return (node && node.nodeName === 'Z')
-}
 
-// Not all nodes have isContentEditable defined, but once we find a node with it defined
-// it will search up the parentNode list for us and figure out if any are not editable
-function notEditable( node ){
+function notEditable( node, root ){
+  //NATE: TODO: replace all occurrences of notEditable(node) with notEditable(node, root)
+  if(typeof root === 'undefined'){
+    console.info("UNDEFINED ROOT IN notEditable")
+    r = document.body
+  }
+  if(node === root){
+    return true
+  }
+
+  if($(node).hasClass('not-editable')){
+    return true
+  }
+  else{
     if(!node){
         return false
     }
-    //likely a text node
-    if(node.isContentEditable === undefined){
-        return(notEditable(node.parentNode))
-    }
-    // chrome has a bug that will return false for isContentEditable if the node is not visible on the
-    // page: https://code.google.com/p/chromium/issues/detail?id=313082, thus we have to check for the
-    // attribute
     else{
-        // return (node.isContentEditable === false)
-        if(node.hasAttribute('contenteditable')){
-            if(node.getAttribute('contenteditable') === "false"){
-                return true
-            }
-            else{
-                return false
-            }
-        }
-        else{
-            return(notEditable(node.parentNode))
-        }
+        return(notEditable(node.parentNode, root))
     }
+  }
 }
 
 function isText( node ){
@@ -159,8 +161,6 @@ function isText( node ){
 }
 
 function getBlockWalker ( node, root ) {
-    console.info("BLOCKWALKER ROOT: ")
-    console.info(root)
     var walker = new TreeWalker( root, SHOW_ELEMENT, function (node) {
       return(isBlock(node)  && !notEditable(node))
     });
