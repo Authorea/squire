@@ -71,10 +71,9 @@ var onKey = function ( event ) {
         this._keyHandlers[ key ]( this, event, range );
     } else if ( key.length === 1 && !range.collapsed ) {
         // Record undo checkpoint.
-        this._recordUndoState( range );
-        this._getRangeAndRemoveBookmark( range );
+        this.saveUndoState( range );
         // Delete the selection
-        deleteContentsOfRange( range );
+        deleteContentsOfRange( range, this._root );
         this._ensureBottomLine();
         this.setSelection( range );
         this._updatePath( range, true );
@@ -109,10 +108,8 @@ var mapKeyToFormat = function ( tag, remove ) {
 var afterDelete = function ( self, range ) {
     // console.info("after delete")
     try {
-        ensureBrAtEndOfAllLines(self._body)
-        ensurePreZNodesForContentEditable(self._body)
-        removeDanglingZNodes(self._body)
-        removeEmptyInlines( self._body )
+        ensureBrAtEndOfAllLines(self._root)
+        removeEmptyInlines( self._root )
 
         if ( !range ) { range = self.getSelection(); }
         var node = range.startContainer,
@@ -133,7 +130,7 @@ var afterDelete = function ( self, range ) {
         window.p55 = parent
         window.n55 = parent
 
-        // If focussed in empty inline element
+        // If focused in empty inline element
         if ( node !== parent ) {
             console.info("removing empty inline")
             // Move focus to just before empty inline(s)
@@ -144,18 +141,18 @@ var afterDelete = function ( self, range ) {
             parent.removeChild( node );
             // Fix cursor in block
             if ( !isBlock( parent ) ) {
-                parent = getPreviousBlock( parent );
+                parent = getPreviousBlock( parent, self._root );
             }
-            fixCursor( parent );
+            fixCursor( parent, self._root );
             // Move cursor into text node
             console.info("moving range down tree")
             moveRangeBoundariesDownTree( range );
         }
         // If you delete the last character in the sole <div> in Chrome,
         // it removes the div and replaces it with just a <br> inside the
-        // body. Detach the <br>; the _ensureBottomLine call will insert a new
+        // root. Detach the <br>; the _ensureBottomLine call will insert a new
         // block.
-        if ( node.nodeName === 'BODY' &&
+        if ( node === self._root &&
                 ( node = node.firstChild ) && node.nodeName === 'BR' ) {
             detach( node );
         }
@@ -175,6 +172,7 @@ var ensureOutsideOfNotEditable = function ( self ){
 
 var keyHandlers = {
     enter: function ( self, event, range ) {
+        var root = self._root;
         var block, parent, nodeAfterSplit;
 
         // We handle this ourselves
@@ -184,17 +182,17 @@ var keyHandlers = {
         // Remove any zws so we don't think there's content in an empty
         // block.
         self._recordUndoState( range );
-        addLinks( range.startContainer );
+        addLinks( range.startContainer, root, self );
         self._removeZWS();
         self._getRangeAndRemoveBookmark( range );
 
         // Selected text is overwritten, therefore delete the contents
         // to collapse selection.
         if ( !range.collapsed ) {
-            deleteContentsOfRange( range );
+            deleteContentsOfRange( range, root );
         }
 
-        block = getStartBlockOfRange( range );
+        block = getStartBlockOfRange( range, root );
 
         // If this is a malformed bit of document or in a table;
         // just play it safe and insert a <br>.
@@ -207,17 +205,18 @@ var keyHandlers = {
         }
 
         // If in a list, we'll split the LI instead.
-        if ( parent = getNearest( block, 'LI' ) ) {
+        if ( parent = getNearest( block, root, 'LI' ) ) {
             block = parent;
         }
 
         if ( !block.textContent ) {
             // Break list
-            if ( getNearest( block, 'UL' ) || getNearest( block, 'OL' ) ) {
+            if ( getNearest( block, root, 'UL' ) ||
+                    getNearest( block, root, 'OL' ) ) {
                 return self.modifyBlocks( decreaseListLevel, range );
             }
             // Break blockquote
-            else if ( getNearest( block, 'BLOCKQUOTE' ) ) {
+            else if ( getNearest( block, root, 'BLOCKQUOTE' ) ) {
                 return self.modifyBlocks( removeBlockQuote, range );
             }
         }
@@ -229,7 +228,7 @@ var keyHandlers = {
         // block
         removeZWS( block );
         removeEmptyInlines( block );
-        fixCursor( block );
+        fixCursor( block, root );
 
         // Focus cursor
         // If there's a <b>/<i> etc. at the beginning of the split
@@ -250,7 +249,7 @@ var keyHandlers = {
             }
 
 
-            if ( nodeAfterSplit.nodeType !== TEXT_NODE && notEditable(nodeAfterSplit)) {
+            if ( nodeAfterSplit.nodeType !== TEXT_NODE && notEditable(nodeAfterSplit, root)) {
                 break;
             }
             while ( child && child.nodeType === TEXT_NODE && !child.data ) {
@@ -274,18 +273,6 @@ var keyHandlers = {
         range = self._createRange( nodeAfterSplit, 0 );
         self.setSelection( range );
         self._updatePath( range, true );
-
-        // Scroll into view
-        if ( nodeAfterSplit.nodeType === TEXT_NODE ) {
-            nodeAfterSplit = nodeAfterSplit.parentNode;
-        }
-        var doc = self._doc,
-            body = self._body;
-        if ( nodeAfterSplit.offsetTop + nodeAfterSplit.offsetHeight >
-                ( doc.documentElement.scrollTop || body.scrollTop ) +
-                body.offsetHeight ) {
-            nodeAfterSplit.scrollIntoView( false );
-        }
     },
     backspace: function ( self, event, range ) {
         self.backspace(self, event, range)
@@ -294,25 +281,30 @@ var keyHandlers = {
         console.info("deleting")
         self._removeZWS();
         // Record undo checkpoint.
-        self._recordUndoState( range );
-        self._getRangeAndRemoveBookmark( range );
+        self.saveUndoState( range );
         // If not collapsed, delete contents
         if ( !range.collapsed ) {
             console.info("deleting contents of range")
             event.preventDefault();
-            deleteContentsOfRange( range );
+            deleteContentsOfRange( range, root );
             afterDelete( self, range );
         }
         // If at end of block, merge next into this block
-        else if ( rangeDoesEndAtBlockBoundary( range ) ) {
+        else if ( rangeDoesEndAtBlockBoundary( range, root ) ) {
             console.info("ends at block boundary")
             event.preventDefault();
-            var current = getStartBlockOfRange( range ),
-                next = current && getNextBlock( current );
+            current = getStartBlockOfRange( range, root );
+            if ( !current ) {
+                return;
+            }
+            // In case inline data has somehow got between blocks.
+            fixContainer( current.parentNode, root );
+            // Now get next block
+            next = getNextBlock( current, root );
             // Must not be at the very end of the text area.
             if ( next ) {
                 // If not editable, just delete whole block.
-                if ( notEditable(next) ) {
+                if ( notEditable(next, root) ) {
                     detach( next );
                     return;
                 }
@@ -321,11 +313,11 @@ var keyHandlers = {
                 // If deleted line between containers, merge newly adjacent
                 // containers.
                 next = current.parentNode;
-                while ( next && !next.nextSibling ) {
+                while ( next !== root && !next.nextSibling ) {
                     next = next.parentNode;
                 }
-                if ( next && ( next = next.nextSibling ) ) {
-                    mergeContainers( next );
+                if ( next !== root && ( next = next.nextSibling ) ) {
+                    mergeContainers( next, root );
                 }
                 self.setSelection( range );
                 self._updatePath( range, true );
@@ -336,7 +328,7 @@ var keyHandlers = {
             var so = range.startOffset
             if(sc.nodeType === ELEMENT_NODE){
                 var ch = sc.childNodes[so]
-                if(notEditable(ch)){
+                if(notEditable(ch, root)){
                     detach( next );
                 }
             }
@@ -345,13 +337,12 @@ var keyHandlers = {
         }
     },
     tab: function ( self, event, range ) {
+        var root = self._root;
         var node, parent;
         self._removeZWS();
-        // If no selection and in an empty block
-        if ( range.collapsed &&
-                rangeDoesStartAtBlockBoundary( range ) &&
-                rangeDoesEndAtBlockBoundary( range ) ) {
-            node = getStartBlockOfRange( range );
+        // If no selection and at start of block
+        if ( range.collapsed && rangeDoesStartAtBlockBoundary( range, root ) ) {
+            node = getStartBlockOfRange( range, root );
             // Iterate through the block's parents
             while ( parent = node.parentNode ) {
                 // If we find a UL or OL (so are in a list, node must be an LI)
@@ -366,7 +357,21 @@ var keyHandlers = {
                 }
                 node = parent;
             }
-            event.preventDefault();
+        }
+    },
+    'shift-tab': function ( self, event, range ) {
+        var root = self._root;
+        var node;
+        self._removeZWS();
+        // If no selection and at start of block
+        if ( range.collapsed && rangeDoesStartAtBlockBoundary( range, root ) ) {
+            // Break list
+            node = range.startContainer;
+            if ( getNearest( node, root, 'UL' ) ||
+                    getNearest( node, root, 'OL' ) ) {
+                event.preventDefault();
+                self.modifyBlocks( decreaseListLevel, range );
+            }
         }
     },
     space: function ( self, _, range ) {
@@ -374,7 +379,7 @@ var keyHandlers = {
         // Nate: This record/bookmark has a side effect of putting a BR tag at the end of a line, which
         // currently is ok with me
         self._recordUndoState( range );
-        addLinks( range.startContainer );
+        addLinks( range.startContainer, self._root, self );
         self._getRangeAndRemoveBookmark( range );
 
         // If the cursor is at the end of a link (<a>foo|</a>) then move it
@@ -385,6 +390,13 @@ var keyHandlers = {
         if ( range.collapsed && parent.nodeName === 'A' &&
                 !node.nextSibling && range.endOffset === getLength( node ) ) {
             range.setStartAfter( parent );
+        }
+        // Delete the selection if not collapsed
+        else if ( !range.collapsed ) {
+            deleteContentsOfRange( range, self._root );
+            self._ensureBottomLine();
+            self.setSelection( range );
+            self._updatePath( range, true );
         }
 
         self.setSelection( range );
@@ -404,22 +416,24 @@ var keyHandlers = {
 
 };
 
-// Firefox incorrectly handles Cmd-left/Cmd-right on Mac:
+// Firefox pre v29 incorrectly handles Cmd-left/Cmd-right on Mac:
 // it goes back/forward in history! Override to do the right
 // thing.
 // https://bugzilla.mozilla.org/show_bug.cgi?id=289384
 if ( isMac && isGecko ) {
-      keyHandlers[ 'meta-left' ] = function ( self, event ) {
-      event.preventDefault();
-      if (self._sel && self._sel.modify) {
-        self._sel.modify( 'move', 'backward', 'lineboundary' );
-      }
+    keyHandlers[ 'meta-left' ] = function ( self, event ) {
+        event.preventDefault();
+        var sel = getWindowSelection( self );
+        if ( sel && sel.modify ) {
+            sel.modify( 'move', 'backward', 'lineboundary' );
+        }
     };
     keyHandlers[ 'meta-right' ] = function ( self, event ) {
         event.preventDefault();
-      if (self._sel && self._sel.modify) {
-        self._sel.modify( 'move', 'forward', 'lineboundary' );
-      }
+        var sel = getWindowSelection( self );
+        if ( sel && sel.modify ) {
+            sel.modify( 'move', 'forward', 'lineboundary' );
+        }
     };
 }
 
@@ -450,10 +464,10 @@ keyHandlers[ ctrlKey + 'z' ] = mapKeyTo( 'undo' );
 keyHandlers[ ctrlKey + 'shift-z' ] = mapKeyTo( 'redo' );
 
 var getLineNumber = function(root, node){
-  if(node.parentNode === root){
+  if(root.isSameNode(node.parentNode)) {
     return indexOf.call(root.childNodes, node)
   }
-  else{
+  else {
     return getLineNumber(root, node.parentNode)
   }
 }
@@ -462,7 +476,6 @@ var findNextBRTag = function(root, node){
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
                         return ( node.nodeName === "BR" )
     } );
-    window.w = w
     w.currentNode = node;
     return w.nextNONode()
 }
@@ -471,25 +484,23 @@ var findPreviousBRTag = function(root, node){
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
                         return ( node.nodeName === "BR" )
     } );
-    window.w = w
     w.currentNode = node;
     return w.previousNode()
 }
 
 var findNextTextOrNotEditable = function(root, node){
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
-        return ( (isText(node) && !isZWNBS(node)) || notEditable(node) )
+        return ( (isText(node) && !isZWNBS(node)) || notEditable(node, root) )
     } );
-    window.w = w
     w.currentNode = node;
+    //NATE: TODO: call this with root
     return w.nextNONode(notEditable)
 }
 
 var findPreviousTextOrNotEditable = function(root, node){
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
-        return ( (isText(node) && !isZWNBS(node)) || notEditable(node) )
+        return ( (isText(node) && !isZWNBS(node)) || notEditable(node, root) )
     } );
-    window.w = w
     w.currentNode = node;
     return w.previousNode(notEditable)
 }
@@ -501,6 +512,7 @@ var printRange = function(range, message){
 
 Squire.prototype.backspace = function(self, event, range){
     self  = self  ? self  : this
+    var root = self._root;
     event && event.preventDefault()
     range = range ? range : self.getSelection()
     self._removeZWS();
@@ -523,7 +535,7 @@ Squire.prototype.backspace = function(self, event, range){
         // Must not be at the very beginning of the text area.
         if ( previous ) {
             // If not editable, just delete whole block.
-            if ( notEditable(previous) ) {
+            if ( notEditable(previous, root) ) {
                 detach( previous );
                 return;
             }
@@ -597,7 +609,7 @@ Squire.prototype.backspace = function(self, event, range){
                         detach(pn);
                     }
                 }
-                else if(notEditable(pn)){
+                else if(notEditable(pn, root)){
                     detach(pn);
                 }
                 rootNodeOfClean = previousParent
@@ -621,7 +633,7 @@ Squire.prototype.backspace = function(self, event, range){
                     }
 
                 }
-                else if(notEditable(pn)){
+                else if(notEditable(pn, root)){
                     detach(pn);
                 }
             }
@@ -634,7 +646,7 @@ Squire.prototype.backspace = function(self, event, range){
         //     window.rootNodeOfClean = rootNodeOfClean
         //     //CleanTree will trim whitespace, but it won't do this if there is a <br> tag at the end of the line
         //     //We want to preserve whitespace that the user has entered so calling ensureBr is necessary
-        //     ensureBrAtEndOfAllLines(self._body)
+        //     ensureBrAtEndOfAllLines(self._root)
         //     cleanTree(rootNodeOfClean)
         //     replaceDoubleSpace(rootNodeOfClean, range)
         //     replaceTrailingSingleSpace(rootNodeOfClean, range)
@@ -648,7 +660,7 @@ Squire.prototype.backspace = function(self, event, range){
 Squire.prototype.moveRight = function(self, event, range){
     self  = self  ? self  : this
     //TODO: stop looking for BR tags to designate end of lines
-    ensureBrAtEndOfAllLines(self._body)
+    ensureBrAtEndOfAllLines(self._root)
     event && event.preventDefault()
     range = range ? range : self.getSelection()
     self._removeZWS();
@@ -657,16 +669,16 @@ Squire.prototype.moveRight = function(self, event, range){
     var ec = range.endContainer
     var eo = range.endOffset
     var parent = sc.parent
-    var root = self._body
+    var root = self._root
     var nn
-    var block = getStartBlockOfRange(range)
+    var block = getStartBlockOfRange(range, root)
     window.sc = sc
     window.so = so
     window.r = range
 
-    if(rangeDoesEndAtBlockBoundary(range)){
+    if(rangeDoesEndAtBlockBoundary(range, root)){
         window.b1 = block
-        var nextBlock = block && getNextBlock(block)
+        var nextBlock = block && getNextBlock(block, root)
         window.nb1 = nextBlock
 
         if(nextBlock){
@@ -694,7 +706,7 @@ Squire.prototype.moveRight = function(self, event, range){
             // The right cursor has a special case where it should skip over the first notEditable node,
             // otherwise it will take two right presses to go from text->notEditable->text
             if(nn){
-                if(notEditable(nn)){
+                if(notEditable(nn, root)){
                     nn = findNextTextOrNotEditable(block, nn)
                     skippedNode = true
                 }
@@ -752,19 +764,19 @@ Squire.prototype.moveRight = function(self, event, range){
 Squire.prototype.moveUp = function(self, event, range){
   self  = self  ? self  : this
   //TODO: stop looking for BR tags to designate end of lines
-  ensureBrAtEndOfAllLines(self._body)
+  ensureBrAtEndOfAllLines(self._root)
   range = range ? range : self.getSelection()
   self._removeZWS();
   var so = range.startOffset
   var sc = range.startContainer
-  var root = self._body
+  var root = self._root
 
   var lineNumber = getLineNumber(root, sc)
   if(lineNumber === 0){
     console.info("on line 0")
     event && event.preventDefault()
     var e = new CustomEvent('squire::up-on-first-line', { 'detail': {range: range} });
-    self._doc.dispatchEvent(e);
+    root.dispatchEvent(e);
     // return
   }
   setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
@@ -774,28 +786,29 @@ Squire.prototype.moveUp = function(self, event, range){
 Squire.prototype.moveDown = function(self, event, range){
   self  = self  ? self  : this
   //TODO: stop looking for BR tags to designate end of lines
-  ensureBrAtEndOfAllLines(self._body)
+  ensureBrAtEndOfAllLines(self._root)
   range = range ? range : self.getSelection()
   self._removeZWS();
   var so = range.startOffset
   var sc = range.startContainer
-  var root = self._body
+  var root = self._root
 
   var lineNumber = getLineNumber(root, sc)
   if(lineNumber === root.childNodes.length - 1){
     console.info("on last line")
     event && event.preventDefault()
     var e = new CustomEvent('squire::down-on-last-line', { 'detail': {range: range} });
-    self._doc.dispatchEvent(e);
+    root.dispatchEvent(e);
     // return
   }
   setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
 }
 
 Squire.prototype.moveLeft = function(self, event, range){
+    console.info("MOVING LEFT")
     self  = self  ? self  : this
     //TODO: stop looking for BR tags to designate end of lines
-    ensureBrAtEndOfAllLines(self._body)
+    ensureBrAtEndOfAllLines(self._root)
     event && event.preventDefault()
     range = range ? range : self.getSelection()
     self._removeZWS();
@@ -804,9 +817,9 @@ Squire.prototype.moveLeft = function(self, event, range){
     var ec = range.endContainer
     var eo = range.endOffset
     var parent = sc.parent
-    var root = self._body
+    var root = self._root
     var nn
-    var block = getStartBlockOfRange(range)
+    var block = getStartBlockOfRange(range, root)
     window.sc = sc
     window.so = so
     window.r = range
@@ -816,11 +829,15 @@ Squire.prototype.moveLeft = function(self, event, range){
         range.setStart(sc, so)
         self.setSelection(range)
     }
-    if(rangeDoesStartAtBlockBoundary(range)){
+    if(rangeDoesStartAtBlockBoundary(range, root)){
+        console.info("RANGE STARTS AT BLOCK BOUNDARY")
         var block = getStartBlockOfRange(range)
 
-        var previousBlock = block && getPreviousBlock(block)
+        var previousBlock = block && getPreviousBlock(block, root)
         if(block && previousBlock){
+          console.info("previousBlock:")
+          console.info(previousBlock)
+
             self.setSelectionToNode(previousBlock)
             var newRange = self.getSelection()
             newRange.setStart(newRange.endContainer, newRange.endContainer.childNodes.length-1)
@@ -829,10 +846,13 @@ Squire.prototype.moveLeft = function(self, event, range){
             self.setSelection(newRange)
         }
         else{
-            // console.info("no block found")
+          console.info("no block found")
         }
     }
     else if(sc.nodeType === TEXT_NODE){
+        console.info("TEXT_NODE")
+
+
         var l = sc.length
         //If we are in a text node and not at the end, move one character to the right
         if(so > 0){

@@ -35,7 +35,7 @@ function parseElement(el){
         res["isContentEditable"] = true
     }
     else{
-        res["isContentEditable"] = el.isContentEditable
+        res["isContentEditable"] = !el.classList.contains('not-editable')
     }
     for(i=0; i<numChildren; i++){
         childNode = children[i]
