@@ -93,7 +93,8 @@ quickTest = function(){
   // })
   console.info("starting quick test")
   keyEvent = new KeyboardEvent("keydown", {key : "a", keyCode: 65, code: "KeyA", cancelable: true});
-  prepareTest("<div>a<br></div><div><br></div><div>b<br></div>")
+  // prepareTest("<div>a<br></div><div><br></div><div>b<br></div>")
+  prepareTest('<div>ab<span class="not-editable">c</span>d</div>')
   // editor.moveRight(editor, keyEvent, range);updateCursor()
   // editor.moveRight(editor, keyEvent, range);updateCursor()
   // editor.moveRight(editor, keyEvent, range);updateCursor()

@@ -134,6 +134,7 @@ TreeWalker.prototype.nextNode = function () {
 // If the currentNode is d, nextNONode will return e.  Calling it again returns 'a' since there are no more branches
 // of a.  Calling again gives f, then g, b, and finally r.  I'm not certain if this is post order so I refrained from
 // using a completely analogous name to previousPONode.
+// NATE: We now assume the breakoutFunction can take root as second argument
 TreeWalker.prototype.nextNONode = function (breakoutFunction) {
     var current = this.currentNode,
         root = this.root,
@@ -147,7 +148,7 @@ TreeWalker.prototype.nextNONode = function (breakoutFunction) {
         node = current.nextSibling;
         //modified to let us break on an element satisfying the breakoutFunction
         if ( node ) {
-           if(breakoutFunction && breakoutFunction(node)){
+           if(breakoutFunction && breakoutFunction(node, root)){
                this.currentNode = node;
                return node;
            }
@@ -171,6 +172,7 @@ TreeWalker.prototype.nextNONode = function (breakoutFunction) {
     }
 };
 
+// NATE: the breakoutFunction takes (node, root)
 TreeWalker.prototype.previousNode = function (breakoutFunction) {
     var current = this.currentNode,
         root = this.root,
@@ -184,7 +186,7 @@ TreeWalker.prototype.previousNode = function (breakoutFunction) {
         node = current.previousSibling;
         //modified to let us break on an element satisfying the breakoutFunction
         if ( node ) {
-           if(breakoutFunction && breakoutFunction(node)){
+           if(breakoutFunction && breakoutFunction(node, root)){
                this.currentNode = node;
                return node;
            }
@@ -333,9 +335,20 @@ function every ( nodeList, fn ) {
 
 // ---
 
-function isLeaf ( node ) {
+function isLeaf ( node, root ) {
+  console.info("ISLEAF")
+    //NATE: TODO: replace all occurrences of isLeaf(node) with isLeaf(node, root)
+    if (typeof root === 'undefined'){
+      console.info("UNDEFINED ROOT IN isLeaf")
+      // console.info(node)
+      // console.info(console.trace())
+      // console.info(document)
+      // console.info(document.body)
+      root = document.body
+      // window.d = document
+    }
     return (node.nodeType === ELEMENT_NODE &&
-        (!!leafNodeNames[ node.nodeName ]) || notEditable(node));
+        (!!leafNodeNames[ node.nodeName ]) || notEditable(node, root));
 }
 function isInline ( node ) {
     return (inlineNodeNames.test( node.nodeName ) || mathMLNodeNames[node.nodeName]);
@@ -356,37 +369,28 @@ function isZWS ( node ) {
 function isZWNBS ( node ) {
     return (isText(node) && node.data === ZWNBS)
 }
-function isZ ( node ) {
-    return (node && node.nodeName === 'Z')
-}
 
-// Not all nodes have isContentEditable defined, but once we find a node with it defined
-// it will search up the parentNode list for us and figure out if any are not editable
-function notEditable( node ){
+function notEditable( node, root ){
+  //NATE: TODO: replace all occurrences of notEditable(node) with notEditable(node, root)
+  if(typeof root === 'undefined'){
+    console.info("UNDEFINED ROOT IN notEditable")
+    r = document.body
+  }
+  if(node === root){
+    return true
+  }
+
+  if($(node).hasClass('not-editable')){
+    return true
+  }
+  else{
     if(!node){
         return false
     }
-    //likely a text node
-    if(node.isContentEditable === undefined){
-        return(notEditable(node.parentNode))
-    }
-    // chrome has a bug that will return false for isContentEditable if the node is not visible on the
-    // page: https://code.google.com/p/chromium/issues/detail?id=313082, thus we have to check for the
-    // attribute
     else{
-        // return (node.isContentEditable === false)
-        if(node.hasAttribute('contenteditable')){
-            if(node.getAttribute('contenteditable') === "false"){
-                return true
-            }
-            else{
-                return false
-            }
-        }
-        else{
-            return(notEditable(node.parentNode))
-        }
+        return(notEditable(node.parentNode, root))
     }
+  }
 }
 
 function isText( node ){
@@ -397,8 +401,6 @@ function isText( node ){
 }
 
 function getBlockWalker ( node, root ) {
-    console.info("BLOCKWALKER ROOT: ")
-    console.info(root)
     var walker = new TreeWalker( root, SHOW_ELEMENT, function (node) {
       return(isBlock(node)  && !notEditable(node))
     });
@@ -964,7 +966,6 @@ var insertNodeInRange = function ( range, node ) {
 
     range.setStart( startContainer, startOffset );
     range.setEnd( endContainer, endOffset );
-    ensurePreZNodesForContentEditable( node.ownerDocument.body )
     ensureBrAtEndOfAllLines( node.ownerDocument.body )
 };
 
@@ -1334,13 +1335,16 @@ var moveRangeBoundariesUpTree = function ( range, common ) {
 // Nate: This has no root argument, but I would think it needs to terminate at
 // the root node if nothing is found
 var moveRangeOutOfNotEditable = function( range ){
-
+    console.info("MOVING RANGE OUT OF")
     var startContainer = range.startContainer
     var endContainer = range.endContainer
     var moveRight = false
     var nextSibling
+
+    window.mrange = range
     if(range.collapsed){
         if(startContainer.nodeType === TEXT_NODE){
+            console.info("IS TEXT NODE")
             var currentParent = startContainer.parentNode
             var newParent = currentParent
             var textLength = startContainer.data.length
@@ -1612,8 +1616,6 @@ var afterDelete = function ( self, range ) {
     // console.info("after delete")
     try {
         ensureBrAtEndOfAllLines(self._root)
-        ensurePreZNodesForContentEditable(self._root)
-        removeDanglingZNodes(self._root)
         removeEmptyInlines( self._root )
 
         if ( !range ) { range = self.getSelection(); }
@@ -1754,7 +1756,7 @@ var keyHandlers = {
             }
 
 
-            if ( nodeAfterSplit.nodeType !== TEXT_NODE && notEditable(nodeAfterSplit)) {
+            if ( nodeAfterSplit.nodeType !== TEXT_NODE && notEditable(nodeAfterSplit, root)) {
                 break;
             }
             while ( child && child.nodeType === TEXT_NODE && !child.data ) {
@@ -1809,7 +1811,7 @@ var keyHandlers = {
             // Must not be at the very end of the text area.
             if ( next ) {
                 // If not editable, just delete whole block.
-                if ( notEditable(next) ) {
+                if ( notEditable(next, root) ) {
                     detach( next );
                     return;
                 }
@@ -1833,7 +1835,7 @@ var keyHandlers = {
             var so = range.startOffset
             if(sc.nodeType === ELEMENT_NODE){
                 var ch = sc.childNodes[so]
-                if(notEditable(ch)){
+                if(notEditable(ch, root)){
                     detach( next );
                 }
             }
@@ -1981,7 +1983,6 @@ var findNextBRTag = function(root, node){
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
                         return ( node.nodeName === "BR" )
     } );
-    window.w = w
     w.currentNode = node;
     return w.nextNONode()
 }
@@ -1990,25 +1991,23 @@ var findPreviousBRTag = function(root, node){
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
                         return ( node.nodeName === "BR" )
     } );
-    window.w = w
     w.currentNode = node;
     return w.previousNode()
 }
 
 var findNextTextOrNotEditable = function(root, node){
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
-        return ( (isText(node) && !isZWNBS(node)) || notEditable(node) )
+        return ( (isText(node) && !isZWNBS(node)) || notEditable(node, root) )
     } );
-    window.w = w
     w.currentNode = node;
+    //NATE: TODO: call this with root
     return w.nextNONode(notEditable)
 }
 
 var findPreviousTextOrNotEditable = function(root, node){
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
-        return ( (isText(node) && !isZWNBS(node)) || notEditable(node) )
+        return ( (isText(node) && !isZWNBS(node)) || notEditable(node, root) )
     } );
-    window.w = w
     w.currentNode = node;
     return w.previousNode(notEditable)
 }
@@ -2020,6 +2019,7 @@ var printRange = function(range, message){
 
 Squire.prototype.backspace = function(self, event, range){
     self  = self  ? self  : this
+    var root = self._root;
     event && event.preventDefault()
     range = range ? range : self.getSelection()
     self._removeZWS();
@@ -2042,7 +2042,7 @@ Squire.prototype.backspace = function(self, event, range){
         // Must not be at the very beginning of the text area.
         if ( previous ) {
             // If not editable, just delete whole block.
-            if ( notEditable(previous) ) {
+            if ( notEditable(previous, root) ) {
                 detach( previous );
                 return;
             }
@@ -2116,7 +2116,7 @@ Squire.prototype.backspace = function(self, event, range){
                         detach(pn);
                     }
                 }
-                else if(notEditable(pn)){
+                else if(notEditable(pn, root)){
                     detach(pn);
                 }
                 rootNodeOfClean = previousParent
@@ -2140,7 +2140,7 @@ Squire.prototype.backspace = function(self, event, range){
                     }
 
                 }
-                else if(notEditable(pn)){
+                else if(notEditable(pn, root)){
                     detach(pn);
                 }
             }
@@ -2213,7 +2213,7 @@ Squire.prototype.moveRight = function(self, event, range){
             // The right cursor has a special case where it should skip over the first notEditable node,
             // otherwise it will take two right presses to go from text->notEditable->text
             if(nn){
-                if(notEditable(nn)){
+                if(notEditable(nn, root)){
                     nn = findNextTextOrNotEditable(block, nn)
                     skippedNode = true
                 }
@@ -2522,7 +2522,8 @@ var filterClasses = function(node, whiteList){
 var filterSpanClasses = function(span){
     var whiteList = {
         "katex": 1,
-        "ltx_Math": 1
+        "ltx_Math": 1,
+        "not-editable": 1
     }
     return filterClasses(span, whiteList)
 }
@@ -2554,7 +2555,6 @@ var filterAttributes = function(node, whiteList){
 var filterSpanAttributes = function(span){
     var whiteList = {
         "class": 1,
-        "contenteditable": 1,
         "data": 1
     }
     return filterAttributes(span, whiteList)
@@ -2648,7 +2648,7 @@ var stylesRewriters = {
     // Basically for the moment if we don't know what it is it will have no classes and no attributes.
     DEFAULT_REWRITER: function ( node, parent ){
         filterClasses(node, {})
-        filterAttributes(node, {data: 1, class: 1, contenteditable: 1})
+        filterAttributes(node, {data: 1, class: 1})
         return node
     },
     A: function ( node, parent ){
@@ -2868,25 +2868,6 @@ var replaceTrailingSingleSpace = function replaceTrailingSingleSpace ( root, ran
     }
 };
 
-// Nate:  The hack I found to get chrome happy with noneditable containers is to place a zero-width-space and
-// a dummy <z> container in front of them.  This ZWS can sometimes be absorbed by the text element preceding it.
-// They are impossible to see.
-var removeTrailingZWS = function removeTrailingZWS ( root ) {
-    var walker = new TreeWalker(root, SHOW_TEXT, function(){return true})
-    var node = walker.currentNode
-    while(node){
-        if (isText(node) && !isLeaf( node ) ) {
-            if(node.data){
-                if(node.data.length > 1 && node.data[node.data.length-1] === ZWNBS){
-                    node.replaceData(node.data.length-1, 1, "")
-
-                }
-            }
-        }
-        node = walker.nextNode()
-    }
-};
-
 var ensureBrAtEndOfAllLines = function (root){
     //NATE: even divs which are not lines need to have brs at their end for chrome to happily play with spaces
     ensureBrAtEndOfAllDivs(root)
@@ -2932,84 +2913,6 @@ var removeBrAtEndOfAllLines = function (root){
         }
     }
 }
-
-// The only purpose of the Z node is to protect a following non-editable container, removing it
-// if it's neighbor is missing or editable
-var removeDanglingZNodes = function(root){
-    var walker = new TreeWalker(root, SHOW_ELEMENT, function(){return true})
-    var node = walker.currentNode
-    var nodesToRemove = []
-    var ps
-
-    while(node){
-        if (node.nodeName === 'Z' ) {
-            if(!notEditable(node.nextSibling)){
-                nodesToRemove.push(node)
-                ps = node.previousSibling
-                if(isZWNBS(ps)){
-                    nodesToRemove.push(ps)
-                }
-            }
-        }
-        node = walker.nextNode()
-    }
-    nodesToRemove.forEach(function(node){
-        detach(node)
-    })
-};
-
-var removeAllZNodes = function(root){
-    var walker = new TreeWalker(root, SHOW_ELEMENT, function(){return true})
-    var node = walker.currentNode
-    var ps
-    var nodesToRemove = []
-
-    while(node){
-        if (node.nodeName === 'Z' ) {
-            nodesToRemove.push(node)
-            ps = node.previousSibling
-            if(isZWNBS(ps)){
-                nodesToRemove.push(ps)
-            }
-        }
-        node = walker.nextNode()
-    }
-    nodesToRemove.forEach(function(node){
-        detach(node)
-    })
-};
-var ensurePreZNodesForContentEditable = function(root){
-    //only uppermost not editables need the Z tag, because the lower nodes will be inaccessible
-    var walker = new TreeWalker(root, SHOW_ELEMENT, function(node){return (notEditable(node) && !notEditable(node.parentNode) )})
-    var node = walker.currentNode
-    var doc = node.ownerDocument
-    if(!walker.filter(node)){
-        node = walker.nextNode()
-    }
-    var previousNode, zwsNode
-    var n, t
-
-    while(node){
-        previousNode = node.previousSibling
-        if(!(previousNode && previousNode.nodeName === "Z")){
-            n = doc.createElement("z")
-            // node.parentNode.insertBefore(t, node)
-            node.parentNode.insertBefore(n, node)
-        }
-        else{
-            n = previousNode
-        }
-        zwsNode = n && n.previousSibling
-        if(!isZWNBS(zwsNode)){
-            t = doc.createTextNode( ZWNBS )
-            // node.parentNode.insertBefore(t, node)
-            n.parentNode.insertBefore(t, n)
-        }
-
-        node = walker.nextNode()
-    }
-}
-
 
 // ---
 
@@ -3101,9 +3004,6 @@ Squire.Clean = function(){}
 //NATE: normally I use the editor.collapseSimpleSpans but for testing I would like to have it available from Squire.Clean
 Squire.Clean.collapseSimpleSpans = collapseSimpleSpans
 Squire.prototype.cleanTree = cleanTree
-Squire.prototype.removeDanglingZNodes = removeDanglingZNodes
-Squire.prototype.ensurePreZNodesForContentEditable = ensurePreZNodesForContentEditable
-Squire.prototype.removeAllZNodes = removeAllZNodes
 Squire.prototype.removeEmptyInlines = removeEmptyInlines
 Squire.prototype.collapseSimpleSpans = collapseSimpleSpans
 Squire.prototype.ensureBrAtEndOfAllLines = ensureBrAtEndOfAllLines
@@ -3409,45 +3309,23 @@ function Squire ( root, config ) {
         var sc = r.startContainer
         var so = r.startOffset
         var child = sc.childNodes && sc.childNodes[so]
-        // NATE: if the child is not editable we need to set the cursor position to behind the to protective chars, ZWNBS<Z>.
-        // So we look back to see if they exist, and to see if there is already a text node behind them.  If so then set the
-        // range to the end of that text node, otherwise insert a new text node containing the character in the keypress.
-        // I tried not inserting the char, instead starting with a blank string, but chrome will then insert the char
-        // into the ZWNBS text, amazingly.
+        // NATE: set node to previous node if notEditable.  Probably needs some work
+        // since I have just removed references to contentEditable.
         if(notEditable(child)){
             console.info("NOT EDITABLE need to move range")
-            var z = child.previousSibling
-            var zwnbs = isZ(z) && z.previousSibling
-            var beforeZwnbs = isZWNBS(zwnbs) && zwnbs.previousSibling
-            if(isText(beforeZwnbs)){
-                var length = beforeZwnbs.length
-                this.setSelectionToNode(beforeZwnbs, length ? length : 0)
+            var previousSibling = child.previousSibling
+            if(isText(previousSibling)){
+                var length = previousSibling.length
+                this.setSelectionToNode(previousSibling, length ? length : 0)
             }
-            else if(isZWNBS(zwnbs)){
+            else{
+                console.info("Previous sibling not text node, creating text node")
                 e.preventDefault()
                 var tn = this._doc.createTextNode(String.fromCharCode(e.charCode))
-                sc.insertBefore(tn, zwnbs)
+                sc.insertBefore(tn, previousSibling)
                 this.setSelectionToNode(tn, 1)
 
             }
-        }
-        else if(isZWNBS(child) || isZWNBS(sc)){
-           console.info("currrently focued on zwnbs")
-           var zwnbs = isZWNBS(child) && child || sc
-           var beforeZwnbs = zwnbs.previousSibling
-           var parent = (zwnbs === child) ? sc : sc.parentNode
-           if(isText(beforeZwnbs)){
-               var length = beforeZwnbs.length
-               this.setSelectionToNode(beforeZwnbs, length ? length : 0)
-           }
-           else{
-
-               e.preventDefault()
-               var tn = this._doc.createTextNode(String.fromCharCode(e.charCode))
-               parent.insertBefore(tn, zwnbs)
-               this.setSelectionToNode(tn, 1)
-
-           }
         }
     });
 
@@ -4749,15 +4627,7 @@ var makeList = function ( self, frag, type ) {
         listAttrs = tagAttributes[ type.toLowerCase() ],
         listItemAttrs = tagAttributes.li;
     var div = frag.childNodes[0]
-    var addedContentEditable = false
-    // Nate: We need to do this due to an addition I made to isBlock, which returns false for noneditable nodes.
-    // This function is dealing with a frag that has been removed from the editor dom, thus it loses the
-    // contenteditable=true inherited from the editor body.  I temporarily set that here and remove it again
-    // at the end of the function once the frag has been re-inserted into the editor.
-    if(div && !div.hasAttribute("contenteditable")){
-        div.setAttribute("contenteditable", true)
-        addedContentEditable = true
-    }
+
     while ( node = walker.nextNode() ) {
         tag = node.parentNode.nodeName;
         if ( tag !== 'LI' ) {
@@ -4790,9 +4660,6 @@ var makeList = function ( self, frag, type ) {
                 );
             }
         }
-    }
-    if(addedContentEditable){
-        div.removeAttribute("contenteditable")
     }
 };
 
@@ -4925,7 +4792,6 @@ options =
 {
     withBookMark: 1, //will include tags for cursor position
     stripEndBrs: 1, //remove BRs from the end of block elements
-    cleanContentEditable: 1, //remove contentEditable <ZWNBS><Z> tags
 }
 
 */
@@ -4941,9 +4807,6 @@ proto.getHTML = function ( options ) {
 
     if(options["stripEndBrs"]){
         removeBrAtEndOfAllLines(root)
-    }
-    if(options["cleanContentEditable"]){
-        removeAllZNodes(root)
     }
     if ( withBookMark && ( range = this.getSelection() ) ) {
         this._saveRangeToBookmark( range );
@@ -4971,9 +4834,6 @@ proto.getHTML = function ( options ) {
     }
     if(options["stripEndBrs"]){
         ensureBrAtEndOfAllLines(root)
-    }
-    if(options["cleanContentEditable"]){
-        ensurePreZNodesForContentEditable(root)
     }
     return html;
 };
@@ -5029,8 +4889,6 @@ proto.setHTML = function ( html ) {
     enableRestoreSelection.call( this );
     this._updatePath( range, true );
 
-    removeTrailingZWS(this._root)
-    ensurePreZNodesForContentEditable( root )
     return this;
 };
 
@@ -5175,7 +5033,6 @@ proto.insertHTML = function ( html, isPaste ) {
         cleanupBRs( frag, null );
         removeEmptyInlines( frag );
         frag.normalize();
-        ensurePreZNodesForContentEditable(frag)
         ensureBrAtEndOfAllLines(frag)
         //NATE: This is a clear spot to do something of the sort:
         // registeredFilters.each(function(filter){filter(frag)})

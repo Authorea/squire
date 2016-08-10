@@ -72,6 +72,7 @@ TreeWalker.prototype.nextNode = function () {
 // If the currentNode is d, nextNONode will return e.  Calling it again returns 'a' since there are no more branches
 // of a.  Calling again gives f, then g, b, and finally r.  I'm not certain if this is post order so I refrained from
 // using a completely analogous name to previousPONode.
+// NATE: We now assume the breakoutFunction can take root as second argument
 TreeWalker.prototype.nextNONode = function (breakoutFunction) {
     var current = this.currentNode,
         root = this.root,
@@ -85,7 +86,7 @@ TreeWalker.prototype.nextNONode = function (breakoutFunction) {
         node = current.nextSibling;
         //modified to let us break on an element satisfying the breakoutFunction
         if ( node ) {
-           if(breakoutFunction && breakoutFunction(node)){
+           if(breakoutFunction && breakoutFunction(node, root)){
                this.currentNode = node;
                return node;
            }
@@ -109,6 +110,7 @@ TreeWalker.prototype.nextNONode = function (breakoutFunction) {
     }
 };
 
+// NATE: the breakoutFunction takes (node, root)
 TreeWalker.prototype.previousNode = function (breakoutFunction) {
     var current = this.currentNode,
         root = this.root,
@@ -122,7 +124,7 @@ TreeWalker.prototype.previousNode = function (breakoutFunction) {
         node = current.previousSibling;
         //modified to let us break on an element satisfying the breakoutFunction
         if ( node ) {
-           if(breakoutFunction && breakoutFunction(node)){
+           if(breakoutFunction && breakoutFunction(node, root)){
                this.currentNode = node;
                return node;
            }
