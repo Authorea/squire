@@ -368,6 +368,23 @@ var keyHandlers = {
             }
             event.preventDefault();
         }
+        // otherwise if the range is collapsed just insert a normal tab
+        else if( range.collapsed ) {
+          console.info("inserting tab")
+          var node = self._doc.createTextNode(TAB)
+          // insert the element into squire
+          window.r1 = range
+          self.insertNodeInRange(
+              range,
+              node
+          )
+          // mergeInlines(node.parentNode)
+          window.n = node
+          console.info(node)
+          // self.setSelectionToNode(node)
+          window.r2 = self.getSelection()
+          event.preventDefault();
+        }
     },
     space: function ( self, _, range ) {
         var node, parent;

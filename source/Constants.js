@@ -12,8 +12,10 @@ var START_TO_END = 1;   // Range.START_TO_END
 var END_TO_END = 2;     // Range.END_TO_END
 var END_TO_START = 3;   // Range.END_TO_START
 
-var ZWS = '\u200B';
+var ZWS   = '\u200B';
 var ZWNBS = '\uFEFF'
+var NBSP  = '\u00A0'
+var TAB   = NBSP + NBSP + NBSP + NBSP
 
 var win = doc.defaultView;
 
