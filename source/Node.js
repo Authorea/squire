@@ -447,6 +447,8 @@ function split ( node, offset, stopNode ) {
 }
 
 function mergeInlines ( node, range ) {
+  console.info("merging inlines")
+  console.trace()
     if ( node.nodeType !== ELEMENT_NODE ) {
         return;
     }

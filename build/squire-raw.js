@@ -16,8 +16,10 @@ var START_TO_END = 1;   // Range.START_TO_END
 var END_TO_END = 2;     // Range.END_TO_END
 var END_TO_START = 3;   // Range.END_TO_START
 
-var ZWS = '\u200B';
+var ZWS   = '\u200B';
 var ZWNBS = '\uFEFF'
+var NBSP  = '\u00A0'
+var TAB   = NBSP + NBSP + NBSP + NBSP
 
 var win = doc.defaultView;
 
@@ -676,6 +678,8 @@ function split ( node, offset, stopNode ) {
 }
 
 function mergeInlines ( node, range ) {
+  console.info("merging inlines")
+  console.trace()
     if ( node.nodeType !== ELEMENT_NODE ) {
         return;
     }
@@ -1792,6 +1796,23 @@ var keyHandlers = {
                 node = parent;
             }
             event.preventDefault();
+        }
+        // otherwise if the range is collapsed just insert a normal tab
+        else if( range.collapsed ) {
+          console.info("inserting tab")
+          var node = self._doc.createTextNode(TAB)
+          // insert the element into squire
+          window.r1 = range
+          self.insertNodeInRange(
+              range,
+              node
+          )
+          // mergeInlines(node.parentNode)
+          window.n = node
+          console.info(node)
+          // self.setSelectionToNode(node)
+          window.r2 = self.getSelection()
+          event.preventDefault();
         }
     },
     space: function ( self, _, range ) {
@@ -4315,6 +4336,14 @@ var increaseBlockQuoteLevel = function ( frag ) {
         ]);
 };
 
+var increaseIndentLevel = function ( frag ) {
+  var props = this._config.tagAttributes.blockquote || {};
+
+  props.class = 'no-left-border';
+
+  return this.createElement( 'BLOCKQUOTE', props, [frag])
+}
+
 var decreaseBlockQuoteLevel = function ( frag ) {
     var blockquotes = frag.querySelectorAll( 'blockquote' );
     Array.prototype.filter.call( blockquotes, function ( el ) {
@@ -5041,6 +5070,9 @@ proto.removeAllFormatting = function ( range ) {
 
 proto.increaseQuoteLevel = command( 'modifyBlocks', increaseBlockQuoteLevel );
 proto.decreaseQuoteLevel = command( 'modifyBlocks', decreaseBlockQuoteLevel );
+
+proto.increaseIndentLevel = command( 'modifyBlocks', increaseIndentLevel )
+proto.decreaseIndentLevel = proto.decreaseQuoteLevel
 
 proto.makeUnorderedList = command( 'modifyBlocks', makeUnorderedList );
 proto.makeOrderedList = command( 'modifyBlocks', makeOrderedList );
