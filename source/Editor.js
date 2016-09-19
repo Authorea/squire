@@ -500,10 +500,10 @@ proto.getSelection = function () {
         startContainer = selection.startContainer;
         endContainer = selection.endContainer;
         // FF can return the selection as being inside an <img>. WTF?
-        if ( startContainer && isLeaf( startContainer ) ) {
+        if ( startContainer && isLeaf( startContainer, root ) ) {
             selection.setStartBefore( startContainer );
         }
-        if ( endContainer && isLeaf( endContainer ) ) {
+        if ( endContainer && isLeaf( endContainer, root ) ) {
             selection.setEndBefore( endContainer );
         }
     }

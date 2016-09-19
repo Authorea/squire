@@ -19,7 +19,6 @@ var FONT_FAMILY_CLASS = 'font';
 var FONT_SIZE_CLASS = 'size';
 
 var ZWS = '\u200B';
-var ZWNBS = '\uFEFF'
 
 var win = doc.defaultView;
 

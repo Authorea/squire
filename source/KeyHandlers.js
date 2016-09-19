@@ -27,9 +27,6 @@ var onKey = function ( event ) {
         range = this.getSelection();
     var sc = range.startContainer
     var so = range.startOffset
-    if(isZWNBS(sc)){
-        console.info("INSIDE ZWNBS")
-    }
 
     if ( event.defaultPrevented ) {
         return;
@@ -279,6 +276,8 @@ var keyHandlers = {
     },
     'delete': function ( self, event, range ) {
         console.info("deleting")
+        var root = self._root;
+        var current, next;
         self._removeZWS();
         // Record undo checkpoint.
         self.saveUndoState( range );
@@ -490,7 +489,7 @@ var findPreviousBRTag = function(root, node){
 
 var findNextTextOrNotEditable = function(root, node){
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
-        return ( (isText(node) && !isZWNBS(node)) || notEditable(node, root) )
+        return ( isText(node) || notEditable(node, root) )
     } );
     w.currentNode = node;
     //NATE: TODO: call this with root
@@ -499,7 +498,7 @@ var findNextTextOrNotEditable = function(root, node){
 
 var findPreviousTextOrNotEditable = function(root, node){
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
-        return ( (isText(node) && !isZWNBS(node)) || notEditable(node, root) )
+        return ( isText(node) || notEditable(node, root) )
     } );
     w.currentNode = node;
     return w.previousNode(notEditable)
@@ -519,6 +518,7 @@ Squire.prototype.backspace = function(self, event, range){
     // Record undo checkpoint.
     self._recordUndoState( range.cloneRange() );
     self._getRangeAndRemoveBookmark( range.cloneRange() );
+    return
     // If not collapsed, delete contents
     var block = getStartBlockOfRange(range)
     window.block = block
@@ -695,7 +695,7 @@ Squire.prototype.moveRight = function(self, event, range){
         var l = sc.length
         var skippedNode = false
         //If we are in a text node and not at the end, move one character to the right
-        if(so < l && !isZWNBS(sc)){
+        if(so < l){
             so += 1
             range.setStart(sc, so)
             self.setSelection(r)

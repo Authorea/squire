@@ -96,12 +96,12 @@ function every ( nodeList, fn ) {
 // ---
 
 function isLeaf ( node, root ) {
-  console.info("ISLEAF")
+  // console.info("ISLEAF")
     //NATE: TODO: replace all occurrences of isLeaf(node) with isLeaf(node, root)
     if (typeof root === 'undefined'){
-      console.info("UNDEFINED ROOT IN isLeaf")
-      // console.info(node)
-      // console.info(console.trace())
+      console.warn("UNDEFINED ROOT IN isLeaf")
+      console.warn(node)
+      console.warn(console.trace())
       // console.info(document)
       // console.info(document.body)
       root = document.body
@@ -126,30 +126,24 @@ function isContainer ( node ) {
 function isZWS ( node ) {
     return (isText(node) && node.data === ZWS)
 }
-function isZWNBS ( node ) {
-    return (isText(node) && node.data === ZWNBS)
-}
 
 function notEditable( node, root ){
   //NATE: TODO: replace all occurrences of notEditable(node) with notEditable(node, root)
   if(typeof root === 'undefined'){
-    console.info("UNDEFINED ROOT IN notEditable")
-    r = document.body
+    console.warn("UNDEFINED ROOT IN notEditable")
+    root = document.body
   }
-  if(node === root){
-    return true
-  }
-
   if($(node).hasClass('not-editable')){
     return true
   }
+  if(node === root){
+    return false
+  }
+  if(!node){
+      return false
+  }
   else{
-    if(!node){
-        return false
-    }
-    else{
-        return(notEditable(node.parentNode, root))
-    }
+      return(notEditable(node.parentNode, root))
   }
 }
 
@@ -176,8 +170,8 @@ function getNextBlock ( node, root ) {
     return node !== root ? node : null;
 }
 
-function areAlike ( node, node2 ) {
-    return !isLeaf( node ) && (
+function areAlike ( node, node2, root ) {
+    return !isLeaf( node, root ) && (
         node.nodeType === node2.nodeType &&
         node.nodeName === node2.nodeName &&
         node.nodeName !== 'A' &&
@@ -490,7 +484,7 @@ function split ( node, offset, stopNode, root ) {
     return offset;
 }
 
-function _mergeInlines ( node, fakeRange ) {
+function _mergeInlines ( node, fakeRange, root ) {
     var children = node.childNodes,
         l = children.length,
         frags = [],
@@ -498,7 +492,7 @@ function _mergeInlines ( node, fakeRange ) {
     while ( l-- ) {
         child = children[l];
         prev = l && children[ l - 1 ];
-        if ( l && isInline( child ) && !isZWNBS(child) && areAlike( child, prev ) &&
+        if ( l && isInline( child ) && areAlike( child, prev, root ) &&
                 !leafNodeNames[ child.nodeName ] ) {
             if ( fakeRange.startContainer === child ) {
                 fakeRange.startContainer = prev;
@@ -539,12 +533,12 @@ function _mergeInlines ( node, fakeRange ) {
             while ( len-- ) {
                 child.appendChild( frags.pop() );
             }
-            _mergeInlines( child, fakeRange );
+            _mergeInlines( child, fakeRange, root );
         }
     }
 }
 
-function mergeInlines ( node, range ) {
+function mergeInlines ( node, range, root ) {
     if ( node.nodeType === TEXT_NODE ) {
         node = node.parentNode;
     }
@@ -555,7 +549,7 @@ function mergeInlines ( node, range ) {
             endContainer: range.endContainer,
             endOffset: range.endOffset
         };
-        _mergeInlines( node, fakeRange );
+        _mergeInlines( node, fakeRange, root );
         range.setStart( fakeRange.startContainer, fakeRange.startOffset );
         range.setEnd( fakeRange.endContainer, fakeRange.endOffset );
     }
@@ -609,7 +603,7 @@ function mergeContainers ( node, root ) {
         return;
     }
 
-    if ( prev && areAlike( prev, node ) ) {
+    if ( prev && areAlike( prev, node, root ) ) {
         if ( !isContainer( prev ) ) {
             if ( isListItem ) {
                 block = createElement( doc, 'DIV' );
@@ -644,6 +638,5 @@ Squire.Node.getPreviousBlock = getPreviousBlock
 Squire.Node.getNextBlock = getNextBlock
 Squire.Node.isBlock = isBlock
 Squire.Node.isZWS = isZWS
-Squire.Node.isZWNBS = isZWNBS
 Squire.Node.empty = empty
 Squire.Node.isLeaf = isLeaf
