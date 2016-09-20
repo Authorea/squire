@@ -1,7 +1,6 @@
 /*jshint strict:false, undef:false, unused:false */
 
 var inlineNodeNames  = /^(?:#text|A(?:BBR|CRONYM)?|B(?:R|D[IO])?|C(?:ITE|ODE)|D(?:ATA|EL|FN)|EM|FONT|HR|I(?:FRAME|MG|NPUT|NS)?|KBD|Q|R(?:P|T|UBY)|S(?:AMP|MALL|PAN|TR(?:IKE|ONG)|U[BP])?|TABLE|TD|TR|TBODY|U|VAR|WBR|Z)$/;
-window.inn = inlineNodeNames
 
 var leafNodeNames = {
     BR: 1,
@@ -96,16 +95,12 @@ function every ( nodeList, fn ) {
 // ---
 
 function isLeaf ( node, root ) {
-  // console.info("ISLEAF")
     //NATE: TODO: replace all occurrences of isLeaf(node) with isLeaf(node, root)
     if (typeof root === 'undefined'){
       console.warn("UNDEFINED ROOT IN isLeaf")
       console.warn(node)
       console.warn(console.trace())
-      // console.info(document)
-      // console.info(document.body)
       root = document.body
-      // window.d = document
     }
     return (node.nodeType === ELEMENT_NODE &&
         (!!leafNodeNames[ node.nodeName ]) || notEditable(node, root));

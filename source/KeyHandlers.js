@@ -19,8 +19,6 @@ var keys = {
 
 // Ref: http://unixpapa.com/js/key.html
 var onKey = function ( event ) {
-    window.k = event
-
     var code = event.keyCode,
         key = keys[ code ],
         modifiers = '',
@@ -103,7 +101,6 @@ var mapKeyToFormat = function ( tag, remove ) {
 // link in Opera, it won't delete the link. Let's make things consistent. If
 // you delete all text inside an inline tag, remove the inline tag.
 var afterDelete = function ( self, range ) {
-    // console.info("after delete")
     try {
         ensureBrAtEndOfAllLines(self._root)
         removeEmptyInlines( self._root )
@@ -117,19 +114,14 @@ var afterDelete = function ( self, range ) {
             node = node.parentNode;
         }
         parent = node;
-        window.p44 = parent
-        window.n44 = node
         while ( isInline( parent ) &&
                 ( !parent.textContent || parent.textContent === ZWS ) ) {
             node = parent;
             parent = node.parentNode;
         }
-        window.p55 = parent
-        window.n55 = parent
 
         // If focused in empty inline element
         if ( node !== parent ) {
-            console.info("removing empty inline")
             // Move focus to just before empty inline(s)
             range.setStart( parent,
                 indexOf.call( parent.childNodes, node ) );
@@ -142,7 +134,6 @@ var afterDelete = function ( self, range ) {
             }
             fixCursor( parent, self._root );
             // Move cursor into text node
-            console.info("moving range down tree")
             moveRangeBoundariesDownTree( range );
         }
         // If you delete the last character in the sole <div> in Chrome,
@@ -275,7 +266,6 @@ var keyHandlers = {
         self.backspace(self, event, range)
     },
     'delete': function ( self, event, range ) {
-        console.info("deleting")
         var root = self._root;
         var current, next;
         self._removeZWS();
@@ -283,14 +273,12 @@ var keyHandlers = {
         self.saveUndoState( range );
         // If not collapsed, delete contents
         if ( !range.collapsed ) {
-            console.info("deleting contents of range")
             event.preventDefault();
             deleteContentsOfRange( range, root );
             afterDelete( self, range );
         }
         // If at end of block, merge next into this block
         else if ( rangeDoesEndAtBlockBoundary( range, root ) ) {
-            console.info("ends at block boundary")
             event.preventDefault();
             current = getStartBlockOfRange( range, root );
             if ( !current ) {
@@ -532,13 +520,11 @@ Squire.prototype.backspace = function(self, event, range){
     // If not collapsed, delete contents
     var block = getStartBlockOfRange(range)
     if ( !range.collapsed ) {
-        console.info("range not collapsed")
         deleteContentsOfRange( range, self._root );
         afterDelete( self, range );
     }
     // If at beginning of block, merge with previous
     else if ( rangeDoesStartAtBlockBoundary( range, self._root ) ) {
-        console.info("range starts at block boundary")
         var current = getStartBlockOfRange( range ),
             previous = current && getPreviousBlock( current, self._root );
         // Must not be at the very beginning of the text area.
@@ -588,18 +574,12 @@ Squire.prototype.backspace = function(self, event, range){
         var pn = null;
         var pOffset
         var parent = null;
-        window.sc33 = sc
-        window.so33 = so
-        window.r33 = range
-        window.pn = pn
         var rootNodeOfClean = null;
 
         if((sc.nodeType === TEXT_NODE)){
             if(so>1){
                 sc.deleteData(so-1, 1)
                 parent = sc.parentNode
-                // pn = w.previousNode(notEditable)
-                // console.info(pn)
                 rootNodeOfClean = parent
 
             }
@@ -609,7 +589,6 @@ Squire.prototype.backspace = function(self, event, range){
             else{ //so === 0
                 pn = findPreviousTextOrNotEditable(block, sc)
                 var previousParent = pn.parentNode
-                window.previousParent = previousParent
                 if(pn.nodeType === TEXT_NODE){
                     if(pn.length>0){
                         pn.deleteData(pn.length - 1, 1)
@@ -628,7 +607,6 @@ Squire.prototype.backspace = function(self, event, range){
             var child = sc.childNodes[so]
             pn = findPreviousTextOrNotEditable(block, child)
             if(pn){
-                window.pn33 = pn
                 if(pn.nodeType === TEXT_NODE){
                     if(pn.length>0){
                         pn.deleteData(pn.length - 1, 1)
@@ -652,7 +630,6 @@ Squire.prototype.backspace = function(self, event, range){
         }
 
         // if(rootNodeOfClean){
-        //     window.rootNodeOfClean = rootNodeOfClean
         //     //CleanTree will trim whitespace, but it won't do this if there is a <br> tag at the end of the line
         //     //We want to preserve whitespace that the user has entered so calling ensureBr is necessary
         //     ensureBrAtEndOfAllLines(self._root)
@@ -681,14 +658,9 @@ Squire.prototype.moveRight = function(self, event, range){
     var root = self._root
     var nn
     var block = getStartBlockOfRange(range, root)
-    window.sc = sc
-    window.so = so
-    window.r = range
 
     if(rangeDoesEndAtBlockBoundary(range, root)){
-        window.b1 = block
         var nextBlock = block && getNextBlock(block, root)
-        window.nb1 = nextBlock
 
         if(nextBlock){
            self.setSelectionToNode(nextBlock)
@@ -707,7 +679,7 @@ Squire.prototype.moveRight = function(self, event, range){
         if(so < l){
             so += 1
             range.setStart(sc, so)
-            self.setSelection(r)
+            self.setSelection(range)
         }
         else{
             nn = findNextTextOrNotEditable(root, sc)
@@ -814,7 +786,6 @@ Squire.prototype.moveDown = function(self, event, range){
 }
 
 Squire.prototype.moveLeft = function(self, event, range){
-    console.info("MOVING LEFT")
     self  = self  ? self  : this
     //TODO: stop looking for BR tags to designate end of lines
     ensureBrAtEndOfAllLines(self._root)
@@ -830,9 +801,6 @@ Squire.prototype.moveLeft = function(self, event, range){
     var root = self._root
     var nn
     var block = getStartBlockOfRange(range, root)
-    window.sc = sc
-    window.so = so
-    window.r = range
     if(!isText(sc) && (so > sc.childNodes.length - 1) ){
         console.info("range is out of bounds")
         so = so - 1
@@ -840,14 +808,10 @@ Squire.prototype.moveLeft = function(self, event, range){
         self.setSelection(range)
     }
     if(rangeDoesStartAtBlockBoundary(range, root)){
-        console.info("RANGE STARTS AT BLOCK BOUNDARY")
         var block = getStartBlockOfRange(range)
 
         var previousBlock = block && getPreviousBlock(block, root)
         if(block && previousBlock){
-          console.info("previousBlock:")
-          console.info(previousBlock)
-
             self.setSelectionToNode(previousBlock)
             var newRange = self.getSelection()
             newRange.setStart(newRange.endContainer, newRange.endContainer.childNodes.length-1)
@@ -860,9 +824,6 @@ Squire.prototype.moveLeft = function(self, event, range){
         }
     }
     else if(sc.nodeType === TEXT_NODE){
-        console.info("TEXT_NODE")
-
-
         var l = sc.length
         //If we are in a text node and not at the end, move one character to the right
         if(so > 0){
