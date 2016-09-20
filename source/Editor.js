@@ -1597,7 +1597,11 @@ proto.getHTML = function ( options ) {
     return html;
 };
 
-proto.setHTML = function ( html ) {
+// options["focus"]: call this.focus and set selection to range
+proto.setHTML = function ( html, options ) {
+    if(!options){
+        options = {}
+    }
     var frag = this._doc.createDocumentFragment();
     var div = this.createElement( 'DIV' );
     var root = this._root;
@@ -1635,7 +1639,6 @@ proto.setHTML = function ( html ) {
     this._undoStack.length = 0;
     this._undoStackLength = 0;
     this._isInUndoState = false;
-
     // Record undo state
     var range = this._getRangeAndRemoveBookmark() ||
         this._createRange( root.firstChild, 0 );
@@ -1647,7 +1650,10 @@ proto.setHTML = function ( html ) {
     this._lastSelection = range;
     enableRestoreSelection.call( this );
     this._updatePath( range, true );
-
+    if(options["focus"]){
+      this.focus()
+      this.setSelection(range)
+    }
     return this;
 };
 
