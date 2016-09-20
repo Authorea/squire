@@ -232,6 +232,12 @@ var stylesRewriters = {
         filterClasses(node, {})
         filterAttributes(node, {"href": 1})
         return node
+    },
+    // NATE: probably want to check if it is a squire cursor bookmark
+    // before applying the general filter
+    INPUT: function ( node, parent ){
+        filterAttributes(node, {"id": 1, "type": 1})
+        return node
     }
     //TODO: NATE: We probably want to map p tags to divs, it might be done already but I'm not 100% sure
 };
