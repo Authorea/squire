@@ -1,7 +1,6 @@
 /*jshint strict:false, undef:false, unused:false */
 
 var inlineNodeNames  = /^(?:#text|A(?:BBR|CRONYM)?|B(?:R|D[IO])?|C(?:ITE|ODE)|D(?:ATA|EL|FN)|EM|FONT|HR|I(?:FRAME|MG|NPUT|NS)?|KBD|Q|R(?:P|T|UBY)|S(?:AMP|MALL|PAN|TR(?:IKE|ONG)|U[BP])?|TABLE|TD|TR|TBODY|U|VAR|WBR|Z)$/;
-window.inn = inlineNodeNames
 
 var leafNodeNames = {
     BR: 1,
@@ -95,9 +94,16 @@ function every ( nodeList, fn ) {
 
 // ---
 
-function isLeaf ( node ) {
+function isLeaf ( node, root ) {
+    //NATE: TODO: replace all occurrences of isLeaf(node) with isLeaf(node, root)
+    if (typeof root === 'undefined'){
+      console.warn("UNDEFINED ROOT IN isLeaf")
+      console.warn(node)
+      console.warn(console.trace())
+      root = document.body
+    }
     return (node.nodeType === ELEMENT_NODE &&
-        (!!leafNodeNames[ node.nodeName ]) || notEditable(node));
+        (!!leafNodeNames[ node.nodeName ]) || notEditable(node, root));
 }
 function isInline ( node ) {
     return (inlineNodeNames.test( node.nodeName ) || mathMLNodeNames[node.nodeName]);
@@ -115,40 +121,25 @@ function isContainer ( node ) {
 function isZWS ( node ) {
     return (isText(node) && node.data === ZWS)
 }
-function isZWNBS ( node ) {
-    return (isText(node) && node.data === ZWNBS)
-}
-function isZ ( node ) {
-    return (node && node.nodeName === 'Z')
-}
 
-// Not all nodes have isContentEditable defined, but once we find a node with it defined
-// it will search up the parentNode list for us and figure out if any are not editable
-function notEditable( node ){
-    if(!node){
-        return false
-    }
-    //likely a text node
-    if(node.isContentEditable === undefined){
-        return(notEditable(node.parentNode))
-    }
-    // chrome has a bug that will return false for isContentEditable if the node is not visible on the
-    // page: https://code.google.com/p/chromium/issues/detail?id=313082, thus we have to check for the
-    // attribute
-    else{
-        // return (node.isContentEditable === false)
-        if(node.hasAttribute('contenteditable')){
-            if(node.getAttribute('contenteditable') === "false"){
-                return true
-            }
-            else{
-                return false
-            }
-        }
-        else{
-            return(notEditable(node.parentNode))
-        }
-    }
+function notEditable( node, root ){
+  //NATE: TODO: replace all occurrences of notEditable(node) with notEditable(node, root)
+  if(typeof root === 'undefined'){
+    console.warn("UNDEFINED ROOT IN notEditable")
+    root = document.body
+  }
+  if($(node).hasClass('not-editable')){
+    return true
+  }
+  if(node === root){
+    return false
+  }
+  if(!node){
+      return false
+  }
+  else{
+      return(notEditable(node.parentNode, root))
+  }
 }
 
 function isText( node ){
@@ -174,8 +165,8 @@ function getNextBlock ( node, root ) {
     return node !== root ? node : null;
 }
 
-function areAlike ( node, node2 ) {
-    return !isLeaf( node ) && (
+function areAlike ( node, node2, root ) {
+    return !isLeaf( node, root ) && (
         node.nodeType === node2.nodeType &&
         node.nodeName === node2.nodeName &&
         node.nodeName !== 'A' &&
@@ -488,7 +479,7 @@ function split ( node, offset, stopNode, root ) {
     return offset;
 }
 
-function _mergeInlines ( node, fakeRange ) {
+function _mergeInlines ( node, fakeRange, root ) {
     var children = node.childNodes,
         l = children.length,
         frags = [],
@@ -496,7 +487,7 @@ function _mergeInlines ( node, fakeRange ) {
     while ( l-- ) {
         child = children[l];
         prev = l && children[ l - 1 ];
-        if ( l && isInline( child ) && !isZWNBS(child) && areAlike( child, prev ) &&
+        if ( l && isInline( child ) && areAlike( child, prev, root ) &&
                 !leafNodeNames[ child.nodeName ] ) {
             if ( fakeRange.startContainer === child ) {
                 fakeRange.startContainer = prev;
@@ -537,12 +528,12 @@ function _mergeInlines ( node, fakeRange ) {
             while ( len-- ) {
                 child.appendChild( frags.pop() );
             }
-            _mergeInlines( child, fakeRange );
+            _mergeInlines( child, fakeRange, root );
         }
     }
 }
 
-function mergeInlines ( node, range ) {
+function mergeInlines ( node, range, root ) {
     if ( node.nodeType === TEXT_NODE ) {
         node = node.parentNode;
     }
@@ -553,7 +544,7 @@ function mergeInlines ( node, range ) {
             endContainer: range.endContainer,
             endOffset: range.endOffset
         };
-        _mergeInlines( node, fakeRange );
+        _mergeInlines( node, fakeRange, root );
         range.setStart( fakeRange.startContainer, fakeRange.startOffset );
         range.setEnd( fakeRange.endContainer, fakeRange.endOffset );
     }
@@ -607,7 +598,7 @@ function mergeContainers ( node, root ) {
         return;
     }
 
-    if ( prev && areAlike( prev, node ) ) {
+    if ( prev && areAlike( prev, node, root ) ) {
         if ( !isContainer( prev ) ) {
             if ( isListItem ) {
                 block = createElement( doc, 'DIV' );
@@ -642,6 +633,5 @@ Squire.Node.getPreviousBlock = getPreviousBlock
 Squire.Node.getNextBlock = getNextBlock
 Squire.Node.isBlock = isBlock
 Squire.Node.isZWS = isZWS
-Squire.Node.isZWNBS = isZWNBS
 Squire.Node.empty = empty
 Squire.Node.isLeaf = isLeaf

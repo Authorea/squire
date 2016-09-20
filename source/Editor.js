@@ -60,45 +60,23 @@ function Squire ( root, config ) {
         var sc = r.startContainer
         var so = r.startOffset
         var child = sc.childNodes && sc.childNodes[so]
-        // NATE: if the child is not editable we need to set the cursor position to behind the to protective chars, ZWNBS<Z>.
-        // So we look back to see if they exist, and to see if there is already a text node behind them.  If so then set the
-        // range to the end of that text node, otherwise insert a new text node containing the character in the keypress.
-        // I tried not inserting the char, instead starting with a blank string, but chrome will then insert the char
-        // into the ZWNBS text, amazingly.
+        // NATE: set node to previous node if notEditable.  Probably needs some work
+        // since I have just removed references to contentEditable.
         if(notEditable(child)){
             console.info("NOT EDITABLE need to move range")
-            var z = child.previousSibling
-            var zwnbs = isZ(z) && z.previousSibling
-            var beforeZwnbs = isZWNBS(zwnbs) && zwnbs.previousSibling
-            if(isText(beforeZwnbs)){
-                var length = beforeZwnbs.length
-                this.setSelectionToNode(beforeZwnbs, length ? length : 0)
+            var previousSibling = child.previousSibling
+            if(isText(previousSibling)){
+                var length = previousSibling.length
+                this.setSelectionToNode(previousSibling, length ? length : 0)
             }
-            else if(isZWNBS(zwnbs)){
+            else{
+                console.info("Previous sibling not text node, creating text node")
                 e.preventDefault()
                 var tn = this._doc.createTextNode(String.fromCharCode(e.charCode))
-                sc.insertBefore(tn, zwnbs)
+                sc.insertBefore(tn, previousSibling)
                 this.setSelectionToNode(tn, 1)
 
             }
-        }
-        else if(isZWNBS(child) || isZWNBS(sc)){
-           console.info("currrently focued on zwnbs")
-           var zwnbs = isZWNBS(child) && child || sc
-           var beforeZwnbs = zwnbs.previousSibling
-           var parent = (zwnbs === child) ? sc : sc.parentNode
-           if(isText(beforeZwnbs)){
-               var length = beforeZwnbs.length
-               this.setSelectionToNode(beforeZwnbs, length ? length : 0)
-           }
-           else{
-
-               e.preventDefault()
-               var tn = this._doc.createTextNode(String.fromCharCode(e.charCode))
-               parent.insertBefore(tn, zwnbs)
-               this.setSelectionToNode(tn, 1)
-
-           }
         }
     });
 
@@ -522,10 +500,10 @@ proto.getSelection = function () {
         startContainer = selection.startContainer;
         endContainer = selection.endContainer;
         // FF can return the selection as being inside an <img>. WTF?
-        if ( startContainer && isLeaf( startContainer ) ) {
+        if ( startContainer && isLeaf( startContainer, root ) ) {
             selection.setStartBefore( startContainer );
         }
-        if ( endContainer && isLeaf( endContainer ) ) {
+        if ( endContainer && isLeaf( endContainer, root ) ) {
             selection.setEndBefore( endContainer );
         }
     }
@@ -1408,15 +1386,7 @@ var makeList = function ( self, frag, type ) {
         listAttrs = tagAttributes[ type.toLowerCase() ],
         listItemAttrs = tagAttributes.li;
     var div = frag.childNodes[0]
-    var addedContentEditable = false
-    // Nate: We need to do this due to an addition I made to isBlock, which returns false for noneditable nodes.
-    // This function is dealing with a frag that has been removed from the editor dom, thus it loses the
-    // contenteditable=true inherited from the editor body.  I temporarily set that here and remove it again
-    // at the end of the function once the frag has been re-inserted into the editor.
-    if(div && !div.hasAttribute("contenteditable")){
-        div.setAttribute("contenteditable", true)
-        addedContentEditable = true
-    }
+
     while ( node = walker.nextNode() ) {
         tag = node.parentNode.nodeName;
         if ( tag !== 'LI' ) {
@@ -1449,9 +1419,6 @@ var makeList = function ( self, frag, type ) {
                 );
             }
         }
-    }
-    if(addedContentEditable){
-        div.removeAttribute("contenteditable")
     }
 };
 
@@ -1584,7 +1551,6 @@ options =
 {
     withBookMark: 1, //will include tags for cursor position
     stripEndBrs: 1, //remove BRs from the end of block elements
-    cleanContentEditable: 1, //remove contentEditable <ZWNBS><Z> tags
 }
 
 */
@@ -1600,9 +1566,6 @@ proto.getHTML = function ( options ) {
 
     if(options["stripEndBrs"]){
         removeBrAtEndOfAllLines(root)
-    }
-    if(options["cleanContentEditable"]){
-        removeAllZNodes(root)
     }
     if ( withBookMark && ( range = this.getSelection() ) ) {
         this._saveRangeToBookmark( range );
@@ -1630,9 +1593,6 @@ proto.getHTML = function ( options ) {
     }
     if(options["stripEndBrs"]){
         ensureBrAtEndOfAllLines(root)
-    }
-    if(options["cleanContentEditable"]){
-        ensurePreZNodesForContentEditable(root)
     }
     return html;
 };
@@ -1688,8 +1648,6 @@ proto.setHTML = function ( html ) {
     enableRestoreSelection.call( this );
     this._updatePath( range, true );
 
-    removeTrailingZWS(this._root)
-    ensurePreZNodesForContentEditable( root )
     return this;
 };
 
@@ -1834,7 +1792,6 @@ proto.insertHTML = function ( html, isPaste ) {
         cleanupBRs( frag, null );
         removeEmptyInlines( frag );
         frag.normalize();
-        ensurePreZNodesForContentEditable(frag)
         ensureBrAtEndOfAllLines(frag)
         //NATE: This is a clear spot to do something of the sort:
         // registeredFilters.each(function(filter){filter(frag)})

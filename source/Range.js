@@ -78,7 +78,6 @@ var insertNodeInRange = function ( range, node ) {
 
     range.setStart( startContainer, startOffset );
     range.setEnd( endContainer, endOffset );
-    ensurePreZNodesForContentEditable( node.ownerDocument.body )
     ensureBrAtEndOfAllLines( node.ownerDocument.body )
 };
 
@@ -348,21 +347,15 @@ var moveRangeBoundariesDownTree = function ( range ) {
         child;
 
     if( notEditable(startContainer)){
-        // console.info("start container not editable, stopping here")
         return
     }
     // This loop goes down and to the left of the tree
     while ( startContainer.nodeType !== TEXT_NODE ) {
         child = startContainer.childNodes[ startOffset ];
-        // console.info("child")
-        // console.info(child)
         if ( !child || isLeaf( child )) {
-            // console.info("start breaking on")
-            // console.info(child)
             break;
         }
         if (  notEditable( child ) ){
-            // console.info("child not editable, stopping")
             break;
         }
         startContainer = child;
@@ -370,31 +363,24 @@ var moveRangeBoundariesDownTree = function ( range ) {
     }
     // If the endOffset is nonzero, this goes down and to the right of the tree starting at the node just before the end offset
     if ( endOffset ) {
-        // console.info("end offset")
         while ( endContainer.nodeType !== TEXT_NODE ) {
-            // console.info(endContainer)
             child = endContainer.childNodes[ endOffset - 1 ];
             if ( !child || isLeaf( child ) ) {
-                // console.info("breaking on")
-                console.info(child)
                 break;
             }
             if (  notEditable( child ) ){
-                // console.info("child not editable, stopping")
                 break;
             }
             endContainer = child;
             endOffset = getLength( endContainer );
         }
     } else {
-        // console.info("not end offset")
         while ( endContainer.nodeType !== TEXT_NODE ) {
             child = endContainer.firstChild;
             if ( !child || isLeaf( child ) ) {
                 break;
             }
             if (  notEditable( child ) ){
-                // console.info("child not editable, stopping")
                 break;
             }
             endContainer = child;
@@ -405,7 +391,6 @@ var moveRangeBoundariesDownTree = function ( range ) {
     // *outside* the range rather than inside, but also it flips which is
     // assigned to which.
     if ( range.collapsed ) {
-        // console.info("collapsed range flipping start and end")
         range.setStart( endContainer, endOffset );
         range.setEnd( endContainer, endOffset );
         //Nate:  I don't think it makes sense to have the start and end different on a collapsed range
@@ -444,12 +429,14 @@ var moveRangeBoundariesUpTree = function ( range, common ) {
     range.setEnd( endContainer, endOffset );
 };
 
+// Nate: This has no root argument, but I would think it needs to terminate at
+// the root node if nothing is found
 var moveRangeOutOfNotEditable = function( range ){
-
     var startContainer = range.startContainer
     var endContainer = range.endContainer
     var moveRight = false
     var nextSibling
+
     if(range.collapsed){
         if(startContainer.nodeType === TEXT_NODE){
             var currentParent = startContainer.parentNode

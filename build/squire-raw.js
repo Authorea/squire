@@ -23,7 +23,6 @@ var FONT_FAMILY_CLASS = 'font';
 var FONT_SIZE_CLASS = 'size';
 
 var ZWS = '\u200B';
-var ZWNBS = '\uFEFF'
 
 var win = doc.defaultView;
 
@@ -134,6 +133,7 @@ TreeWalker.prototype.nextNode = function () {
 // If the currentNode is d, nextNONode will return e.  Calling it again returns 'a' since there are no more branches
 // of a.  Calling again gives f, then g, b, and finally r.  I'm not certain if this is post order so I refrained from
 // using a completely analogous name to previousPONode.
+// NATE: We now assume the breakoutFunction can take root as second argument
 TreeWalker.prototype.nextNONode = function (breakoutFunction) {
     var current = this.currentNode,
         root = this.root,
@@ -147,7 +147,7 @@ TreeWalker.prototype.nextNONode = function (breakoutFunction) {
         node = current.nextSibling;
         //modified to let us break on an element satisfying the breakoutFunction
         if ( node ) {
-           if(breakoutFunction && breakoutFunction(node)){
+           if(breakoutFunction && breakoutFunction(node, root)){
                this.currentNode = node;
                return node;
            }
@@ -171,6 +171,7 @@ TreeWalker.prototype.nextNONode = function (breakoutFunction) {
     }
 };
 
+// NATE: the breakoutFunction takes (node, root)
 TreeWalker.prototype.previousNode = function (breakoutFunction) {
     var current = this.currentNode,
         root = this.root,
@@ -184,7 +185,7 @@ TreeWalker.prototype.previousNode = function (breakoutFunction) {
         node = current.previousSibling;
         //modified to let us break on an element satisfying the breakoutFunction
         if ( node ) {
-           if(breakoutFunction && breakoutFunction(node)){
+           if(breakoutFunction && breakoutFunction(node, root)){
                this.currentNode = node;
                return node;
            }
@@ -239,7 +240,6 @@ TreeWalker.prototype.previousPONode = function () {
 };
 
 var inlineNodeNames  = /^(?:#text|A(?:BBR|CRONYM)?|B(?:R|D[IO])?|C(?:ITE|ODE)|D(?:ATA|EL|FN)|EM|FONT|HR|I(?:FRAME|MG|NPUT|NS)?|KBD|Q|R(?:P|T|UBY)|S(?:AMP|MALL|PAN|TR(?:IKE|ONG)|U[BP])?|TABLE|TD|TR|TBODY|U|VAR|WBR|Z)$/;
-window.inn = inlineNodeNames
 
 var leafNodeNames = {
     BR: 1,
@@ -333,9 +333,16 @@ function every ( nodeList, fn ) {
 
 // ---
 
-function isLeaf ( node ) {
+function isLeaf ( node, root ) {
+    //NATE: TODO: replace all occurrences of isLeaf(node) with isLeaf(node, root)
+    if (typeof root === 'undefined'){
+      console.warn("UNDEFINED ROOT IN isLeaf")
+      console.warn(node)
+      console.warn(console.trace())
+      root = document.body
+    }
     return (node.nodeType === ELEMENT_NODE &&
-        (!!leafNodeNames[ node.nodeName ]) || notEditable(node));
+        (!!leafNodeNames[ node.nodeName ]) || notEditable(node, root));
 }
 function isInline ( node ) {
     return (inlineNodeNames.test( node.nodeName ) || mathMLNodeNames[node.nodeName]);
@@ -353,40 +360,25 @@ function isContainer ( node ) {
 function isZWS ( node ) {
     return (isText(node) && node.data === ZWS)
 }
-function isZWNBS ( node ) {
-    return (isText(node) && node.data === ZWNBS)
-}
-function isZ ( node ) {
-    return (node && node.nodeName === 'Z')
-}
 
-// Not all nodes have isContentEditable defined, but once we find a node with it defined
-// it will search up the parentNode list for us and figure out if any are not editable
-function notEditable( node ){
-    if(!node){
-        return false
-    }
-    //likely a text node
-    if(node.isContentEditable === undefined){
-        return(notEditable(node.parentNode))
-    }
-    // chrome has a bug that will return false for isContentEditable if the node is not visible on the
-    // page: https://code.google.com/p/chromium/issues/detail?id=313082, thus we have to check for the
-    // attribute
-    else{
-        // return (node.isContentEditable === false)
-        if(node.hasAttribute('contenteditable')){
-            if(node.getAttribute('contenteditable') === "false"){
-                return true
-            }
-            else{
-                return false
-            }
-        }
-        else{
-            return(notEditable(node.parentNode))
-        }
-    }
+function notEditable( node, root ){
+  //NATE: TODO: replace all occurrences of notEditable(node) with notEditable(node, root)
+  if(typeof root === 'undefined'){
+    console.warn("UNDEFINED ROOT IN notEditable")
+    root = document.body
+  }
+  if($(node).hasClass('not-editable')){
+    return true
+  }
+  if(node === root){
+    return false
+  }
+  if(!node){
+      return false
+  }
+  else{
+      return(notEditable(node.parentNode, root))
+  }
 }
 
 function isText( node ){
@@ -412,8 +404,8 @@ function getNextBlock ( node, root ) {
     return node !== root ? node : null;
 }
 
-function areAlike ( node, node2 ) {
-    return !isLeaf( node ) && (
+function areAlike ( node, node2, root ) {
+    return !isLeaf( node, root ) && (
         node.nodeType === node2.nodeType &&
         node.nodeName === node2.nodeName &&
         node.nodeName !== 'A' &&
@@ -726,7 +718,7 @@ function split ( node, offset, stopNode, root ) {
     return offset;
 }
 
-function _mergeInlines ( node, fakeRange ) {
+function _mergeInlines ( node, fakeRange, root ) {
     var children = node.childNodes,
         l = children.length,
         frags = [],
@@ -734,7 +726,7 @@ function _mergeInlines ( node, fakeRange ) {
     while ( l-- ) {
         child = children[l];
         prev = l && children[ l - 1 ];
-        if ( l && isInline( child ) && !isZWNBS(child) && areAlike( child, prev ) &&
+        if ( l && isInline( child ) && areAlike( child, prev, root ) &&
                 !leafNodeNames[ child.nodeName ] ) {
             if ( fakeRange.startContainer === child ) {
                 fakeRange.startContainer = prev;
@@ -775,12 +767,12 @@ function _mergeInlines ( node, fakeRange ) {
             while ( len-- ) {
                 child.appendChild( frags.pop() );
             }
-            _mergeInlines( child, fakeRange );
+            _mergeInlines( child, fakeRange, root );
         }
     }
 }
 
-function mergeInlines ( node, range ) {
+function mergeInlines ( node, range, root ) {
     if ( node.nodeType === TEXT_NODE ) {
         node = node.parentNode;
     }
@@ -791,7 +783,7 @@ function mergeInlines ( node, range ) {
             endContainer: range.endContainer,
             endOffset: range.endOffset
         };
-        _mergeInlines( node, fakeRange );
+        _mergeInlines( node, fakeRange, root );
         range.setStart( fakeRange.startContainer, fakeRange.startOffset );
         range.setEnd( fakeRange.endContainer, fakeRange.endOffset );
     }
@@ -845,7 +837,7 @@ function mergeContainers ( node, root ) {
         return;
     }
 
-    if ( prev && areAlike( prev, node ) ) {
+    if ( prev && areAlike( prev, node, root ) ) {
         if ( !isContainer( prev ) ) {
             if ( isListItem ) {
                 block = createElement( doc, 'DIV' );
@@ -880,7 +872,6 @@ Squire.Node.getPreviousBlock = getPreviousBlock
 Squire.Node.getNextBlock = getNextBlock
 Squire.Node.isBlock = isBlock
 Squire.Node.isZWS = isZWS
-Squire.Node.isZWNBS = isZWNBS
 Squire.Node.empty = empty
 Squire.Node.isLeaf = isLeaf
 
@@ -962,7 +953,6 @@ var insertNodeInRange = function ( range, node ) {
 
     range.setStart( startContainer, startOffset );
     range.setEnd( endContainer, endOffset );
-    ensurePreZNodesForContentEditable( node.ownerDocument.body )
     ensureBrAtEndOfAllLines( node.ownerDocument.body )
 };
 
@@ -1232,21 +1222,15 @@ var moveRangeBoundariesDownTree = function ( range ) {
         child;
 
     if( notEditable(startContainer)){
-        // console.info("start container not editable, stopping here")
         return
     }
     // This loop goes down and to the left of the tree
     while ( startContainer.nodeType !== TEXT_NODE ) {
         child = startContainer.childNodes[ startOffset ];
-        // console.info("child")
-        // console.info(child)
         if ( !child || isLeaf( child )) {
-            // console.info("start breaking on")
-            // console.info(child)
             break;
         }
         if (  notEditable( child ) ){
-            // console.info("child not editable, stopping")
             break;
         }
         startContainer = child;
@@ -1254,31 +1238,24 @@ var moveRangeBoundariesDownTree = function ( range ) {
     }
     // If the endOffset is nonzero, this goes down and to the right of the tree starting at the node just before the end offset
     if ( endOffset ) {
-        // console.info("end offset")
         while ( endContainer.nodeType !== TEXT_NODE ) {
-            // console.info(endContainer)
             child = endContainer.childNodes[ endOffset - 1 ];
             if ( !child || isLeaf( child ) ) {
-                // console.info("breaking on")
-                console.info(child)
                 break;
             }
             if (  notEditable( child ) ){
-                // console.info("child not editable, stopping")
                 break;
             }
             endContainer = child;
             endOffset = getLength( endContainer );
         }
     } else {
-        // console.info("not end offset")
         while ( endContainer.nodeType !== TEXT_NODE ) {
             child = endContainer.firstChild;
             if ( !child || isLeaf( child ) ) {
                 break;
             }
             if (  notEditable( child ) ){
-                // console.info("child not editable, stopping")
                 break;
             }
             endContainer = child;
@@ -1289,7 +1266,6 @@ var moveRangeBoundariesDownTree = function ( range ) {
     // *outside* the range rather than inside, but also it flips which is
     // assigned to which.
     if ( range.collapsed ) {
-        // console.info("collapsed range flipping start and end")
         range.setStart( endContainer, endOffset );
         range.setEnd( endContainer, endOffset );
         //Nate:  I don't think it makes sense to have the start and end different on a collapsed range
@@ -1328,12 +1304,14 @@ var moveRangeBoundariesUpTree = function ( range, common ) {
     range.setEnd( endContainer, endOffset );
 };
 
+// Nate: This has no root argument, but I would think it needs to terminate at
+// the root node if nothing is found
 var moveRangeOutOfNotEditable = function( range ){
-
     var startContainer = range.startContainer
     var endContainer = range.endContainer
     var moveRight = false
     var nextSibling
+
     if(range.collapsed){
         if(startContainer.nodeType === TEXT_NODE){
             var currentParent = startContainer.parentNode
@@ -1517,17 +1495,12 @@ var keys = {
 
 // Ref: http://unixpapa.com/js/key.html
 var onKey = function ( event ) {
-    window.k = event
-
     var code = event.keyCode,
         key = keys[ code ],
         modifiers = '',
         range = this.getSelection();
     var sc = range.startContainer
     var so = range.startOffset
-    if(isZWNBS(sc)){
-        console.info("INSIDE ZWNBS")
-    }
 
     if ( event.defaultPrevented ) {
         return;
@@ -1604,11 +1577,8 @@ var mapKeyToFormat = function ( tag, remove ) {
 // link in Opera, it won't delete the link. Let's make things consistent. If
 // you delete all text inside an inline tag, remove the inline tag.
 var afterDelete = function ( self, range ) {
-    // console.info("after delete")
     try {
         ensureBrAtEndOfAllLines(self._root)
-        ensurePreZNodesForContentEditable(self._root)
-        removeDanglingZNodes(self._root)
         removeEmptyInlines( self._root )
 
         if ( !range ) { range = self.getSelection(); }
@@ -1620,19 +1590,14 @@ var afterDelete = function ( self, range ) {
             node = node.parentNode;
         }
         parent = node;
-        window.p44 = parent
-        window.n44 = node
         while ( isInline( parent ) &&
                 ( !parent.textContent || parent.textContent === ZWS ) ) {
             node = parent;
             parent = node.parentNode;
         }
-        window.p55 = parent
-        window.n55 = parent
 
         // If focused in empty inline element
         if ( node !== parent ) {
-            console.info("removing empty inline")
             // Move focus to just before empty inline(s)
             range.setStart( parent,
                 indexOf.call( parent.childNodes, node ) );
@@ -1645,7 +1610,6 @@ var afterDelete = function ( self, range ) {
             }
             fixCursor( parent, self._root );
             // Move cursor into text node
-            console.info("moving range down tree")
             moveRangeBoundariesDownTree( range );
         }
         // If you delete the last character in the sole <div> in Chrome,
@@ -1749,7 +1713,7 @@ var keyHandlers = {
             }
 
 
-            if ( nodeAfterSplit.nodeType !== TEXT_NODE && notEditable(nodeAfterSplit)) {
+            if ( nodeAfterSplit.nodeType !== TEXT_NODE && notEditable(nodeAfterSplit, root)) {
                 break;
             }
             while ( child && child.nodeType === TEXT_NODE && !child.data ) {
@@ -1778,20 +1742,19 @@ var keyHandlers = {
         self.backspace(self, event, range)
     },
     'delete': function ( self, event, range ) {
-        console.info("deleting")
+        var root = self._root;
+        var current, next;
         self._removeZWS();
         // Record undo checkpoint.
         self.saveUndoState( range );
         // If not collapsed, delete contents
         if ( !range.collapsed ) {
-            console.info("deleting contents of range")
             event.preventDefault();
             deleteContentsOfRange( range, root );
             afterDelete( self, range );
         }
         // If at end of block, merge next into this block
         else if ( rangeDoesEndAtBlockBoundary( range, root ) ) {
-            console.info("ends at block boundary")
             event.preventDefault();
             current = getStartBlockOfRange( range, root );
             if ( !current ) {
@@ -1804,7 +1767,7 @@ var keyHandlers = {
             // Must not be at the very end of the text area.
             if ( next ) {
                 // If not editable, just delete whole block.
-                if ( notEditable(next) ) {
+                if ( notEditable(next, root) ) {
                     detach( next );
                     return;
                 }
@@ -1828,7 +1791,7 @@ var keyHandlers = {
             var so = range.startOffset
             if(sc.nodeType === ELEMENT_NODE){
                 var ch = sc.childNodes[so]
-                if(notEditable(ch)){
+                if(notEditable(ch, root)){
                     detach( next );
                 }
             }
@@ -1976,7 +1939,6 @@ var findNextBRTag = function(root, node){
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
                         return ( node.nodeName === "BR" )
     } );
-    window.w = w
     w.currentNode = node;
     return w.nextNONode()
 }
@@ -1985,25 +1947,23 @@ var findPreviousBRTag = function(root, node){
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
                         return ( node.nodeName === "BR" )
     } );
-    window.w = w
     w.currentNode = node;
     return w.previousNode()
 }
 
 var findNextTextOrNotEditable = function(root, node){
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
-        return ( (isText(node) && !isZWNBS(node)) || notEditable(node) )
+        return ( isText(node) || notEditable(node, root) )
     } );
-    window.w = w
     w.currentNode = node;
+    //NATE: TODO: call this with root
     return w.nextNONode(notEditable)
 }
 
 var findPreviousTextOrNotEditable = function(root, node){
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
-        return ( (isText(node) && !isZWNBS(node)) || notEditable(node) )
+        return ( isText(node) || notEditable(node, root) )
     } );
-    window.w = w
     w.currentNode = node;
     return w.previousNode(notEditable)
 }
@@ -2015,29 +1975,38 @@ var printRange = function(range, message){
 
 Squire.prototype.backspace = function(self, event, range){
     self  = self  ? self  : this
+    var root = self._root;
     event && event.preventDefault()
     range = range ? range : self.getSelection()
     self._removeZWS();
     // Record undo checkpoint.
     self._recordUndoState( range.cloneRange() );
-    self._getRangeAndRemoveBookmark( range.cloneRange() );
+    // NATE: there is a possibility that during getRangeAndRemoveBookmark,
+    // that the node with the current selection is removed from the dom,
+    // and this causes unexpected behavior with the current selection.  The
+    // range returned will be correct, it all happens in mergeInlines, and
+    // that function fixes the range at the end.  We should probably reset
+    // the selection every time we call getRangeAndRemoveBookmark.  Also,
+    // cloning the range probably isn't so helpful.
+    var newRange = self._getRangeAndRemoveBookmark( range.cloneRange() );
+    if(newRange){
+      self.setSelection(newRange)
+      range = newRange
+    }
     // If not collapsed, delete contents
     var block = getStartBlockOfRange(range)
-    window.block = block
     if ( !range.collapsed ) {
-        console.info("range not collapsed")
         deleteContentsOfRange( range, self._root );
         afterDelete( self, range );
     }
     // If at beginning of block, merge with previous
     else if ( rangeDoesStartAtBlockBoundary( range, self._root ) ) {
-        console.info("range starts at block boundary")
         var current = getStartBlockOfRange( range ),
             previous = current && getPreviousBlock( current, self._root );
         // Must not be at the very beginning of the text area.
         if ( previous ) {
             // If not editable, just delete whole block.
-            if ( notEditable(previous) ) {
+            if ( notEditable(previous, root) ) {
                 detach( previous );
                 return;
             }
@@ -2081,18 +2050,12 @@ Squire.prototype.backspace = function(self, event, range){
         var pn = null;
         var pOffset
         var parent = null;
-        window.sc33 = sc
-        window.so33 = so
-        window.r33 = range
-        window.pn = pn
         var rootNodeOfClean = null;
 
         if((sc.nodeType === TEXT_NODE)){
             if(so>1){
                 sc.deleteData(so-1, 1)
                 parent = sc.parentNode
-                // pn = w.previousNode(notEditable)
-                // console.info(pn)
                 rootNodeOfClean = parent
 
             }
@@ -2102,7 +2065,6 @@ Squire.prototype.backspace = function(self, event, range){
             else{ //so === 0
                 pn = findPreviousTextOrNotEditable(block, sc)
                 var previousParent = pn.parentNode
-                window.previousParent = previousParent
                 if(pn.nodeType === TEXT_NODE){
                     if(pn.length>0){
                         pn.deleteData(pn.length - 1, 1)
@@ -2111,7 +2073,7 @@ Squire.prototype.backspace = function(self, event, range){
                         detach(pn);
                     }
                 }
-                else if(notEditable(pn)){
+                else if(notEditable(pn, root)){
                     detach(pn);
                 }
                 rootNodeOfClean = previousParent
@@ -2121,7 +2083,6 @@ Squire.prototype.backspace = function(self, event, range){
             var child = sc.childNodes[so]
             pn = findPreviousTextOrNotEditable(block, child)
             if(pn){
-                window.pn33 = pn
                 if(pn.nodeType === TEXT_NODE){
                     if(pn.length>0){
                         pn.deleteData(pn.length - 1, 1)
@@ -2135,7 +2096,7 @@ Squire.prototype.backspace = function(self, event, range){
                     }
 
                 }
-                else if(notEditable(pn)){
+                else if(notEditable(pn, root)){
                     detach(pn);
                 }
             }
@@ -2145,7 +2106,6 @@ Squire.prototype.backspace = function(self, event, range){
         }
 
         // if(rootNodeOfClean){
-        //     window.rootNodeOfClean = rootNodeOfClean
         //     //CleanTree will trim whitespace, but it won't do this if there is a <br> tag at the end of the line
         //     //We want to preserve whitespace that the user has entered so calling ensureBr is necessary
         //     ensureBrAtEndOfAllLines(self._root)
@@ -2173,15 +2133,10 @@ Squire.prototype.moveRight = function(self, event, range){
     var parent = sc.parent
     var root = self._root
     var nn
-    var block = getStartBlockOfRange(range)
-    window.sc = sc
-    window.so = so
-    window.r = range
+    var block = getStartBlockOfRange(range, root)
 
-    if(rangeDoesEndAtBlockBoundary(range)){
-        window.b1 = block
-        var nextBlock = block && getNextBlock(block)
-        window.nb1 = nextBlock
+    if(rangeDoesEndAtBlockBoundary(range, root)){
+        var nextBlock = block && getNextBlock(block, root)
 
         if(nextBlock){
            self.setSelectionToNode(nextBlock)
@@ -2197,10 +2152,10 @@ Squire.prototype.moveRight = function(self, event, range){
         var l = sc.length
         var skippedNode = false
         //If we are in a text node and not at the end, move one character to the right
-        if(so < l && !isZWNBS(sc)){
+        if(so < l){
             so += 1
             range.setStart(sc, so)
-            self.setSelection(r)
+            self.setSelection(range)
         }
         else{
             nn = findNextTextOrNotEditable(root, sc)
@@ -2208,7 +2163,7 @@ Squire.prototype.moveRight = function(self, event, range){
             // The right cursor has a special case where it should skip over the first notEditable node,
             // otherwise it will take two right presses to go from text->notEditable->text
             if(nn){
-                if(notEditable(nn)){
+                if(notEditable(nn, root)){
                     nn = findNextTextOrNotEditable(block, nn)
                     skippedNode = true
                 }
@@ -2321,17 +2276,14 @@ Squire.prototype.moveLeft = function(self, event, range){
     var parent = sc.parent
     var root = self._root
     var nn
-    var block = getStartBlockOfRange(range)
-    window.sc = sc
-    window.so = so
-    window.r = range
+    var block = getStartBlockOfRange(range, root)
     if(!isText(sc) && (so > sc.childNodes.length - 1) ){
         console.info("range is out of bounds")
         so = so - 1
         range.setStart(sc, so)
         self.setSelection(range)
     }
-  if(rangeDoesStartAtBlockBoundary(range, self._root)){
+    if(rangeDoesStartAtBlockBoundary(range, root)){
         var block = getStartBlockOfRange(range)
 
         var previousBlock = block && getPreviousBlock(block, root)
@@ -2344,7 +2296,7 @@ Squire.prototype.moveLeft = function(self, event, range){
             self.setSelection(newRange)
         }
         else{
-            // console.info("no block found")
+          console.info("no block found")
         }
     }
     else if(sc.nodeType === TEXT_NODE){
@@ -2510,7 +2462,8 @@ var filterClasses = function(node, whiteList){
 var filterSpanClasses = function(span){
     var whiteList = {
         "katex": 1,
-        "ltx_Math": 1
+        "ltx_Math": 1,
+        "not-editable": 1
     }
     return filterClasses(span, whiteList)
 }
@@ -2542,7 +2495,6 @@ var filterAttributes = function(node, whiteList){
 var filterSpanAttributes = function(span){
     var whiteList = {
         "class": 1,
-        "contenteditable": 1,
         "data": 1
     }
     return filterAttributes(span, whiteList)
@@ -2636,7 +2588,7 @@ var stylesRewriters = {
     // Basically for the moment if we don't know what it is it will have no classes and no attributes.
     DEFAULT_REWRITER: function ( node, parent ){
         filterClasses(node, {})
-        filterAttributes(node, {data: 1, class: 1, contenteditable: 1})
+        filterAttributes(node, {data: 1, class: 1})
         return node
     },
     A: function ( node, parent ){
@@ -2856,25 +2808,6 @@ var replaceTrailingSingleSpace = function replaceTrailingSingleSpace ( root, ran
     }
 };
 
-// Nate:  The hack I found to get chrome happy with noneditable containers is to place a zero-width-space and
-// a dummy <z> container in front of them.  This ZWS can sometimes be absorbed by the text element preceding it.
-// They are impossible to see.
-var removeTrailingZWS = function removeTrailingZWS ( root ) {
-    var walker = new TreeWalker(root, SHOW_TEXT, function(){return true})
-    var node = walker.currentNode
-    while(node){
-        if (isText(node) && !isLeaf( node ) ) {
-            if(node.data){
-                if(node.data.length > 1 && node.data[node.data.length-1] === ZWNBS){
-                    node.replaceData(node.data.length-1, 1, "")
-
-                }
-            }
-        }
-        node = walker.nextNode()
-    }
-};
-
 var ensureBrAtEndOfAllLines = function (root){
     //NATE: even divs which are not lines need to have brs at their end for chrome to happily play with spaces
     ensureBrAtEndOfAllDivs(root)
@@ -2920,84 +2853,6 @@ var removeBrAtEndOfAllLines = function (root){
         }
     }
 }
-
-// The only purpose of the Z node is to protect a following non-editable container, removing it
-// if it's neighbor is missing or editable
-var removeDanglingZNodes = function(root){
-    var walker = new TreeWalker(root, SHOW_ELEMENT, function(){return true})
-    var node = walker.currentNode
-    var nodesToRemove = []
-    var ps
-
-    while(node){
-        if (node.nodeName === 'Z' ) {
-            if(!notEditable(node.nextSibling)){
-                nodesToRemove.push(node)
-                ps = node.previousSibling
-                if(isZWNBS(ps)){
-                    nodesToRemove.push(ps)
-                }
-            }
-        }
-        node = walker.nextNode()
-    }
-    nodesToRemove.forEach(function(node){
-        detach(node)
-    })
-};
-
-var removeAllZNodes = function(root){
-    var walker = new TreeWalker(root, SHOW_ELEMENT, function(){return true})
-    var node = walker.currentNode
-    var ps
-    var nodesToRemove = []
-
-    while(node){
-        if (node.nodeName === 'Z' ) {
-            nodesToRemove.push(node)
-            ps = node.previousSibling
-            if(isZWNBS(ps)){
-                nodesToRemove.push(ps)
-            }
-        }
-        node = walker.nextNode()
-    }
-    nodesToRemove.forEach(function(node){
-        detach(node)
-    })
-};
-var ensurePreZNodesForContentEditable = function(root){
-    //only uppermost not editables need the Z tag, because the lower nodes will be inaccessible
-    var walker = new TreeWalker(root, SHOW_ELEMENT, function(node){return (notEditable(node) && !notEditable(node.parentNode) )})
-    var node = walker.currentNode
-    var doc = node.ownerDocument
-    if(!walker.filter(node)){
-        node = walker.nextNode()
-    }
-    var previousNode, zwsNode
-    var n, t
-
-    while(node){
-        previousNode = node.previousSibling
-        if(!(previousNode && previousNode.nodeName === "Z")){
-            n = doc.createElement("z")
-            // node.parentNode.insertBefore(t, node)
-            node.parentNode.insertBefore(n, node)
-        }
-        else{
-            n = previousNode
-        }
-        zwsNode = n && n.previousSibling
-        if(!isZWNBS(zwsNode)){
-            t = doc.createTextNode( ZWNBS )
-            // node.parentNode.insertBefore(t, node)
-            n.parentNode.insertBefore(t, n)
-        }
-
-        node = walker.nextNode()
-    }
-}
-
 
 // ---
 
@@ -3089,9 +2944,6 @@ Squire.Clean = function(){}
 //NATE: normally I use the editor.collapseSimpleSpans but for testing I would like to have it available from Squire.Clean
 Squire.Clean.collapseSimpleSpans = collapseSimpleSpans
 Squire.prototype.cleanTree = cleanTree
-Squire.prototype.removeDanglingZNodes = removeDanglingZNodes
-Squire.prototype.ensurePreZNodesForContentEditable = ensurePreZNodesForContentEditable
-Squire.prototype.removeAllZNodes = removeAllZNodes
 Squire.prototype.removeEmptyInlines = removeEmptyInlines
 Squire.prototype.collapseSimpleSpans = collapseSimpleSpans
 Squire.prototype.ensureBrAtEndOfAllLines = ensureBrAtEndOfAllLines
@@ -3411,45 +3263,23 @@ function Squire ( root, config ) {
         var sc = r.startContainer
         var so = r.startOffset
         var child = sc.childNodes && sc.childNodes[so]
-        // NATE: if the child is not editable we need to set the cursor position to behind the to protective chars, ZWNBS<Z>.
-        // So we look back to see if they exist, and to see if there is already a text node behind them.  If so then set the
-        // range to the end of that text node, otherwise insert a new text node containing the character in the keypress.
-        // I tried not inserting the char, instead starting with a blank string, but chrome will then insert the char
-        // into the ZWNBS text, amazingly.
+        // NATE: set node to previous node if notEditable.  Probably needs some work
+        // since I have just removed references to contentEditable.
         if(notEditable(child)){
             console.info("NOT EDITABLE need to move range")
-            var z = child.previousSibling
-            var zwnbs = isZ(z) && z.previousSibling
-            var beforeZwnbs = isZWNBS(zwnbs) && zwnbs.previousSibling
-            if(isText(beforeZwnbs)){
-                var length = beforeZwnbs.length
-                this.setSelectionToNode(beforeZwnbs, length ? length : 0)
+            var previousSibling = child.previousSibling
+            if(isText(previousSibling)){
+                var length = previousSibling.length
+                this.setSelectionToNode(previousSibling, length ? length : 0)
             }
-            else if(isZWNBS(zwnbs)){
+            else{
+                console.info("Previous sibling not text node, creating text node")
                 e.preventDefault()
                 var tn = this._doc.createTextNode(String.fromCharCode(e.charCode))
-                sc.insertBefore(tn, zwnbs)
+                sc.insertBefore(tn, previousSibling)
                 this.setSelectionToNode(tn, 1)
 
             }
-        }
-        else if(isZWNBS(child) || isZWNBS(sc)){
-           console.info("currrently focued on zwnbs")
-           var zwnbs = isZWNBS(child) && child || sc
-           var beforeZwnbs = zwnbs.previousSibling
-           var parent = (zwnbs === child) ? sc : sc.parentNode
-           if(isText(beforeZwnbs)){
-               var length = beforeZwnbs.length
-               this.setSelectionToNode(beforeZwnbs, length ? length : 0)
-           }
-           else{
-
-               e.preventDefault()
-               var tn = this._doc.createTextNode(String.fromCharCode(e.charCode))
-               parent.insertBefore(tn, zwnbs)
-               this.setSelectionToNode(tn, 1)
-
-           }
         }
     });
 
@@ -3873,10 +3703,10 @@ proto.getSelection = function () {
         startContainer = selection.startContainer;
         endContainer = selection.endContainer;
         // FF can return the selection as being inside an <img>. WTF?
-        if ( startContainer && isLeaf( startContainer ) ) {
+        if ( startContainer && isLeaf( startContainer, root ) ) {
             selection.setStartBefore( startContainer );
         }
-        if ( endContainer && isLeaf( endContainer ) ) {
+        if ( endContainer && isLeaf( endContainer, root ) ) {
             selection.setEndBefore( endContainer );
         }
     }
@@ -4759,15 +4589,7 @@ var makeList = function ( self, frag, type ) {
         listAttrs = tagAttributes[ type.toLowerCase() ],
         listItemAttrs = tagAttributes.li;
     var div = frag.childNodes[0]
-    var addedContentEditable = false
-    // Nate: We need to do this due to an addition I made to isBlock, which returns false for noneditable nodes.
-    // This function is dealing with a frag that has been removed from the editor dom, thus it loses the
-    // contenteditable=true inherited from the editor body.  I temporarily set that here and remove it again
-    // at the end of the function once the frag has been re-inserted into the editor.
-    if(div && !div.hasAttribute("contenteditable")){
-        div.setAttribute("contenteditable", true)
-        addedContentEditable = true
-    }
+
     while ( node = walker.nextNode() ) {
         tag = node.parentNode.nodeName;
         if ( tag !== 'LI' ) {
@@ -4800,9 +4622,6 @@ var makeList = function ( self, frag, type ) {
                 );
             }
         }
-    }
-    if(addedContentEditable){
-        div.removeAttribute("contenteditable")
     }
 };
 
@@ -4935,7 +4754,6 @@ options =
 {
     withBookMark: 1, //will include tags for cursor position
     stripEndBrs: 1, //remove BRs from the end of block elements
-    cleanContentEditable: 1, //remove contentEditable <ZWNBS><Z> tags
 }
 
 */
@@ -4951,9 +4769,6 @@ proto.getHTML = function ( options ) {
 
     if(options["stripEndBrs"]){
         removeBrAtEndOfAllLines(root)
-    }
-    if(options["cleanContentEditable"]){
-        removeAllZNodes(root)
     }
     if ( withBookMark && ( range = this.getSelection() ) ) {
         this._saveRangeToBookmark( range );
@@ -4981,9 +4796,6 @@ proto.getHTML = function ( options ) {
     }
     if(options["stripEndBrs"]){
         ensureBrAtEndOfAllLines(root)
-    }
-    if(options["cleanContentEditable"]){
-        ensurePreZNodesForContentEditable(root)
     }
     return html;
 };
@@ -5039,8 +4851,6 @@ proto.setHTML = function ( html ) {
     enableRestoreSelection.call( this );
     this._updatePath( range, true );
 
-    removeTrailingZWS(this._root)
-    ensurePreZNodesForContentEditable( root )
     return this;
 };
 
@@ -5185,7 +4995,6 @@ proto.insertHTML = function ( html, isPaste ) {
         cleanupBRs( frag, null );
         removeEmptyInlines( frag );
         frag.normalize();
-        ensurePreZNodesForContentEditable(frag)
         ensureBrAtEndOfAllLines(frag)
         //NATE: This is a clear spot to do something of the sort:
         // registeredFilters.each(function(filter){filter(frag)})

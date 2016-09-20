@@ -64,33 +64,44 @@ var initEditors = function(){
 
     testSetup()
 
-    quickTest()
+    // quickTest()
 
-    // runTests()
+    runTests()
     // testGetHTML()
     // testInlineNodeNames()
     // testCleaner()
     // testLists()
     // testTables()
     // testInsertHTML()
-    // testResults()
+    testResults()
 
     setTimeout(updateCursor, 20)
   });
 }
 
 quickTest = function(){
-  prepareTest("<div>a<br></div><div><br></div><div>b<br></div>")
-  editor.addEventListener('squire::up-on-first-line', function(e){
-    console.info('UP EVENT')
-    console.info(e)
-    window.e = e
-  })
-  editor.addEventListener('squire::down-on-last-line', function(e){
-    console.info('UP EVENT')
-    console.info(e)
-    window.e = e
-  })
+  // prepareTest("<div>a<br></div><div><br></div><div>b<br></div>")
+  // editor.addEventListener('squire::up-on-first-line', function(e){
+  //   console.info('UP EVENT')
+  //   console.info(e)
+  //   window.e = e
+  // })
+  // editor.addEventListener('squire::down-on-last-line', function(e){
+  //   console.info('UP EVENT')
+  //   console.info(e)
+  //   window.e = e
+  // })
+  console.info("starting quick test")
+  keyEvent = new KeyboardEvent("keydown", {key : "a", keyCode: 65, code: "KeyA", cancelable: true});
+  // prepareTest("<div>a<br></div><div><br></div><div>b<br></div>")
+  prepareTest('<div>ab<span class="not-editable">c</span>d</div>')
+  // editor.moveRight(editor, keyEvent, range);updateCursor()
+  // editor.moveRight(editor, keyEvent, range);updateCursor()
+  // editor.moveRight(editor, keyEvent, range);updateCursor()
+  // editor.moveRight(editor, keyEvent, range);updateCursor()
+  // testBlock(SquireRange.getNextBlock(firstLine), "right arrow from end of text at end of line")
+
+  console.info("ended quick test")
 }
 
 var updateCursor = function(){
@@ -167,8 +178,8 @@ prepareTest = function(html){
   editor.setHTML(html)
   updateCursor()
   editor.focus()
-  range = editor.getSelection()
-  firstLine = editor._doc.body.childNodes[0]
+  // range = editor.getSelection()
+  // firstLine = editor._doc.body.childNodes[0]
 }
 
 testContent = function(content, offset, message){
@@ -218,7 +229,7 @@ testNode = function(node, func, message){
 ** by hand commands such as: editor.moveLeft(editor, keyEvent, range);updateCursor()
 */
 runTests = function(){
-  editor.setHTML('<div>ab<span contentEditable="false">c</span>d</div>')
+  editor.setHTML('<div>ab<span class=not-editable>c</span>d</div>')
   updateCursor()
   editor.focus()
   range = editor.getSelection()
@@ -229,6 +240,7 @@ runTests = function(){
   editor.moveRight(editor, keyEvent, range);
   editor.moveRight(editor, keyEvent, range);
   editor.moveRight(editor, keyEvent, range);
+  return
   testContent("d", 0, "right arrow over non-editable")
   editor.moveLeft(editor, keyEvent, range);
   editor.moveRight(editor, keyEvent, range);
@@ -239,7 +251,6 @@ runTests = function(){
   testContent("ab", "right arrow when child is text")
 
   // LEFT ARROW
-  //TODO: without ZWS<Z> this was childNodes[2], 1
   range.setStart(firstLine.childNodes[4], 1); range.setEnd(firstLine.childNodes[4], 1)
   editor.setSelection(range)
   editor.moveLeft(editor, keyEvent, range);updateCursor()
@@ -286,8 +297,6 @@ runTests = function(){
   firstLine = editor._doc.body.childNodes[0]
   keyEvent = new KeyboardEvent("keydown", {key : "a", keyCode: 65, code: "KeyA", cancelable: true});
 
-  prepareTest("a<z></z>b<z></z>c")
-  editor.removeAllZNodes(editor._body);updateCursor()
   editor.moveRight(editor, keyEvent, range);updateCursor()
   editor.moveRight(editor, keyEvent, range);updateCursor()
   testContent("b", 1, "moves right properly between two next nodes")
@@ -312,11 +321,6 @@ runTests = function(){
   prepareTest("")
   insertNotEditable(); updateCursor()
   return
-  testNode(firstLine, function(node){
-    var fc = node.firstChild
-    var ns = fc.nextSibling
-    return(Squire.Node.isZWNBS(fc) && (ns && ns.nodeName === "Z"))},
-    "inserts ZWS and Z node before notEditable when insertNodeInRange")
 }
 
 testTables = function(){
@@ -325,7 +329,6 @@ testTables = function(){
   t = $(s)[0]
   editor.insertNodeInRange(editor.getSelection(), t)
   test(editor._body.childNodes[0].childNodes[2] === t, "can insert table")
-  test(editor._body.childNodes[0].childNodes[1].nodeName === 'Z', "table has pre Z node")
 }
 testLists = function(){
   prepareTest("a")
@@ -341,15 +344,6 @@ testLists = function(){
   s = '<div>a<br></div><div><br></div>'
   test(editor.getHTML() === s, "can remove list")
   return
-
-
-  // editor.insertHTML(s)
-  // editor.moveRight()
-  // editor.moveRight()
-
-  // df = document.createDocumentFragment()
-  // df.appendChild(editor._body.childNodes[0])
-  // w = Squire.Node.getBlockWalker( df )
 }
 
 testGetHTML = function(){
@@ -360,13 +354,10 @@ testGetHTML = function(){
   test(editor.getHTML({withBookMark: 1}).match("squire"), "getHTML can bookmark cursor")
   prepareTest("<span contentEditable=false>a</span>")
   test(editor.getHTML({cleanContentEditable: 1, stripEndBrs: 1}) === '<div><span contenteditable="false">a</span></div>', "getHTML cleans up contenteditable")
-  test(editor.getHTML() === '<div>﻿<z></z><span contenteditable="false">a</span><br></div>', "getHTML cleans up contenteditable")
   prepareTest("<span data-name=a>a</span>")
   test(editor.getHTML().match('data-name'), "spans can have data attributes")
   prepareTest("<math data-name=a>a</math>")
   test(editor.getHTML().match('data-name'), "other nodes can have data attributes")
-
-
 }
 
 testCleaner = function(){
@@ -418,48 +409,6 @@ testInsertHTML = function(){
 }
 
 debuggingTests = function(){
-  // var citation4 = '<cite contenteditable="false"><a href="#">Jen</a> </cite> this is a <div>div</div> and'
-  // editor.setHTML("is <span contentEditable='false'>non</span> edit or " + citation4 + " something else")
-  // editor.setHTML("is " + citation4 + " som" + "<div>abc</div><div>xy<b>bd</b>z</div>")
-  // editor.setHTML("<div>abc</div><div>xy<b>bd</b>z</div>")
-  // var citation5 = '<cite contenteditable="false"><a href="#">Jenkins</a>   </cite>'
-  // var citation5 = '&#8203;<cite contenteditable="false"><a href="#">Jenkins</a> </cite>&#8203;'
-  // editor.setHTML("<div>a b c</div>" + "<div>" + citation5 + "</div>")
-  // editor.setHTML('<div>f<cite contenteditable="false"><a href="#20366120">(Jenkins 2009)</a></cite>&nbsp; This is after<br></div>')
-  // editor.setHTML('<div>&nbsp;f<cite contenteditable="false"><a href="#20366120">(Jenkins 2009)</a></cite><br></div>')
-  // editor.setHTML('<div>b<span contenteditable="false"><span><math><semantics><mrow><mi>x</mi><mo>=</mo><mn>5</mn></mrow><annotation>x=5</annotation></semantics></math></span><span><span></span><span></span><span><span>x</span><span>=</span><span>5</span></span></span></span><br></div>')
-  // editor.setHTML('<div><b>b</b><span contenteditable="false">x</span><span contenteditable="false">y</span><span contenteditable="false">z</span>')
-  // editor.setHTML('<div>Lib<span class="a">a<span class="b">b<span class="c">c<span class="d">d&nbsp;for<span class="e">e&nbsp;</span></span></span></span></span><br></div><div><br></div>')
-  // editor.setHTML('abcd')
-  // prepareTest('<div>tool<span class="highlight" style="background-color: rgb(255, 255, 255)"><span class="colour" style="color:rgb(51, 51, 51)">  <span class="font" style="font-family:Helvetica, Times, serif">     <span class="size" style="font-size:16px">f<span class="Apple-converted-space"></span></span></span> </span></span><br></div><div><br></div>')
-  // prepareTest('<div>tool<span class="highlight" style="background-color: rgb(255, 255, 255)"><span class="colour" style="color:rgb(51, 51, 51)">  <span class="font" style="font-family:Helvetica, Times, serif"> <span class="size" style="font-size:16px"><span class="Apple-converted-space"></span></span></span> </span></span><br></div><div><br></div>')
-  // prepareTest('<div>tool<span class="a"><span class="b">  <span class="f"> <span class="s"><span class="A"></span></span></span> </span></span><br></div><div><br></div>')
-  // prepareTest('<div>tool<span class="a">a<span class="b">b<span class="f">c<span class="s"><span class="A"></span></span></span>d</span></span><br></div><div><br></div>')
-  // prepareTest('<div>tool<span style="background-color: rgb(255, 255, 255)" class="highlight"><span style="color:rgb(51, 51, 51)" class="colour">&nbsp;<span style="font-family:Helvetica,Times,serif" class="font"><span style="font-size:16px" class="size"><span class="Apple-converted-space"></span></span></span></span></span><br></div>')
-  // prepareTest('<div>tool<span style="background-color: rgb(255, 255, 255)" class="highlight"><span style="color:rgb(51, 51, 51)" class="colour">  <span style="font-family:Helvetica,Times,serif" class="font"><span style="font-size:16px" class="size"><span class="Apple-converted-space"></span></span></span></span></span><br></div>')
-  // editor.setSelectionToNode(editor._body.childNodes[0].childNodes[2])
-
-  // prepareTest('<div><span class="katex ltx_Math" contenteditable="false" data-equation="x=5"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi><mo>=</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">x=5</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.64444em;"></span><span class="strut bottom" style="height:0.64444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">x</span><span class="mrel">=</span><span class="mord mathrm">5</span></span></span></span><br></div>')
-
-  // prepareTest("abc&#8203;&#8203;<span contentEditable=false>x</span>&#8203;&#8203;<span contentEditable=false>y</span>&#8203;&#8203;def")
-  // prepareTest("a<z></z>b<z></z>c<z></z><span contentEditable=false>x</span><z></z><span contentEditable=false>y</span><z></z>def")
-  // prepareTest("a<z></z>b<z></z>c<z></z><z></z><span contentEditable=false>blah</span><span contentEditable=false>blah</span>")
-  // editor.removeAllZNodes(editor._body);updateCursor()
-  // editor.ensurePreZNodesForContentEditable(editor._body)
-  // var c = editor._body.childNodes[0].childNodes[3]
-  // editor.setSelectionToNode(c)
-  // editor._body.childNodes[0].insertBefore(document.createElement('Z'), c)
-  // var tn = document.createTextNode('')
-  // tn.innerHTML = '&#8203;&#8203;'
-  // editor._body.childNodes[0].insertBefore(tn, c)
-
-  // s = '<div class="remove_me"><span data-equation="x" class="ltx_Math" contenteditable="false"><span class="katex"><span class="katex-mathml">xx</span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">x</span></span></span></span></span>a<span data-equation="y" class="ltx_Math" contenteditable="false"><span class="katex"><span class="katex-mathml">yy</span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.03588em;">y</span></span></span></span></span>a<span data-equation="m" class="ltx_Math" contenteditable="false"><span class="katex"><span class="katex-mathml">mm</span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">m</span></span></span></span></span>a<span data-equation="z" class="ltx_Math" contenteditable="false"><span class="katex"><span class="katex-mathml">zz</span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.04398em;">z</span></span></span></span></span></div><div class="remove_me">jiop ipji opjoip j<br></div>'
-  // s = '<div class="remove_me"><span data-equation="x" class="ltx_Math" contenteditable="false"><span class="katex"><span class="katex-mathml">xx</span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">x</span></span></span></span></span>a<span data-equation="y" class="ltx_Math" contenteditable="false"><span class="katex"><span class="katex-mathml">yy</span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.03588em;">y</span></span></span></span></span>a<span data-equation="m" class="ltx_Math" contenteditable="false"><span class="katex"><span class="katex-mathml">mm</span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">m</span></span></span></span></span>a<span data-equation="z" class="ltx_Math" contenteditable="false"><span class="katex"><span class="katex-mathml">zz</span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.04398em;">z</span></span></span></span></span></div><div class="remove_me">jiop ipji opjoip j<br></div>'
-  // s = "<span class='a' contentEditable='false'>abcd</span><span class='b' contentEditable='false'>def</span>"
-  // editor.insertNodeInRange(editor.getSelection(),$(s)[0])
-  // editor.insertNodeInRange(editor.getSelection(),$(s)[0])
-  // editor.insertNodeInRange(editor.getSelection(),$(s)[1])
-  // prepareTest(s)
 }
 
 
@@ -488,7 +437,7 @@ makeTreeWalker = function(){
 
 insertNotEditable = function(e){
   range = editor.getSelection()
-  var node = $("<span contentEditable=false>NE</span>")[0]
+  var node = $("<span class=not-editable>NE</span>")[0]
   // insert the element into squire
   editor.insertNodeInRange(
       range,
