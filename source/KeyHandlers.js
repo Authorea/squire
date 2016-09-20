@@ -517,11 +517,20 @@ Squire.prototype.backspace = function(self, event, range){
     self._removeZWS();
     // Record undo checkpoint.
     self._recordUndoState( range.cloneRange() );
-    self._getRangeAndRemoveBookmark( range.cloneRange() );
-    return
+    // NATE: there is a possibility that during getRangeAndRemoveBookmark,
+    // that the node with the current selection is removed from the dom,
+    // and this causes unexpected behavior with the current selection.  The
+    // range returned will be correct, it all happens in mergeInlines, and
+    // that function fixes the range at the end.  We should probably reset
+    // the selection every time we call getRangeAndRemoveBookmark.  Also,
+    // cloning the range probably isn't so helpful.
+    var newRange = self._getRangeAndRemoveBookmark( range.cloneRange() );
+    if(newRange){
+      self.setSelection(newRange)
+      range = newRange
+    }
     // If not collapsed, delete contents
     var block = getStartBlockOfRange(range)
-    window.block = block
     if ( !range.collapsed ) {
         console.info("range not collapsed")
         deleteContentsOfRange( range, self._root );
