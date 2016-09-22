@@ -18,7 +18,10 @@ var COLOUR_CLASS = 'colour';
 var FONT_FAMILY_CLASS = 'font';
 var FONT_SIZE_CLASS = 'size';
 
-var ZWS = '\u200B';
+var ZWS       = '\u200B';
+var NBSP      = '\u00A0'
+var TAB       = NBSP + NBSP + NBSP + NBSP
+var TAB_SIZE  = 4
 
 var win = doc.defaultView;
 

@@ -2116,6 +2116,7 @@ proto.increaseQuoteLevel = command( 'modifyBlocks', increaseBlockQuoteLevel );
 proto.decreaseQuoteLevel = command( 'modifyBlocks', decreaseBlockQuoteLevel );
 
 proto.increaseIndentLevel = command( 'modifyBlocks', increaseIndentLevel )
+// TODO: NATE: should this be decreaseListLevel?
 proto.decreaseIndentLevel = proto.decreaseQuoteLevel
 
 proto.makeUnorderedList = command( 'modifyBlocks', makeUnorderedList );

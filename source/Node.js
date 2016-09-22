@@ -97,9 +97,9 @@ function every ( nodeList, fn ) {
 function isLeaf ( node, root ) {
     //NATE: TODO: replace all occurrences of isLeaf(node) with isLeaf(node, root)
     if (typeof root === 'undefined'){
-      console.warn("UNDEFINED ROOT IN isLeaf")
-      console.warn(node)
-      console.warn(console.trace())
+      // console.warn("UNDEFINED ROOT IN isLeaf")
+      // console.warn(node)
+      // console.warn(console.trace())
       root = document.body
     }
     return (node.nodeType === ELEMENT_NODE &&
@@ -125,7 +125,7 @@ function isZWS ( node ) {
 function notEditable( node, root ){
   //NATE: TODO: replace all occurrences of notEditable(node) with notEditable(node, root)
   if(typeof root === 'undefined'){
-    console.warn("UNDEFINED ROOT IN notEditable")
+    // console.warn("UNDEFINED ROOT IN notEditable")
     root = document.body
   }
   if($(node).hasClass('not-editable')){

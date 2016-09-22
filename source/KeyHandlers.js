@@ -326,6 +326,11 @@ var keyHandlers = {
     tab: function ( self, event, range ) {
         var root = self._root;
         var node, parent;
+        var startContainer = range.startContainer,
+            startOffset = range.startOffset,
+            endContainer = range.endContainer,
+            endOffset = range.endOffset;
+        var insideList = false;
         self._removeZWS();
         // If no selection and at start of block
         if ( range.collapsed && rangeDoesStartAtBlockBoundary( range, root ) ) {
@@ -339,11 +344,35 @@ var keyHandlers = {
                         // Then increase the list level
                         event.preventDefault();
                         self.modifyBlocks( increaseListLevel, range );
+                        insideList = true;
                     }
                     break;
                 }
                 node = parent;
             }
+            if(!insideList){
+              event.preventDefault()
+              insertTab(self, range)
+              moveRangeBoundariesDownTree(range)
+              // The previous command will select the entire node
+              // instead of returning a collapsed range so we need
+              // to move the start up to the end of the selection
+              range.setStart(range.endContainer, range.endOffset)
+              self.setSelection(range)
+            }
+        }
+        // otherwise if the range is collapsed just insert a normal tab
+        else if( range.collapsed  ) {
+          window.r = range
+          var node = self._doc.createTextNode(TAB)
+          insertTab(self, range)
+          range.setStart(startContainer, startOffset + TAB_SIZE)
+          range.setEnd(endContainer, endOffset + TAB_SIZE)
+          self.setSelection(range)
+          event.preventDefault();
+        }
+        else{
+          console.info("range not collapsed, ignoring tab")
         }
     },
     'shift-tab': function ( self, event, range ) {
@@ -449,6 +478,15 @@ keyHandlers[ ctrlKey + ']' ] = mapKeyTo( 'increaseQuoteLevel' );
 keyHandlers[ ctrlKey + 'y' ] = mapKeyTo( 'redo' );
 keyHandlers[ ctrlKey + 'z' ] = mapKeyTo( 'undo' );
 keyHandlers[ ctrlKey + 'shift-z' ] = mapKeyTo( 'redo' );
+
+var insertTab = function(self, range){
+  var node = self._doc.createTextNode(TAB)
+  self.insertNodeInRange(
+      range,
+      node
+  )
+  mergeInlines(node.parentNode, range)
+}
 
 var getLineNumber = function(root, node){
   if(root === node.parentNode) {
