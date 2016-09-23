@@ -70,6 +70,10 @@ var firstOrLastLine = function(self){
   }
 }
 
+// NATE: if performance is an issue I'm pretty sure there are
+// faster calculations for these two functions, especially
+// isFirstLine could just check if the parent block offsetTop is
+// the same as the inserted cursorNode.
 var isFirstLine = function(self){
   var res = firstOrLastLine(self)
   return res["firstLine"]
