@@ -56,6 +56,11 @@ var firstOrLastLine = function(self){
   var sc    = range.startContainer
   var so    = range.startOffset
   var ec, eo
+  if(sc === root){
+    moveRangeBoundariesDownTree(range)
+    var sc    = range.startContainer
+    var so    = range.startOffset
+  }
   var parentBlock = getStartBlockOfRange(range)
   var numLines    = numberOfLines(root)
   var parentBlockLineNumber   = getLineNumber(parentBlock, root)
@@ -67,12 +72,21 @@ var firstOrLastLine = function(self){
     return {firstLine: false, lastLine: false}
   }
 
-  if(sc === parentBlock){
+
+
+  if(sc === parentBlock && so === 0 && sc.childNodes[so].nodeName === "BR"){
+    console.info("BR TAG IN OTHERWISE EMPTY DIV")
     lineHeight = window.getComputedStyle(parentBlock, null)["line-height"]
     lineHeight = parseInt(lineHeight)
     lineNumberWithinParent = 0
   }
   else{
+    if(sc === parentBlock){
+      console.info("MOVING RANGE DOWN TREE")
+      moveRangeBoundariesDownTree(range)
+      var sc    = range.startContainer
+      var so    = range.startOffset
+    }
     if(sc.nodeType === TEXT_NODE && so < sc.length){
       range.setEnd(sc, so+1)
     }
