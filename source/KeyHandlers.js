@@ -363,7 +363,6 @@ var keyHandlers = {
         }
         // otherwise if the range is collapsed just insert a normal tab
         else if( range.collapsed  ) {
-          window.r = range
           var node = self._doc.createTextNode(TAB)
           insertTab(self, range)
           range.setStart(startContainer, startOffset + TAB_SIZE)
@@ -486,15 +485,6 @@ var insertTab = function(self, range){
       node
   )
   mergeInlines(node.parentNode, range)
-}
-
-var getLineNumber = function(root, node){
-  if(root === node.parentNode) {
-    return indexOf.call(root.childNodes, node)
-  }
-  else {
-    return getLineNumber(root, node.parentNode)
-  }
 }
 
 var findNextBRTag = function(root, node){
@@ -790,8 +780,7 @@ Squire.prototype.moveUp = function(self, event, range){
   var sc = range.startContainer
   var root = self._root
 
-  var lineNumber = getLineNumber(root, sc)
-  if(lineNumber === 0){
+  if(isFirstLine(self)){
     console.info("on line 0")
     event && event.preventDefault()
     var e = new CustomEvent('squire::up-on-first-line', { 'detail': {range: range} });
@@ -812,8 +801,8 @@ Squire.prototype.moveDown = function(self, event, range){
   var sc = range.startContainer
   var root = self._root
 
-  var lineNumber = getLineNumber(root, sc)
-  if(lineNumber === root.childNodes.length - 1){
+
+  if(isLastLine(self)){
     console.info("on last line")
     event && event.preventDefault()
     var e = new CustomEvent('squire::down-on-last-line', { 'detail': {range: range} });
