@@ -60,46 +60,55 @@ var firstOrLastLine = function(self){
   var numLines    = numberOfLines(root)
   var parentBlockLineNumber   = getLineNumber(parentBlock, root)
   var numLinesParentBlock     = numberOfLinesWithinParentBlock(parentBlock)
+  var lineNumberWithinParent
+  var lineHeight
 
   if(!range.collapsed){
     return {firstLine: false, lastLine: false}
   }
 
-  if(sc.nodeType === TEXT_NODE && so < sc.length){
-    range.setEnd(sc, so+1)
+  if(sc === parentBlock){
+    lineHeight = window.getComputedStyle(parentBlock, null)["line-height"]
+    lineHeight = parseInt(lineHeight)
+    lineNumberWithinParent = 0
   }
   else{
-    var nextSibling = sc.nextSibling
-    if(nextSibling){
-      if(nextSibling.nodeName === "BR"){
-        // do nothing, cursor is at the end of the line
-      }
-      else{
-        range.setStart(nextSibling, 0)
-        range.setEnd(nextSibling, 0)
-        moveRangeBoundariesDownTree(range)
-        ec = range.endContainer
-        eo = range.endOffset
-        if(ec.nodeType === TEXT_NODE && eo < ec.length){
-          range.setEnd(ec, eo+1)
+    if(sc.nodeType === TEXT_NODE && so < sc.length){
+      range.setEnd(sc, so+1)
+    }
+    else{
+      var nextSibling = sc.nextSibling
+      if(nextSibling){
+        if(nextSibling.nodeName === "BR"){
+          // do nothing, cursor is at the end of the line
+        }
+        else{
+          range.setStart(nextSibling, 0)
+          range.setEnd(nextSibling, 0)
+          moveRangeBoundariesDownTree(range)
+          ec = range.endContainer
+          eo = range.endOffset
+          if(ec.nodeType === TEXT_NODE && eo < ec.length){
+            range.setEnd(ec, eo+1)
+          }
         }
       }
     }
-  }
 
-  // NATE: we could probably put some sanity checks on this rect.  It
-  // should only contain one character thus the width and height should
-  // both be reasonably small.
-  var rect = range.getBoundingClientRect()
-  var nodeOffset = rect.top
-  var parentOffset = parentBlock.offsetTop
-  if(nodeOffset === parentOffset){
-    return true
+    // NATE: we could probably put some sanity checks on this rect.  It
+    // should only contain one character thus the width and height should
+    // both be reasonably small.
+    var rect = range.getBoundingClientRect()
+    var nodeOffset = rect.top
+    var parentOffset = parentBlock.offsetTop
+    if(nodeOffset === parentOffset){
+      return true
+    }
+    nodeOffset = nodeOffset - parentOffset
+    lineHeight = window.getComputedStyle(parentBlock, null)["line-height"]
+    lineHeight = parseInt(lineHeight)
+    lineNumberWithinParent = Math.round(nodeOffset/lineHeight)
   }
-  nodeOffset = nodeOffset - parentOffset
-  var lineHeight = window.getComputedStyle(parentBlock, null)["line-height"]
-  lineHeight = parseInt(lineHeight)
-  var lineNumberWithinParent = Math.round(nodeOffset/lineHeight)
 
   if(parentBlockLineNumber === 0 && lineNumberWithinParent === 0){
     if(numLines === 1 && numLinesParentBlock === 1){

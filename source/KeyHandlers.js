@@ -697,7 +697,14 @@ Squire.prototype.moveRight = function(self, event, range){
            self.setSelection(newRange)
         }
         else{
-            // console.info("no block found")
+            console.info("no block found")
+            if(isLastLine(self)){
+              console.info("on last line")
+              event && event.preventDefault()
+              var e = new CustomEvent('squire::down-on-last-line', { 'detail': {range: range} });
+              root.dispatchEvent(e);
+              // return
+            }
         }
     }
     else if(sc.nodeType === TEXT_NODE){
@@ -848,6 +855,13 @@ Squire.prototype.moveLeft = function(self, event, range){
         }
         else{
           console.info("no block found")
+          if(isFirstLine(self)){
+            console.info("on line 0")
+            event && event.preventDefault()
+            var e = new CustomEvent('squire::up-on-first-line', { 'detail': {range: range} });
+            root.dispatchEvent(e);
+            // return
+          }
         }
     }
     else if(sc.nodeType === TEXT_NODE){
