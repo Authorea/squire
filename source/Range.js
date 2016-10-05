@@ -600,3 +600,7 @@ function SquireRange(){};
 SquireRange.getNextBlock = getNextBlock
 SquireRange.getPreviousBlock = getPreviousBlock
 window.SquireRange = SquireRange
+// NATE: These are useful for debugging
+// window.mrbd = moveRangeBoundariesDownTree
+// window.mrup = moveRangeBoundariesUpTree
+// window.pr   = printRange

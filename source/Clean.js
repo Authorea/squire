@@ -501,7 +501,7 @@ var removeBrAtEndOfAllLines = function (root){
 }
 
 // ---
-
+// TODO: NATE: add root to this function
 var notWSTextNode = function ( node ) {
     return node.nodeType === ELEMENT_NODE ?
         node.nodeName === 'BR' :
