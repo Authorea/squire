@@ -429,43 +429,60 @@ var moveRangeBoundariesUpTree = function ( range, common ) {
     range.setEnd( endContainer, endOffset );
 };
 
+var moveNodeOutOfNotEditable = function( node, nodeOffset ){
+    var startContainer = node
+    var moveRight = false
+    var nextSibling
+    var currentParent = startContainer.parentNode
+    var newParent     = currentParent
+    var textLength, startOffset, offset
+
+    if(startContainer.nodeType === TEXT_NODE){
+        textLength = startContainer.data.length
+        // if we are for some reason, likely an up or down arrow, finding ourselves in the middle of a
+        // text area that isn't editable, we need to decide if we should be in front of that element
+        // or to the right of it.  At the moment this will only work for a single text element in a series
+        // of non-editable structures, but it can be extended to work for all cases if necessary.
+        if(nodeOffset > textLength/2){
+            moveRight = true
+        }
+    }
+    else{
+      currentParent = startContainer.parentNode
+      newParent = currentParent
+    }
+    while(notEditable(newParent)){
+        currentParent = newParent
+        if(moveRight){
+            if(nextSibling = currentParent.nextSibling){
+                currentParent = nextSibling
+            }
+        }
+        newParent = currentParent.parentNode
+        startOffset = indexOf.call( newParent.childNodes, currentParent );
+    }
+    if(newParent !== currentParent){
+        offset = indexOf.call( newParent.childNodes, currentParent )
+        return([newParent, offset])
+    }
+    else{
+      return([node, nodeOffset])
+    }
+
+}
+window.moveNodeOutOfNotEditable = moveNodeOutOfNotEditable
+
 // Nate: This has no root argument, but I would think it needs to terminate at
 // the root node if nothing is found
 var moveRangeOutOfNotEditable = function( range ){
-    var startContainer = range.startContainer
-    var endContainer = range.endContainer
-    var moveRight = false
-    var nextSibling
-
-    if(range.collapsed){
-        if(startContainer.nodeType === TEXT_NODE){
-            var currentParent = startContainer.parentNode
-            var newParent = currentParent
-            var textLength = startContainer.data.length
-            // if we are for some reason, likely an up or down arrow, finding ourselves in the middle of a
-            // text area that isn't editable, we need to decide if we should be in front of that element
-            // or to the right of it.  At the moment this will only work for a single text element in a series
-            // of non-editable structures, but it can be extended to work for all cases if necessary.
-            if(range.startOffset > textLength/2){
-                moveRight = true
-            }
-            while(notEditable(newParent)){
-                currentParent = newParent
-                if(moveRight){
-                    if(nextSibling = currentParent.nextSibling){
-                        currentParent = nextSibling
-                    }
-                }
-                newParent = currentParent.parentNode
-                var startOffset = indexOf.call( newParent.childNodes, currentParent );
-            }
-            if(newParent !== currentParent){
-                var offset = indexOf.call( newParent.childNodes, currentParent )
-                range.setStart( newParent, offset );
-                range.setEnd( newParent, offset );
-            }
-        }
-    }
+  var sc = range.startContainer
+  var so = range.startOffset
+  var ec = range.endContainer
+  var eo = range.endOffset
+  var newStart = moveNodeOutOfNotEditable(sc, so)
+  var newEnd   = moveNodeOutOfNotEditable(ec, eo)
+  range.setStart(newStart[0], newStart[1])
+  range.setEnd(newEnd[0], newEnd[1])
 }
 window.moveRangeOutOfNotEditable = moveRangeOutOfNotEditable
 

@@ -67,28 +67,35 @@ function Squire ( root, config ) {
         var child = sc.childNodes && sc.childNodes[so]
         var previous
         var root = this._root
-        // TODO: NATE: ensure that we don't add content to a noot-editable node.
-        // Needs to be re-implemented
-        // if(notEditable(child)){
-        //     console.info("NOT EDITABLE need to move range")
-        //     var previousSibling = child.previousSibling
-        //     if(isText(previousSibling)){
-        //         var length = previousSibling.length
-        //         this.setSelectionToNode(previousSibling, length ? length : 0)
-        //     }
-        //     else{
-        //         console.info("Previous sibling not text node, creating text node")
-        //         e.preventDefault()
-        //         var tn = this._doc.createTextNode(String.fromCharCode(e.charCode))
-        //         sc.insertBefore(tn, previousSibling)
-        //         this.setSelectionToNode(tn, 1)
-        //     }
-        // }
+
+        if(notEditable(child)){
+            console.info("NOT EDITABLE need to move range")
+            ensureOutsideOfNotEditable( this )
+            r = this.getSelection()
+            sc = r.startContainer
+            so = r.startOffset
+            child = sc.childNodes && sc.childNodes[so]
+            if(notEditable(child)){
+              var previousSibling = child.previousSibling
+              if(isText(previousSibling)){
+                  var length = previousSibling.length
+                  this.setSelectionToNode(previousSibling, length ? length : 0)
+              }
+              else{
+                  console.info("Previous sibling not text node, creating text node")
+                  e.preventDefault()
+                  var tn = this._doc.createTextNode(String.fromCharCode(e.charCode))
+                  sc.insertBefore(tn, child)
+                  this.setSelectionToNode(tn, 1)
+              }
+            }
+        }
 
         if(sc.nodeType === TEXT_NODE){
           if(so === 0){
             previous = findPreviousTextOrNotEditable(root, sc)
             if(notEditable(previous, root)){
+              // TODO: nate: could possibly just insert the char here
               sc.insertData(0, ZWS)
               r.setStart(sc, 1)
               this.setSelection(r)
@@ -96,7 +103,18 @@ function Squire ( root, config ) {
           }
         }
         else{
-          // console.info("NOT TEXT NODE")
+          console.info("NOT TEXT NODE")
+          previous = findPreviousTextOrNotEditable(root, child)
+          if(notEditable(previous, root)){
+            console.info("prev not edit")
+            // TODO: nate: could possibly just insert the char here
+            var node = this._doc.createTextNode(ZWS)
+            sc.insertBefore(node, child)
+            r.setStart(node, 1)
+            // r.setEnd(node, 1)
+            this.setSelection(r)
+            // mergeInlines(node.parentNode, range)
+          }
         }
     });
 
