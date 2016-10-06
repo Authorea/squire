@@ -371,7 +371,6 @@ var keyHandlers = {
         }
         // otherwise if the range is collapsed just insert a normal tab
         else if( range.collapsed  ) {
-          var node = self._doc.createTextNode(TAB)
           insertTab(self, range)
           range.setStart(startContainer, startOffset + TAB_SIZE)
           range.setEnd(endContainer, endOffset + TAB_SIZE)

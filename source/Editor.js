@@ -89,6 +89,7 @@ function Squire ( root, config ) {
           if(so === 0){
             previous = findPreviousTextOrNotEditable(root, sc)
             if(notEditable(previous, root)){
+              // TODO: nate: could possibly just insert the char here
               sc.insertData(0, ZWS)
               r.setStart(sc, 1)
               this.setSelection(r)
@@ -96,7 +97,18 @@ function Squire ( root, config ) {
           }
         }
         else{
-          // console.info("NOT TEXT NODE")
+          console.info("NOT TEXT NODE")
+          previous = findPreviousTextOrNotEditable(root, child)
+          if(notEditable(previous, root)){
+            console.info("prev not edit")
+            // TODO: nate: could possibly just insert the char here
+            var node = this._doc.createTextNode(ZWS)
+            sc.insertBefore(node, child)
+            r.setStart(node, 1)
+            // r.setEnd(node, 1)
+            this.setSelection(r)
+            // mergeInlines(node.parentNode, range)
+          }
         }
     });
 
