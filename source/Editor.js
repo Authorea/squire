@@ -55,28 +55,48 @@ function Squire ( root, config ) {
         this.addEventListener( 'beforedeactivate', this.getSelection );
     }
 
+    // The keypress event listener is useful since it doesn't fire for
+    // arrow or modifier keys, whereas keydown fires for everything.
+    // Currently this get fired after the onkey handler in keyhandlers,
+    // so there might have already been some processing on the range
+    // before arriving here.
     this.addEventListener("keypress", function(e){
         var r = this.getSelection()
         var sc = r.startContainer
         var so = r.startOffset
         var child = sc.childNodes && sc.childNodes[so]
-        // NATE: set node to previous node if notEditable.  Probably needs some work
-        // since I have just removed references to contentEditable.
-        if(notEditable(child)){
-            console.info("NOT EDITABLE need to move range")
-            var previousSibling = child.previousSibling
-            if(isText(previousSibling)){
-                var length = previousSibling.length
-                this.setSelectionToNode(previousSibling, length ? length : 0)
-            }
-            else{
-                console.info("Previous sibling not text node, creating text node")
-                e.preventDefault()
-                var tn = this._doc.createTextNode(String.fromCharCode(e.charCode))
-                sc.insertBefore(tn, previousSibling)
-                this.setSelectionToNode(tn, 1)
+        var previous
+        var root = this._root
+        // TODO: NATE: ensure that we don't add content to a noot-editable node.
+        // Needs to be re-implemented
+        // if(notEditable(child)){
+        //     console.info("NOT EDITABLE need to move range")
+        //     var previousSibling = child.previousSibling
+        //     if(isText(previousSibling)){
+        //         var length = previousSibling.length
+        //         this.setSelectionToNode(previousSibling, length ? length : 0)
+        //     }
+        //     else{
+        //         console.info("Previous sibling not text node, creating text node")
+        //         e.preventDefault()
+        //         var tn = this._doc.createTextNode(String.fromCharCode(e.charCode))
+        //         sc.insertBefore(tn, previousSibling)
+        //         this.setSelectionToNode(tn, 1)
+        //     }
+        // }
 
+        if(sc.nodeType === TEXT_NODE){
+          if(so === 0){
+            previous = findPreviousTextOrNotEditable(root, sc)
+            if(notEditable(previous, root)){
+              sc.insertData(0, ZWS)
+              r.setStart(sc, 1)
+              this.setSelection(r)
             }
+          }
+        }
+        else{
+          // console.info("NOT TEXT NODE")
         }
     });
 
@@ -751,6 +771,11 @@ proto._getRangeAndRemoveBookmark = function ( range ) {
             }
         }
     }
+
+    // TODO: NATE: we might want to move this back into getRangeAndRemoveBookmark.  I need
+    // it for backspace to function properly.  I'm not sure why it was removed as it used
+    // to be part of this function
+    // moveRangeBoundariesDownTree( range );
     return range || null;
 };
 

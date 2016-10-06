@@ -100,7 +100,9 @@ var filterSpanClasses = function(span){
     var whiteList = {
         "katex": 1,
         "ltx_Math": 1,
-        "not-editable": 1
+        "not-editable": 1,
+        "ltx_cite": 1,
+        "squire-citation": 1
     }
     return filterClasses(span, whiteList)
 }
@@ -156,6 +158,7 @@ var replaceStyles = function ( node, parent ) {
 // insertHTML
 var stylesRewriters = {
     SPAN: replaceStyles,
+    CITE: replaceStyles,
     STRONG: replaceWithTag( 'B' ),
     EM: replaceWithTag( 'I' ),
     INS: replaceWithTag( 'U' ),
@@ -498,7 +501,7 @@ var removeBrAtEndOfAllLines = function (root){
 }
 
 // ---
-
+// TODO: NATE: add root to this function
 var notWSTextNode = function ( node ) {
     return node.nodeType === ELEMENT_NODE ?
         node.nodeName === 'BR' :

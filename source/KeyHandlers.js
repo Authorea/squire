@@ -65,13 +65,21 @@ var onKey = function ( event ) {
     if ( this._keyHandlers[ key ] ) {
         this._keyHandlers[ key ]( this, event, range );
     } else if ( key.length === 1 && !range.collapsed ) {
+        // NATE: saveUndoState was causing odd behavior near non-editable nodes.
+        // My guess is that it is a similar problem to backspace, where I had to
+        // add in a moveRangeBoundariesDownTree for it to function properly.
         // Record undo checkpoint.
-        this.saveUndoState( range );
+        // this.saveUndoState( range );
         // Delete the selection
         deleteContentsOfRange( range, this._root );
         this._ensureBottomLine();
         this.setSelection( range );
         this._updatePath( range, true );
+
+    } else {
+      // Record undo checkpoint.
+      // this.saveUndoState( range );
+
     }
 
 };
@@ -504,7 +512,7 @@ var findPreviousBRTag = function(root, node){
 }
 
 var findNextTextOrNotEditable = function(root, node){
-    var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
+    var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node, root){
         return ( isText(node) || notEditable(node, root) )
     } );
     w.currentNode = node;
@@ -513,16 +521,11 @@ var findNextTextOrNotEditable = function(root, node){
 }
 
 var findPreviousTextOrNotEditable = function(root, node){
-    var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
+    var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node, root){
         return ( isText(node) || notEditable(node, root) )
     } );
     w.currentNode = node;
     return w.previousNode(notEditable)
-}
-
-var printRange = function(range, message){
-    console.info("MESSAGE: " + message)
-    console.info(range.startContainer, range.startOffset, range.endContainer, range.endOffset)
 }
 
 Squire.prototype.backspace = function(self, event, range){
@@ -532,19 +535,18 @@ Squire.prototype.backspace = function(self, event, range){
     range = range ? range : self.getSelection()
     self._removeZWS();
     // Record undo checkpoint.
-    self._recordUndoState( range.cloneRange() );
+    self._recordUndoState( range );
+    // var newRange = self._getRangeAndRemoveBookmark( range );
     // NATE: there is a possibility that during getRangeAndRemoveBookmark,
     // that the node with the current selection is removed from the dom,
     // and this causes unexpected behavior with the current selection.  The
     // range returned will be correct, it all happens in mergeInlines, and
     // that function fixes the range at the end.  We should probably reset
-    // the selection every time we call getRangeAndRemoveBookmark.  Also,
-    // cloning the range probably isn't so helpful.
-    var newRange = self._getRangeAndRemoveBookmark( range.cloneRange() );
-    if(newRange){
-      self.setSelection(newRange)
-      range = newRange
-    }
+    // the selection every time we call getRangeAndRemoveBookmark.
+    range = self._getRangeAndRemoveBookmark( range );
+    // TODO: NATE: we might want to move this back into getRangeAndRemoveBookmark
+    moveRangeBoundariesDownTree( range );
+
     // If not collapsed, delete contents
     var block = getStartBlockOfRange(range)
     if ( !range.collapsed ) {

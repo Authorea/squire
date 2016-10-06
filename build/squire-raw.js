@@ -1478,6 +1478,10 @@ function SquireRange(){};
 SquireRange.getNextBlock = getNextBlock
 SquireRange.getPreviousBlock = getPreviousBlock
 window.SquireRange = SquireRange
+// NATE: These are useful for debugging
+// window.mrbd = moveRangeBoundariesDownTree
+// window.mrup = moveRangeBoundariesUpTree
+// window.pr   = printRange
 
 var getLineNumber = function(node, root){
   if(root === node.parentNode) {
@@ -1696,13 +1700,21 @@ var onKey = function ( event ) {
     if ( this._keyHandlers[ key ] ) {
         this._keyHandlers[ key ]( this, event, range );
     } else if ( key.length === 1 && !range.collapsed ) {
+        // NATE: saveUndoState was causing odd behavior near non-editable nodes.
+        // My guess is that it is a similar problem to backspace, where I had to
+        // add in a moveRangeBoundariesDownTree for it to function properly.
         // Record undo checkpoint.
-        this.saveUndoState( range );
+        // this.saveUndoState( range );
         // Delete the selection
         deleteContentsOfRange( range, this._root );
         this._ensureBottomLine();
         this.setSelection( range );
         this._updatePath( range, true );
+
+    } else {
+      // Record undo checkpoint.
+      // this.saveUndoState( range );
+
     }
 
 };
@@ -2135,7 +2147,7 @@ var findPreviousBRTag = function(root, node){
 }
 
 var findNextTextOrNotEditable = function(root, node){
-    var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
+    var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node, root){
         return ( isText(node) || notEditable(node, root) )
     } );
     w.currentNode = node;
@@ -2144,16 +2156,11 @@ var findNextTextOrNotEditable = function(root, node){
 }
 
 var findPreviousTextOrNotEditable = function(root, node){
-    var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node){
+    var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node, root){
         return ( isText(node) || notEditable(node, root) )
     } );
     w.currentNode = node;
     return w.previousNode(notEditable)
-}
-
-var printRange = function(range, message){
-    console.info("MESSAGE: " + message)
-    console.info(range.startContainer, range.startOffset, range.endContainer, range.endOffset)
 }
 
 Squire.prototype.backspace = function(self, event, range){
@@ -2163,19 +2170,18 @@ Squire.prototype.backspace = function(self, event, range){
     range = range ? range : self.getSelection()
     self._removeZWS();
     // Record undo checkpoint.
-    self._recordUndoState( range.cloneRange() );
+    self._recordUndoState( range );
+    // var newRange = self._getRangeAndRemoveBookmark( range );
     // NATE: there is a possibility that during getRangeAndRemoveBookmark,
     // that the node with the current selection is removed from the dom,
     // and this causes unexpected behavior with the current selection.  The
     // range returned will be correct, it all happens in mergeInlines, and
     // that function fixes the range at the end.  We should probably reset
-    // the selection every time we call getRangeAndRemoveBookmark.  Also,
-    // cloning the range probably isn't so helpful.
-    var newRange = self._getRangeAndRemoveBookmark( range.cloneRange() );
-    if(newRange){
-      self.setSelection(newRange)
-      range = newRange
-    }
+    // the selection every time we call getRangeAndRemoveBookmark.
+    range = self._getRangeAndRemoveBookmark( range );
+    // TODO: NATE: we might want to move this back into getRangeAndRemoveBookmark
+    moveRangeBoundariesDownTree( range );
+
     // If not collapsed, delete contents
     var block = getStartBlockOfRange(range)
     if ( !range.collapsed ) {
@@ -2659,7 +2665,9 @@ var filterSpanClasses = function(span){
     var whiteList = {
         "katex": 1,
         "ltx_Math": 1,
-        "not-editable": 1
+        "not-editable": 1,
+        "ltx_cite": 1,
+        "squire-citation": 1
     }
     return filterClasses(span, whiteList)
 }
@@ -2715,6 +2723,7 @@ var replaceStyles = function ( node, parent ) {
 // insertHTML
 var stylesRewriters = {
     SPAN: replaceStyles,
+    CITE: replaceStyles,
     STRONG: replaceWithTag( 'B' ),
     EM: replaceWithTag( 'I' ),
     INS: replaceWithTag( 'U' ),
@@ -3057,7 +3066,7 @@ var removeBrAtEndOfAllLines = function (root){
 }
 
 // ---
-
+// TODO: NATE: add root to this function
 var notWSTextNode = function ( node ) {
     return node.nodeType === ELEMENT_NODE ?
         node.nodeName === 'BR' :
@@ -3460,28 +3469,48 @@ function Squire ( root, config ) {
         this.addEventListener( 'beforedeactivate', this.getSelection );
     }
 
+    // The keypress event listener is useful since it doesn't fire for
+    // arrow or modifier keys, whereas keydown fires for everything.
+    // Currently this get fired after the onkey handler in keyhandlers,
+    // so there might have already been some processing on the range
+    // before arriving here.
     this.addEventListener("keypress", function(e){
         var r = this.getSelection()
         var sc = r.startContainer
         var so = r.startOffset
         var child = sc.childNodes && sc.childNodes[so]
-        // NATE: set node to previous node if notEditable.  Probably needs some work
-        // since I have just removed references to contentEditable.
-        if(notEditable(child)){
-            console.info("NOT EDITABLE need to move range")
-            var previousSibling = child.previousSibling
-            if(isText(previousSibling)){
-                var length = previousSibling.length
-                this.setSelectionToNode(previousSibling, length ? length : 0)
-            }
-            else{
-                console.info("Previous sibling not text node, creating text node")
-                e.preventDefault()
-                var tn = this._doc.createTextNode(String.fromCharCode(e.charCode))
-                sc.insertBefore(tn, previousSibling)
-                this.setSelectionToNode(tn, 1)
+        var previous
+        var root = this._root
+        // TODO: NATE: ensure that we don't add content to a noot-editable node.
+        // Needs to be re-implemented
+        // if(notEditable(child)){
+        //     console.info("NOT EDITABLE need to move range")
+        //     var previousSibling = child.previousSibling
+        //     if(isText(previousSibling)){
+        //         var length = previousSibling.length
+        //         this.setSelectionToNode(previousSibling, length ? length : 0)
+        //     }
+        //     else{
+        //         console.info("Previous sibling not text node, creating text node")
+        //         e.preventDefault()
+        //         var tn = this._doc.createTextNode(String.fromCharCode(e.charCode))
+        //         sc.insertBefore(tn, previousSibling)
+        //         this.setSelectionToNode(tn, 1)
+        //     }
+        // }
 
+        if(sc.nodeType === TEXT_NODE){
+          if(so === 0){
+            previous = findPreviousTextOrNotEditable(root, sc)
+            if(notEditable(previous, root)){
+              sc.insertData(0, ZWS)
+              r.setStart(sc, 1)
+              this.setSelection(r)
             }
+          }
+        }
+        else{
+          // console.info("NOT TEXT NODE")
         }
     });
 
@@ -4156,6 +4185,11 @@ proto._getRangeAndRemoveBookmark = function ( range ) {
             }
         }
     }
+
+    // TODO: NATE: we might want to move this back into getRangeAndRemoveBookmark.  I need
+    // it for backspace to function properly.  I'm not sure why it was removed as it used
+    // to be part of this function
+    // moveRangeBoundariesDownTree( range );
     return range || null;
 };
 
