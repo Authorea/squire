@@ -85,7 +85,7 @@ var filterClasses = function(node, whiteList){
          classes = $.map(classes, function(c){return c})
      }
      classes.forEach(function(c){
-         if(whiteList[c] || c.match(/^au/) || c.match(/^ltx_/)){
+         if(whiteList[c] || c.match(/^au/) || c.match(/^ltx_/) || c.match(/^v\d+/)){
              newClasses.push(c)
          }
      })
@@ -102,7 +102,9 @@ var filterSpanClasses = function(span){
         "ltx_Math": 1,
         "not-editable": 1,
         "ltx_cite": 1,
-        "squire-citation": 1
+        "squire-citation": 1,
+        "rendered": 1,
+        "raw": 1
     }
     return filterClasses(span, whiteList)
 }
