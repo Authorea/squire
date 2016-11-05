@@ -1452,7 +1452,7 @@ var makeList = function ( self, frag, type ) {
                     ])
                 );
             }
-            newLi.appendChild( node );
+            newLi.appendChild( empty( node ) );
         } else {
             node = node.parentNode.parentNode;
             tag = node.nodeName;
