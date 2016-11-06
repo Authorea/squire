@@ -485,6 +485,21 @@ var ensureBrAtEndOfAllDivs = function (root){
     })
 }
 
+var ensureBrAtEndOfAllTags = function (root, tags){
+    if(!tags){
+      tags = ['div', 'li', 'ol', 'ul']
+    }
+    var elements = $(root).find(tags.join(", "))
+    var lastChild, br
+    elements.each(function(i, element){
+        lastChild = element.lastChild
+        if(!lastChild || lastChild.nodeName !== 'BR'){
+            br = createElement( element.ownerDocument, 'BR' )
+            element.appendChild(br)
+        }
+    })
+}
+
 
 // NATE: TODO: make sure this does not apply to other blocks
 var removeBrAtEndOfAllLines = function (root){
@@ -500,6 +515,10 @@ var removeBrAtEndOfAllLines = function (root){
             }
         }
     }
+}
+
+var removeAllBrs = function (root){
+    $(root).find("br").detach()
 }
 
 // ---

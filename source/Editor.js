@@ -1607,12 +1607,20 @@ proto.getHTML = function ( options ) {
     var withBookMark = options["withBookMark"]
     var root = this._doc.body
 
-    if(options["stripEndBrs"]){
-        removeBrAtEndOfAllLines(root)
-    }
+    // saving the range to a bookmark needs to come first since it will put back
+    // many of the br tags that have been removed
     if ( withBookMark && ( range = this.getSelection() ) ) {
         this._saveRangeToBookmark( range );
     }
+
+    // two options here with the first being more drastic
+    if(options["stripAllBrs"]){
+        removeAllBrs(root)
+    }
+    else if(options["stripEndBrs"]){
+        removeBrAtEndOfAllLines(root)
+    }
+
     if ( useTextFixer ) {
         root = this._root;
         node = root;
@@ -1634,8 +1642,14 @@ proto.getHTML = function ( options ) {
     if ( range ) {
         this._getRangeAndRemoveBookmark( range );
     }
+    // TODO: NATE: might need to extend this to li elements.  Squire uses BR tags
+    // internally to correct some browser behavior but we don't necessarily wants
+    // these tags in the html we are saving on the server.
     if(options["stripEndBrs"]){
         ensureBrAtEndOfAllLines(root)
+    }
+    else if(options["stripAllBrs"]){
+        ensureBrAtEndOfAllTags(root, ['div', 'li'])
     }
     return html;
 };
