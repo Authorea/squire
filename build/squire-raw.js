@@ -2816,7 +2816,7 @@ var stylesRewriters = {
     },
     A: function ( node, parent ){
         filterClasses(node, {})
-        filterAttributes(node, {"href": 1})
+        filterAttributes(node, {"href": 1, "target": 1})
         return node
     },
     // NATE: probably want to check if it is a squire cursor bookmark
