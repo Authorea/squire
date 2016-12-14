@@ -2681,6 +2681,7 @@ var filterSpanClasses = function(span){
     var whiteList = {
         "katex": 1,
         "ltx_Math": 1,
+        "math": 1,
         "not-editable": 1,
         "ltx_cite": 1,
         "squire-citation": 1,
