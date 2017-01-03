@@ -63,6 +63,7 @@ var firstOrLastLine = function(self){
   }
   var parentBlock = getStartBlockOfRange(range)
   var numLines    = numberOfLines(root)
+  
   var parentBlockLineNumber   = getLineNumber(parentBlock, root)
   var numLinesParentBlock     = numberOfLinesWithinParentBlock(parentBlock)
   var lineNumberWithinParent
@@ -114,7 +115,7 @@ var firstOrLastLine = function(self){
     // both be reasonably small.
     var rect = range.getBoundingClientRect()
     var nodeOffset = rect.top
-    var parentOffset = parentBlock.offsetTop
+    var parentOffset = parentBlock.getBoundingClientRect().top
     if(nodeOffset === parentOffset){
       return true
     }
@@ -123,6 +124,7 @@ var firstOrLastLine = function(self){
     lineHeight = parseInt(lineHeight)
     lineNumberWithinParent = Math.round(nodeOffset/lineHeight)
   }
+
 
   if(parentBlockLineNumber === 0 && lineNumberWithinParent === 0){
     if(numLines === 1 && numLinesParentBlock === 1){
