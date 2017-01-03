@@ -193,7 +193,7 @@ var keyHandlers = {
         // If this is a malformed bit of document or in a table;
         // just play it safe and insert a <br>.
         if ( !block || /^T[HD]$/.test( block.nodeName ) ) {
-            insertNodeInRange( range, self.createElement( 'BR' ) );
+            insertNodeInRange( root, range, self.createElement( 'BR' ) );
             range.collapse( false );
             self.setSelection( range );
             self._updatePath( range, true );
@@ -488,6 +488,7 @@ keyHandlers[ ctrlKey + 'shift-z' ] = mapKeyTo( 'redo' );
 var insertTab = function(self, range){
   var node = self._doc.createTextNode(TAB)
   self.insertNodeInRange(
+      self._root,
       range,
       node
   )
@@ -553,7 +554,7 @@ Squire.prototype.backspace = function(self, event, range){
         afterDelete( self, range );
     }
     // If at beginning of block, merge with previous
-    else if ( rangeDoesStartAtBlockBoundary( range, self._root ) ) {
+  else if ( rangeDoesStartAtBlockBoundary( range, self._root ) ) {
         var current = getStartBlockOfRange( range ),
             previous = current && getPreviousBlock( current, self._root );
         // Must not be at the very beginning of the text area.

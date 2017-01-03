@@ -27,7 +27,7 @@ var getNodeAfter = function ( node, offset ) {
 
 // ---
 
-var insertNodeInRange = function ( range, node ) {
+var insertNodeInRange = function ( root, range, node ) {
     // Insert at start.
     var startContainer = range.startContainer,
         startOffset = range.startOffset,
@@ -78,7 +78,7 @@ var insertNodeInRange = function ( range, node ) {
 
     range.setStart( startContainer, startOffset );
     range.setEnd( endContainer, endOffset );
-    ensureBrAtEndOfAllLines( node.ownerDocument.body )
+    ensureBrAtEndOfAllLines( root )
 };
 
 var extractContentsOfRange = function ( range, common, root ) {
@@ -202,7 +202,7 @@ var insertTreeFragmentIntoRange = function ( range, frag, root ) {
 
     if ( allInline ) {
         // If inline, just insert at the current position.
-        insertNodeInRange( range, frag );
+        insertNodeInRange( root, range, frag );
         if ( range.startContainer !== range.endContainer ) {
             mergeInlines( range.endContainer, range );
         }

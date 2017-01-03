@@ -33,7 +33,7 @@ function mergeObjects ( base, extras, mayOverride ) {
 }
 
 function Squire ( root, config ) {
-    if ( root.nodeType === DOCUMENT_NODE ) {
+  if ( root.nodeType === DOCUMENT_NODE ) {
         root = root.body;
     }
     var doc = root.ownerDocument;
@@ -460,7 +460,7 @@ proto.getCursorPosition = function ( range ) {
         this._ignoreChange = true;
         node = this._doc.createElement( 'SPAN' );
         node.textContent = ZWS;
-        insertNodeInRange( range, node );
+        insertNodeInRange( this._root, range, node );
         rect = node.getBoundingClientRect();
         parent = node.parentNode;
         parent.removeChild( node );
@@ -724,9 +724,9 @@ proto._saveRangeToBookmark = function ( range ) {
         }),
         temp;
 
-    insertNodeInRange( range, startNode );
+    insertNodeInRange( this._root, range, startNode );
     range.collapse( false );
-    insertNodeInRange( range, endNode );
+    insertNodeInRange( this._root, range, endNode );
 
     // In a collapsed range, the start is sometimes inserted after the end!
     if ( startNode.compareDocumentPosition( endNode ) &
@@ -1040,7 +1040,7 @@ proto._addFormat = function ( tag, attributes, range ) {
 
     if ( range.collapsed ) {
         el = fixCursor( this.createElement( tag, attributes ), root );
-        insertNodeInRange( range, el );
+        insertNodeInRange( this._root, range, el );
         range.setStart( el.firstChild, el.firstChild.length );
         range.collapse( true );
     }
@@ -1151,7 +1151,7 @@ proto._removeFormat = function ( tag, attributes, range, partial ) {
         } else {
             fixer = doc.createTextNode( '' );
         }
-        insertNodeInRange( range, fixer );
+        insertNodeInRange( this._root, range, fixer );
     }
 
     // Find block-level ancestor of selection
@@ -1361,7 +1361,7 @@ proto.modifyBlocks = function ( modify, range ) {
     frag = extractContentsOfRange( range, root, root );
 
     // 4. Modify tree of fragment and reinsert.
-    insertNodeInRange( range, modify.call( this, frag ) );
+    insertNodeInRange( this._root, range, modify.call( this, frag ) );
     // return
 
     // 5. Merge containers at edges
@@ -1605,7 +1605,7 @@ proto.getHTML = function ( options ) {
     var brs = [],
         root, node, fixer, html, l, range;
     var withBookMark = options["withBookMark"]
-    var root = this._doc.body
+    var root = this._root
 
     // saving the range to a bookmark needs to come first since it will put back
     // many of the br tags that have been removed
@@ -1718,7 +1718,7 @@ proto.insertElement = function ( el, range ) {
     if ( !range ) { range = this.getSelection(); }
     range.collapse( true );
     if ( isInline( el ) ) {
-        insertNodeInRange( range, el );
+        insertNodeInRange( this._root, range, el );
         range.setStartAfter( el );
     } else {
         // Get containing block node.
@@ -1966,6 +1966,7 @@ proto.makeLink = function ( url, attributes ) {
             while ( url[ protocolEnd ] === '/' ) { protocolEnd += 1; }
         }
         insertNodeInRange(
+            this._root,
             range,
             this._doc.createTextNode( url.slice( protocolEnd ) )
         );
