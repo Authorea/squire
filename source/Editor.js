@@ -460,7 +460,7 @@ proto.getCursorPosition = function ( range ) {
         this._ignoreChange = true;
         node = this._doc.createElement( 'SPAN' );
         node.textContent = ZWS;
-        insertNodeInRange( this._root, range, node );
+        this.insertNodeInRange( range, node );
         rect = node.getBoundingClientRect();
         parent = node.parentNode;
         parent.removeChild( node );
@@ -724,9 +724,9 @@ proto._saveRangeToBookmark = function ( range ) {
         }),
         temp;
 
-    insertNodeInRange( this._root, range, startNode );
+    this.insertNodeInRange( range, startNode );
     range.collapse( false );
-    insertNodeInRange( this._root, range, endNode );
+    this.insertNodeInRange( range, endNode );
 
     // In a collapsed range, the start is sometimes inserted after the end!
     if ( startNode.compareDocumentPosition( endNode ) &
@@ -1040,7 +1040,7 @@ proto._addFormat = function ( tag, attributes, range ) {
 
     if ( range.collapsed ) {
         el = fixCursor( this.createElement( tag, attributes ), root );
-        insertNodeInRange( this._root, range, el );
+        this.insertNodeInRange( range, el );
         range.setStart( el.firstChild, el.firstChild.length );
         range.collapse( true );
     }
@@ -1151,7 +1151,7 @@ proto._removeFormat = function ( tag, attributes, range, partial ) {
         } else {
             fixer = doc.createTextNode( '' );
         }
-        insertNodeInRange( this._root, range, fixer );
+        this.insertNodeInRange( range, fixer );
     }
 
     // Find block-level ancestor of selection
@@ -1361,7 +1361,7 @@ proto.modifyBlocks = function ( modify, range ) {
     frag = extractContentsOfRange( range, root, root );
 
     // 4. Modify tree of fragment and reinsert.
-    insertNodeInRange( this._root, range, modify.call( this, frag ) );
+    this.insertNodeInRange( range, modify.call( this, frag ) );
     // return
 
     // 5. Merge containers at edges
@@ -1718,7 +1718,7 @@ proto.insertElement = function ( el, range ) {
     if ( !range ) { range = this.getSelection(); }
     range.collapse( true );
     if ( isInline( el ) ) {
-        insertNodeInRange( this._root, range, el );
+        this.insertNodeInRange( range, el );
         range.setStartAfter( el );
     } else {
         // Get containing block node.
@@ -1965,8 +1965,7 @@ proto.makeLink = function ( url, attributes ) {
         if ( protocolEnd ) {
             while ( url[ protocolEnd ] === '/' ) { protocolEnd += 1; }
         }
-        insertNodeInRange(
-            this._root,
+        this.insertNodeInRange(
             range,
             this._doc.createTextNode( url.slice( protocolEnd ) )
         );

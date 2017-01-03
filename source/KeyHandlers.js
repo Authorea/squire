@@ -193,7 +193,7 @@ var keyHandlers = {
         // If this is a malformed bit of document or in a table;
         // just play it safe and insert a <br>.
         if ( !block || /^T[HD]$/.test( block.nodeName ) ) {
-            insertNodeInRange( root, range, self.createElement( 'BR' ) );
+            self.insertNodeInRange( range, self.createElement( 'BR' ));
             range.collapse( false );
             self.setSelection( range );
             self._updatePath( range, true );
@@ -488,7 +488,6 @@ keyHandlers[ ctrlKey + 'shift-z' ] = mapKeyTo( 'redo' );
 var insertTab = function(self, range){
   var node = self._doc.createTextNode(TAB)
   self.insertNodeInRange(
-      self._root,
       range,
       node
   )
