@@ -105,7 +105,8 @@ var filterSpanClasses = function(span){
         "ltx_cite": 1,
         "squire-citation": 1,
         "rendered": 1,
-        "raw": 1
+        "raw": 1,
+        "au-ref": 1,
     }
     return filterClasses(span, whiteList)
 }
