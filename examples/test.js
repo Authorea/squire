@@ -229,9 +229,10 @@ testNode = function(node, func, message){
 ** by hand commands such as: editor.moveLeft(editor, keyEvent, range);updateCursor()
 */
 runTests = function(){
-  editor.setHTML('<div>ab<span class=not-editable>c</span>d</div>')
+  editor.setHTML('<div>ab<span class=not-editable>citation with link</span>fwe</div>')
   updateCursor()
   editor.focus()
+  return
   range = editor.getSelection()
   firstLine = editor._doc.body.childNodes[0]
   keyEvent = new KeyboardEvent("keydown", {key : "a", keyCode: 65, code: "KeyA", cancelable: true});
@@ -240,7 +241,6 @@ runTests = function(){
   editor.moveRight(editor, keyEvent, range);
   editor.moveRight(editor, keyEvent, range);
   editor.moveRight(editor, keyEvent, range);
-  return
   testContent("d", 0, "right arrow over non-editable")
   editor.moveLeft(editor, keyEvent, range);
   editor.moveRight(editor, keyEvent, range);

@@ -909,7 +909,7 @@ var insertNodeInRange = function ( range, node, root ) {
     if (!root && !(this && this._root)) {
       throw new Error('No document root!')
     }
-  
+
     // Insert at start.
     var startContainer = range.startContainer,
         startOffset = range.startOffset,
@@ -1568,7 +1568,7 @@ var firstOrLastLine = function(self){
   }
   var parentBlock = getStartBlockOfRange(range)
   var numLines    = numberOfLines(root)
-  
+
   var parentBlockLineNumber   = getLineNumber(parentBlock, root)
   var numLinesParentBlock     = numberOfLinesWithinParentBlock(parentBlock)
   var lineNumberWithinParent
@@ -3583,17 +3583,21 @@ function Squire ( root, config ) {
     this._path = '';
     this._willUpdatePath = false;
 
-    if ( 'onselectionchange' in doc ) {
-      this.addEventListener( 'selectionchange', this._updatePathOnEvent );
-    } else {
+    // NATE: We are resorting to the old way of handling changes since we need to move out of noteditable nodes.
+    // To do this with the 'selectionchange' event is trickier since our current procedure triggers a selection change
+
+    // if ( 'onselectionchange' in doc ) {
+    //   this.addEventListener( 'selectionchange', this._updatePathOnEvent );
+    // } else {
       this.addEventListener( 'keyup', this._updatePathOnEvent );
       this.addEventListener( 'mouseup', this._updatePathOnEvent );
       this.addEventListener( 'mouseup', function(){
-          var range = this.getSelection()
+          var docSelection = this._doc.getSelection()
+          var range = docSelection && docSelection.getRangeAt(0)
           moveRangeOutOfNotEditable(range)
           this.setSelection(range)
       } );
-    }
+    // }
 
     this._undoIndex = -1;
     this._undoStack = [];
