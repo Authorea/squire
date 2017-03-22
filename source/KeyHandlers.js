@@ -324,7 +324,8 @@ var keyHandlers = {
             if(sc.nodeType === ELEMENT_NODE){
                 var ch = sc.childNodes[so]
                 if(notEditable(ch, root)){
-                    detach( next );
+                    event.preventDefault();
+                    detach( ch );
                 }
             }
             //else leave it to browser
