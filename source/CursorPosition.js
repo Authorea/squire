@@ -117,7 +117,7 @@ var firstOrLastLine = function(self){
     var nodeOffset = rect.top
     var parentOffset = parentBlock.getBoundingClientRect().top
     if(nodeOffset === parentOffset){
-      return {firstLine: true, lastLine: true}
+      return true
     }
     nodeOffset = nodeOffset - parentOffset
     lineHeight = window.getComputedStyle(parentBlock, null)["line-height"]
