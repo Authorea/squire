@@ -569,7 +569,7 @@ Squire.prototype.backspace = function(self, event, range){
             // If deleted line between containers, merge newly adjacent
             // containers.
             current = previous.parentNode;
-            while ( current && !current.nextSibling ) {
+            while ( current && !current.nextSibling && current !== root ) {
                 current = current.parentNode;
             }
             if ( current && ( current = current.nextSibling ) ) {
