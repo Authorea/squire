@@ -125,6 +125,8 @@ function Squire ( root, config ) {
     this._path = '';
     this._willUpdatePath = false;
 
+    // NATE: We are resorting to the old way of handling changes since we need to move out of noteditable nodes.
+    // To do this with the 'selectionchange' event is trickier since our current procedure triggers a selection change
     // nodes.  To do this with the 'selectionchange' event is trickier since our current procedure triggers
     // a selection change
     // if ( 'onselectionchange' in doc ) {
@@ -133,8 +135,6 @@ function Squire ( root, config ) {
       this.addEventListener( 'keyup', this._updatePathOnEvent );
       this.addEventListener( 'mouseup', this._updatePathOnEvent );
       this.addEventListener( 'mouseup', function(){
-          console.info("MOUSEUP")
-          // debugger
           var docSelection = this._doc.getSelection()
           var range = docSelection && docSelection.getRangeAt(0)
           moveRangeOutOfNotEditable(range)
