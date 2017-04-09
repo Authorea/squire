@@ -176,7 +176,8 @@ function Squire ( root, config ) {
     this._awaitingPaste = false;
     this.addEventListener( isIElt11 ? 'beforecut' : 'cut', onCut );
     this.addEventListener( 'copy', onCopy );
-    this.addEventListener( isIElt11 ? 'beforepaste' : 'paste', onPaste );
+    // NATE: we are implementing paste in the main app.
+    // this.addEventListener( isIElt11 ? 'beforepaste' : 'paste', onPaste );
     this.addEventListener( 'drop', onDrop );
 
     // Opera does not fire keydown repeatedly.
