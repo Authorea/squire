@@ -1429,20 +1429,19 @@ var removeBlockQuote = function (/* frag */) {
 
 var makeList = function ( self, frag, type ) {
     var walker = getBlockWalker( frag, self._root ),
-        node, tag, prev, newLi,
+        node, tag, parentTag, prev, newLi,
         tagAttributes = self._config.tagAttributes,
         listAttrs = tagAttributes[ type.toLowerCase() ],
         listItemAttrs = tagAttributes.li;
     var div = frag.childNodes[0]
 
     while ( node = walker.nextNode() ) {
-        tag = node.parentNode.nodeName;
+        tag = node.nodeName;
         if ( tag !== 'LI' ) {
             newLi = self.createElement( 'LI', listItemAttrs );
             if ( node.dir ) {
                 newLi.dir = node.dir;
             }
-
             // Have we replaced the previous block with a new <ul>/<ol>?
             if ( ( prev = node.previousSibling ) &&
                     prev.nodeName === type ) {
@@ -1458,13 +1457,14 @@ var makeList = function ( self, frag, type ) {
                 );
             }
             newLi.appendChild( empty( node ) );
+            // tag is li
         } else {
-            node = node.parentNode.parentNode;
-            tag = node.nodeName;
-            if ( tag !== type && ( /^[OU]L$/.test( tag ) ) ) {
-                replaceWith( node,
-                    self.createElement( type, listAttrs, [ empty( node ) ] )
-                );
+            parent = node.parentNode;
+            parentTag = parent.nodeName;
+            if (parentTag !==type && /^[OU]L$/.test( parentTag ) ) {
+                    node.appendChild(
+                      self.createElement( type, listAttrs, [ empty( node ) ] )
+                    )
             }
         }
     }
