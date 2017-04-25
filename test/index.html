@@ -3,11 +3,14 @@
   <meta charset="utf-8">
   <title>Squire rich-text editor tests</title>
   <link rel="stylesheet" href="../node_modules/mocha/mocha.css" />
+    <script src="/examples/jquery.js"></script>
 </head>
 <body>
   <script src="../node_modules/mocha/mocha.js"></script>
   <script src="../node_modules/unexpected/unexpected.js"></script>
+    <script src="/examples/d3.js"></script>
   <script src="../build/squire-raw.js"></script>
+  <script src="/examples/view_dom.js"></script>
   <iframe id="testFrame" style="visibility: hidden;"></iframe>
   <div id="mocha"></div>
   <script>
@@ -15,9 +18,9 @@
     var expect = weknowhow.expect;
   </script>
   <script src="squire.spec.js"></script>
+  <!-- <script src="../examples/test.js"></script> -->
   <script>
       mocha.run();
   </script>
 </body>
 </html>
-

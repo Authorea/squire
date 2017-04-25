@@ -124,16 +124,18 @@ describe('Squire RTE', function () {
             editor.removeAllFormatting();
             expect(editor, 'to contain HTML', '<div>one two three four five</div>');
         });
-        it('removes block styles', function () {
-            var startHTML = '<div><blockquote>one</blockquote><ul><li>two</li></ul>' +
-                '<ol><li>three</li></ol><table><tbody><tr><th>four</th><td>five</td></tr></tbody></table></div>';
-            editor.setHTML(startHTML);
-            expect(editor, 'to contain HTML', startHTML);
-            selectAll(editor);
-            editor.removeAllFormatting();
-            var expectedHTML = '<div>one</div><div>two</div><div>three</div><div>four</div><div>five</div>';
-            expect(editor, 'to contain HTML', expectedHTML);
-        });
+        // 
+        // it('removes block styles', function () {
+        //   var startHTML = '<div><blockquote>one</blockquote><ul><li>two</li></ul>' +
+        //       '<ol><li>three</li></ol><table><tbody><tr><th>four</th><td>five</td></tr></tbody></table></div>';
+        //   editor.setHTML(startHTML);
+        //   expect(editor, 'to contain HTML', startHTML);
+        //   selectAll(editor);
+        //   editor.removeAllFormatting();
+        //   var expectedHTML = '<div>one</div><div>two</div><div>three</div><div>four</div><div>five</div>';
+        //   expect(editor, 'to contain HTML', expectedHTML);
+        // });
+
 
         // Potential bugs
         it('removes styles that begin inside the range', function () {
@@ -180,31 +182,30 @@ describe('Squire RTE', function () {
             expect(editor, 'to contain HTML', '<div><i>one </i>two three four<i> five</i></div>');
         });
 
-        it('removes nested styles and closes tags correctly', function () {
-            var startHTML = '<table><tbody><tr><td>one</td></tr><tr><td>two</td><td>three</td></tr><tr><td>four</td><td>five</td></tr></tbody></table>';
-            editor.setHTML(startHTML);
-            expect(editor, 'to contain HTML', startHTML);
-            var range = doc.createRange();
-            range.setStart(doc.getElementsByTagName('td').item(1), 0);
-            range.setEnd(doc.getElementsByTagName('td').item(2), doc.getElementsByTagName('td').item(2).childNodes.length);
-            editor.removeAllFormatting(range);
-            expect(editor, 'to contain HTML', '<table><tbody><tr><td>one</td></tr></tbody></table>' +
-                '<div>two</div>' +
-                '<div>three</div>' +
-                '<table><tbody><tr><td>four</td><td>five</td></tr></tbody></table>');
-        });
+        // it('removes nested styles and closes tags correctly', function () {
+        //     var startHTML = '<table><tbody><tr><td>one</td></tr><tr><td>two</td><td>three</td></tr><tr><td>four</td><td>five</td></tr></tbody></table>';
+        //     editor.setHTML(startHTML);
+        //     expect(editor, 'to contain HTML', startHTML);
+        //     var range = doc.createRange();
+        //     range.setStart(doc.getElementsByTagName('td').item(1), 0);
+        //     range.setEnd(doc.getElementsByTagName('td').item(2), doc.getElementsByTagName('td').item(2).childNodes.length);
+        //     editor.removeAllFormatting(range);
+        //     expect(editor, 'to contain HTML', '<table><tbody><tr><td>one</td></tr></tbody></table>' +
+        //         '<div>two</div>' +
+        //         '<div>three</div>' +
+        //         '<table><tbody><tr><td>four</td><td>five</td></tr></tbody></table>');
+        // });
     });
 
     describe('getPath', function () {
-        var startHTML;
         beforeEach( function () {
-            startHTML = '<div>one <b>two three</b> four <i>five</i></div>';
-            editor.setHTML(startHTML);
+          var startHTML = '<div>one <b>two three</b> four <i>five</i></div>';
+          editor.setHTML(startHTML);
+          var range = doc.createRange();
+          range.setStart(doc.body.childNodes.item(0), 0);
+          range.setEnd(doc.body.childNodes.item(0), 1);
+          editor.setSelection(range);
 
-            var range = doc.createRange();
-            range.setStart(doc.body.childNodes.item(0), 0);
-            range.setEnd(doc.body.childNodes.item(0), 1);
-            editor.setSelection(range);
         });
 
         it('returns the path to the selection', function () {
@@ -218,45 +219,18 @@ describe('Squire RTE', function () {
             expect(editor.getPath(), 'to be', 'DIV>B');
         });
 
-        it('includes id in the path', function () {
-            editor.insertHTML('<div id="spanId">Text</div>');
-            expect(editor.getPath(), 'to be', 'DIV#spanId');
-        });
 
         it('includes class name in the path', function () {
-            editor.insertHTML('<div class="myClass">Text</div>');
-            expect(editor.getPath(), 'to be', 'DIV.myClass');
+            editor.insertHTML('<div class="ltx_myClass">Text</div>');
+
+            expect(editor.getPath(), 'to be', 'DIV.ltx_myClass');
         });
 
         it('includes all class names in the path', function () {
-            editor.insertHTML('<div class="myClass myClass2 myClass3">Text</div>');
-            expect(editor.getPath(), 'to be', 'DIV.myClass.myClass2.myClass3');
+            editor.insertHTML('<div class="au_myClass au_myClass2 au_myClass3">Text</div>');
+            expect(editor.getPath(), 'to be', 'DIV.au_myClass.au_myClass2.au_myClass3');
         });
 
-        it('includes direction in the path', function () {
-            editor.insertHTML('<div dir="rtl">Text</div>');
-            expect(editor.getPath(), 'to be', 'DIV[dir=rtl]');
-        });
-
-        it('includes highlight value in the path', function () {
-            editor.insertHTML('<div class="highlight" style="background-color: rgb(255, 0, 0)">Text</div>');
-            expect(editor.getPath(), 'to be', 'DIV.highlight[backgroundColor=rgb(255,0,0)]');
-        });
-
-        it('includes color value in the path', function () {
-            editor.insertHTML('<div class="colour" style="color: rgb(255, 0, 0)">Text</div>');
-            expect(editor.getPath(), 'to be', 'DIV.colour[color=rgb(255,0,0)]');
-        });
-
-        it('includes font family value in the path', function () {
-            editor.insertHTML('<div class="font" style="font-family: Arial, sans-serif">Text</div>');
-            expect(editor.getPath(), 'to be', 'DIV.font[fontFamily=Arial,sans-serif]');
-        });
-
-        it('includes font size value in the path', function () {
-            editor.insertHTML('<div class="size" style="font-size: 12pt">Text</div>');
-            expect(editor.getPath(), 'to be', 'DIV.size[fontSize=12pt]');
-        });
 
         it('is (selection) when the selection is a range', function() {
             var range = doc.createRange();
@@ -277,3 +251,12 @@ describe('Squire RTE', function () {
         iframe.src = 'blank.html';
     });
 });
+
+// TODO:
+// test = function (t, message) {
+//   describe('nate test', function () {
+//       it(message,function () {
+//         expect(t, 'to be true')
+//       })
+//   })
+// }
