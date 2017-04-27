@@ -447,41 +447,43 @@ function isOrContains ( parent, node ) {
     return false;
 }
 
-function getPath ( node, root ) {
+function getPath ( node, root, options={include_attributes: false} ) {
     var path = '';
     var id, className, classNames, dir;
     if ( node && node !== root ) {
         path = getPath( node.parentNode, root );
         if ( node.nodeType === ELEMENT_NODE ) {
             path += ( path ? '>' : '' ) + node.nodeName;
-            if ( id = node.id ) {
-                path += '#' + id;
-            }
-            if ( className = node.className.trim() ) {
-                classNames = className.split( /\s\s*/ );
-                classNames.sort();
-                path += '.';
-                path += classNames.join( '.' );
-            }
-            if ( dir = node.dir ) {
-                path += '[dir=' + dir + ']';
-            }
-            if ( classNames ) {
-                if ( indexOf.call( classNames, HIGHLIGHT_CLASS ) > -1 ) {
-                    path += '[backgroundColor=' +
-                        node.style.backgroundColor.replace( / /g,'' ) + ']';
-                }
-                if ( indexOf.call( classNames, COLOUR_CLASS ) > -1 ) {
-                    path += '[color=' +
-                        node.style.color.replace( / /g,'' ) + ']';
-                }
-                if ( indexOf.call( classNames, FONT_FAMILY_CLASS ) > -1 ) {
-                    path += '[fontFamily=' +
-                        node.style.fontFamily.replace( / /g,'' ) + ']';
-                }
-                if ( indexOf.call( classNames, FONT_SIZE_CLASS ) > -1 ) {
-                    path += '[fontSize=' + node.style.fontSize + ']';
-                }
+            if (options['include_attributes']){
+              if ( id = node.id ) {
+                  path += '#' + id;
+              }
+              if ( className = node.className.trim() ) {
+                  classNames = className.split( /\s\s*/ );
+                  classNames.sort();
+                  path += '.';
+                  path += classNames.join( '.' );
+              }
+              if ( dir = node.dir ) {
+                  path += '[dir=' + dir + ']';
+              }
+              if ( classNames ) {
+                  if ( indexOf.call( classNames, HIGHLIGHT_CLASS ) > -1 ) {
+                      path += '[backgroundColor=' +
+                          node.style.backgroundColor.replace( / /g,'' ) + ']';
+                  }
+                  if ( indexOf.call( classNames, COLOUR_CLASS ) > -1 ) {
+                      path += '[color=' +
+                          node.style.color.replace( / /g,'' ) + ']';
+                  }
+                  if ( indexOf.call( classNames, FONT_FAMILY_CLASS ) > -1 ) {
+                      path += '[fontFamily=' +
+                          node.style.fontFamily.replace( / /g,'' ) + ']';
+                  }
+                  if ( indexOf.call( classNames, FONT_SIZE_CLASS ) > -1 ) {
+                      path += '[fontSize=' + node.style.fontSize + ']';
+                  }
+              }
             }
         }
     }
