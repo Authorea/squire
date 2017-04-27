@@ -205,7 +205,10 @@ function isOrContains ( parent, node ) {
     return false;
 }
 
-function getPath ( node, root, options={include_attributes: false} ) {
+function getPath ( node, root, options ) {
+    if(!options) {
+      options = {}
+    }
     var path = '';
     var id, className, classNames, dir;
     if ( node && node !== root ) {
