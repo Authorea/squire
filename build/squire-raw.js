@@ -4776,6 +4776,16 @@ var splitBlock = function ( self, block, node, offset ) {
     return nodeAfterSplit;
 };
 
+proto.splitBlockAtCursor = function () {
+  var block, node, offset, range
+  range = this.getSelection()
+  if(!range){
+    console.warn("invalid cursor position in splitBlockAtCursor")
+  }
+  node = range.startContainer
+  split ( node, range.startOffset, this._root, this._root )
+};
+
 proto.forEachBlock = function ( fn, mutates, range ) {
     if ( !range && !( range = this.getSelection() ) ) {
         return this;
