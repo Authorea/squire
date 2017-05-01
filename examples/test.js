@@ -64,19 +64,18 @@ var initEditors = function(){
 
     testSetup()
 
-    // List tests need to be run with async setTimeout chaining. So run those first, then all the others sync
-    testLists(otherTests)
-    function otherTests () {
-      quickTest()
-      runTests()
-      testGetHTML()
-      testInlineNodeNames()
-      testCleaner()
-      testTables()
-      testInsertHTML()
-      testResults()
-    }
+    quickTest()
 
+    // runTests()
+    // testGetHTML()
+    // testInlineNodeNames()
+    // testCleaner()
+    // testLists()
+    // testTables()
+    // testInsertHTML()
+    testResults()
+
+    setTimeout(updateCursor, 20)
   });
 }
 
