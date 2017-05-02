@@ -43,6 +43,7 @@ function Squire ( root, config ) {
     this._win = win;
     this._doc = doc;
     this._root = root;
+
     this._events = {};
 
     this._isFocused = false;
@@ -133,23 +134,20 @@ function Squire ( root, config ) {
     // } else {
       this.addEventListener( 'keyup', this._updatePathOnEvent );
       this.addEventListener( 'mouseup', this._updatePathOnEvent );
-      this._clickedHighlighted = false
+      this._selectionClick = false
       this.addEventListener('mousedown', function (e) {
-        console.log('----------------------TESTING HIGHLIGHIT CLICK--------------------------');
-
         var docSelection = this._doc.getSelection()
-        this._clickedHighlighted = !docSelection.isCollapsed
-
+        this._selectionClick = !docSelection.isCollapsed
       })
       this.addEventListener( 'mouseup', function(){
           var docSelection = this._doc.getSelection()
           var range = docSelection && docSelection.getRangeAt(0)
           moveRangeOutOfNotEditable(range)
-          if(!this._clickedHighlighted){
+          // Only set selection in the editor if there was no selection on click; otherwise, clear it will clear.
+          if(!this._selectionClick){
             this.setSelection(range)
           }
-          this._clickedHighlighted = false
-
+          this._selectionClick = false
       } );
     // }
 
