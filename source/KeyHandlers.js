@@ -665,6 +665,7 @@ Squire.prototype.backspace = function(self, event, range){
         //     ensureBrAtEndOfAllLines(self._root)
         //     cleanTree(rootNodeOfClean)
             // replaceDoubleSpace(rootNodeOfClean, range)
+            // ucommmenting:
             replaceTrailingSingleSpace(rootNodeOfClean, range)
         }
         self.setSelection( range );
