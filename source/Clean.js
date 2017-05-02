@@ -441,7 +441,10 @@ var replaceTrailingSingleSpace = function replaceTrailingSingleSpace ( root, ran
             var text = node.data
             if(text){
                 // Nate: Chrome does not do well with trailing spaces
+                console.log('---------- replace? ');
+                console.log("'" + node.data + "'");
                 if(node.data[node.data.length-1] === ' '){
+                  console.log('replacing!');
                     node.replaceData(node.data.length-1, 1, "\u00A0")
 
                     if(startNode === node){

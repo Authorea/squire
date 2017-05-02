@@ -2086,6 +2086,12 @@ var keyHandlers = {
         }
 
         self.setSelection( range );
+        console.log('space: replacing trailing space');
+        setTimeout(function () {
+        replaceTrailingSingleSpace(node, range)
+      }
+      )
+
     },
     right: function(self, event, range){
         self.moveRight(self, event, range)
@@ -2329,6 +2335,9 @@ Squire.prototype.backspace = function(self, event, range){
         //     cleanTree(rootNodeOfClean)
             // replaceDoubleSpace(rootNodeOfClean, range)
             // ucommmenting:
+            console.log('-----------------');
+            console.log(rootNodeOfClean);
+            console.log('-----------------');
             replaceTrailingSingleSpace(rootNodeOfClean, range)
         }
         self.setSelection( range );
@@ -3035,7 +3044,10 @@ var replaceTrailingSingleSpace = function replaceTrailingSingleSpace ( root, ran
             var text = node.data
             if(text){
                 // Nate: Chrome does not do well with trailing spaces
+                console.log('---------- replace? ');
+                console.log("'" + node.data + "'");
                 if(node.data[node.data.length-1] === ' '){
+                  console.log('replacing!');
                     node.replaceData(node.data.length-1, 1, "\u00A0")
 
                     if(startNode === node){

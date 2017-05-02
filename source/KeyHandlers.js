@@ -423,6 +423,12 @@ var keyHandlers = {
         }
 
         self.setSelection( range );
+        console.log('space: replacing trailing space');
+        setTimeout(function () {
+        replaceTrailingSingleSpace(node, range)
+      }
+      )
+
     },
     right: function(self, event, range){
         self.moveRight(self, event, range)
@@ -666,6 +672,9 @@ Squire.prototype.backspace = function(self, event, range){
         //     cleanTree(rootNodeOfClean)
             // replaceDoubleSpace(rootNodeOfClean, range)
             // ucommmenting:
+            console.log('-----------------');
+            console.log(rootNodeOfClean);
+            console.log('-----------------');
             replaceTrailingSingleSpace(rootNodeOfClean, range)
         }
         self.setSelection( range );
