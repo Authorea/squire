@@ -136,12 +136,11 @@ function Squire ( root, config ) {
       this.addEventListener( 'mouseup', this._updatePathOnEvent );
       this._selectionClick = false
       this.addEventListener('mousedown', function (e) {
-        var docSelection = this._doc.getSelection()
-        this._selectionClick = !docSelection.isCollapsed
+        var range = this.getSelection()
+        this._selectionClick = !range.collapsed
       })
       this.addEventListener( 'mouseup', function(){
-          var docSelection = this._doc.getSelection()
-          var range = docSelection && docSelection.getRangeAt(0)
+          var range = this.getSelection()
           moveRangeOutOfNotEditable(range)
           // Only set selection in the editor if there was no selection on click; otherwise, clear it will clear.
           if(!this._selectionClick){
