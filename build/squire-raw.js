@@ -4954,14 +4954,22 @@ var makeList = function ( self, frag, type ) {
         }
     }
 };
+proto.inList = function () {
+  var active_formats = this.getPath().split('>')
+  return active_formats.indexOf('OL') > -1 || active_formats.indexOf('UL') > -1
+}
 
 var makeUnorderedList = function ( frag ) {
-    makeList( this, frag, 'UL' );
+    if (!this.inList()){
+      makeList( this, frag, 'UL' );
+    }
     return frag;
 };
 
 var makeOrderedList = function ( frag ) {
+    if (!this.inList()){
     makeList( this, frag, 'OL' );
+    }
     return frag;
 };
 
