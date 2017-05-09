@@ -4960,7 +4960,6 @@ proto.inList = function () {
 }
 
 var makeUnorderedList = function ( frag ) {
-    var active_formats = this.getPath().split('>')
     if (!this.inList()){
       makeList( this, frag, 'UL' );
     }
@@ -4968,7 +4967,6 @@ var makeUnorderedList = function ( frag ) {
 };
 
 var makeOrderedList = function ( frag ) {
-    var active_formats = this.getPath().split('>')
     if (!this.inList()){
     makeList( this, frag, 'OL' );
     }
