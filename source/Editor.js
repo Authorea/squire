@@ -1526,6 +1526,9 @@ var removeList = function ( frag ) {
 };
 
 var increaseListLevel = function ( frag ) {
+    if(this.inList()){
+      return frag
+    }
     var items = frag.querySelectorAll( 'LI' ),
         i, l, item,
         type, newParent,
