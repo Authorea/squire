@@ -555,6 +555,7 @@ Squire.prototype.backspace = function(self, event, range){
     }
     // If at beginning of block, merge with previous
   else if ( rangeDoesStartAtBlockBoundary( range, self._root ) ) {
+      console.log('RANGE AT START MERGE WITH LAST');
         var current = getStartBlockOfRange( range ),
             previous = current && getPreviousBlock( current, self._root );
         // Must not be at the very beginning of the text area.
@@ -588,9 +589,14 @@ Squire.prototype.backspace = function(self, event, range){
             // Break blockquote
             else if ( getNearest( current, 'BLOCKQUOTE' ) ) {
                 return self.modifyBlocks( decreaseBlockQuoteLevel, range );
+                // delete first line it it's empty and not the only line:
+            }  else if (isEmptyDiv(current) && current.nextSibling){
+              current.parentNode.removeChild(current)
             }
+
             self.setSelection( range );
             self._updatePath( range, true );
+
         }
     }
     // Nate: previously this was left to the browser but had issues with non-editable spans.  Furthermore
