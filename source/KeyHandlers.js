@@ -555,7 +555,6 @@ Squire.prototype.backspace = function(self, event, range){
     }
     // If at beginning of block, merge with previous
   else if ( rangeDoesStartAtBlockBoundary( range, self._root ) ) {
-      console.log('RANGE AT START MERGE WITH LAST');
         var current = getStartBlockOfRange( range ),
             previous = current && getPreviousBlock( current, self._root );
         // Must not be at the very beginning of the text area.
