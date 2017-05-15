@@ -124,7 +124,7 @@ describe('Squire RTE', function () {
             editor.removeAllFormatting();
             expect(editor, 'to contain HTML', '<div>one two three four five</div>');
         });
-        // 
+        //
         // it('removes block styles', function () {
         //   var startHTML = '<div><blockquote>one</blockquote><ul><li>two</li></ul>' +
         //       '<ol><li>three</li></ol><table><tbody><tr><th>four</th><td>five</td></tr></tbody></table></div>';
@@ -220,15 +220,15 @@ describe('Squire RTE', function () {
         });
 
 
-        it('includes class name in the path', function () {
+        it('removes class name from the path', function () {
             editor.insertHTML('<div class="ltx_myClass">Text</div>');
 
-            expect(editor.getPath(), 'to be', 'DIV.ltx_myClass');
+            expect(editor.getPath(), 'to be', 'DIV');
         });
 
-        it('includes all class names in the path', function () {
+        it('removes all class names in the path', function () {
             editor.insertHTML('<div class="au_myClass au_myClass2 au_myClass3">Text</div>');
-            expect(editor.getPath(), 'to be', 'DIV.au_myClass.au_myClass2.au_myClass3');
+            expect(editor.getPath(), 'to be', 'DIV');
         });
 
 
