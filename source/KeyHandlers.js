@@ -588,9 +588,14 @@ Squire.prototype.backspace = function(self, event, range){
             // Break blockquote
             else if ( getNearest( current, 'BLOCKQUOTE' ) ) {
                 return self.modifyBlocks( decreaseBlockQuoteLevel, range );
+                // delete first line it it's empty and not the only line:
+            }  else if (isEmptyDiv(current) && current.nextSibling){
+              current.parentNode.removeChild(current)
             }
+
             self.setSelection( range );
             self._updatePath( range, true );
+
         }
     }
     // Nate: previously this was left to the browser but had issues with non-editable spans.  Furthermore

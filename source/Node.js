@@ -122,6 +122,16 @@ function isZWS ( node ) {
     return (isText(node) && node.data === ZWS)
 }
 
+function isEmptyDiv(node) {
+  var children = node.childNodes
+
+  var isDiv = node.nodeName == "DIV"
+  var isEmpty = !children.length || (children.length == 1 && children[0].nodeName=='BR')
+
+  return isDiv && isEmpty
+
+}
+
 function notEditable( node, root ){
   //NATE: TODO: replace all occurrences of notEditable(node) with notEditable(node, root)
   if(typeof root === 'undefined'){
