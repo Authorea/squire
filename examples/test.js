@@ -73,10 +73,30 @@ var initEditors = function(){
     // testLists()
     // testTables()
     // testInsertHTML()
+    testHeader()
     testResults()
 
     setTimeout(updateCursor, 20)
   });
+}
+testHeader = function(){
+  prepareTest('<h1>test</h1>');
+
+  var textNode = editor._doc.body.childNodes[0].childNodes[0]
+
+  var r = editor.getSelection()
+  r.setStart(textNode, 4 )
+  r.setEnd(textNode, 4 )
+  editor.setSelection(r);
+  updateCursor();
+
+  keyEvent = new KeyboardEvent("keydown", {key : "Backspace", keyCode: 8, code: "Backspace", cancelable: true});
+  editor.backspace(editor, keyEvent, range);
+  updateCursor();
+
+  // make sure new lines were added under the header:
+  test(editor._doc.body.childNodes.length == 1)
+
 }
 
 quickTest = function(){
