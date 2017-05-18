@@ -1383,6 +1383,7 @@ proto.modifyBlocks = function ( modify, range ) {
     expandRangeToBlockBoundaries( range, root );
     // 3. Remove range.
     moveRangeBoundariesUpTree( range, root );
+    // Daniel: Header bug here: when extractContentsOfRange extracts all of the editor's contents, an empty block is inserted (extractContentsOfRange -> fixCursor -> createDefaultBlock)
     frag = extractContentsOfRange( range, root, root );
 
     // 4. Modify tree of fragment and reinsert.
