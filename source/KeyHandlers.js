@@ -168,107 +168,7 @@ var ensureOutsideOfNotEditable = function ( self ){
 
 var keyHandlers = {
     enter: function ( self, event, range ) {
-        var root = self._root;
-        var block, parent, nodeAfterSplit;
-
-        // We handle this ourselves
-        event.preventDefault();
-
-        // Save undo checkpoint and add any links in the preceding section.
-        // Remove any zws so we don't think there's content in an empty
-        // block.
-        self._recordUndoState( range );
-        addLinks( range.startContainer, root, self );
-        self._removeZWS();
-        self._getRangeAndRemoveBookmark( range );
-
-        // Selected text is overwritten, therefore delete the contents
-        // to collapse selection.
-        if ( !range.collapsed ) {
-            deleteContentsOfRange( range, root );
-        }
-
-        block = getStartBlockOfRange( range, root );
-
-        // If this is a malformed bit of document or in a table;
-        // just play it safe and insert a <br>.
-        if ( !block || /^T[HD]$/.test( block.nodeName ) ) {
-            self.insertNodeInRange( range, self.createElement( 'BR' ));
-            range.collapse( false );
-            self.setSelection( range );
-            self._updatePath( range, true );
-            return;
-        }
-
-        // If in a list, we'll split the LI instead.
-        if ( parent = getNearest( block, root, 'LI' ) ) {
-            block = parent;
-        }
-
-        if ( !block.textContent ) {
-            // Break list
-            if ( getNearest( block, root, 'UL' ) ||
-                    getNearest( block, root, 'OL' ) ) {
-                return self.modifyBlocks( decreaseListLevel, range );
-            }
-            // Break blockquote
-            else if ( getNearest( block, root, 'BLOCKQUOTE' ) ) {
-                return self.modifyBlocks( removeBlockQuote, range );
-            }
-        }
-        // Otherwise, split at cursor point.
-        nodeAfterSplit = splitBlock( self, block,
-            range.startContainer, range.startOffset );
-
-        // Clean up any empty inlines if we hit enter at the beginning of the
-        // block
-        removeZWS( block );
-        removeEmptyInlines( block );
-        fixCursor( block, root );
-
-        // Focus cursor
-        // If there's a <b>/<i> etc. at the beginning of the split
-        // make sure we focus inside it.
-        while ( nodeAfterSplit.nodeType === ELEMENT_NODE ) {
-            var child = nodeAfterSplit.firstChild,
-                next;
-
-            // Don't continue links over a block break; unlikely to be the
-            // desired outcome.
-            if ( nodeAfterSplit.nodeName === 'A' &&
-                    ( !nodeAfterSplit.textContent ||
-                        nodeAfterSplit.textContent === ZWS ) ) {
-                child = self._doc.createTextNode( '' );
-                replaceWith( nodeAfterSplit, child );
-                nodeAfterSplit = child;
-                break;
-            }
-
-
-            if ( nodeAfterSplit.nodeType !== TEXT_NODE && notEditable(nodeAfterSplit, root)) {
-                break;
-            }
-            while ( child && child.nodeType === TEXT_NODE && !child.data ) {
-                next = child.nextSibling;
-                if ( !next || next.nodeName === 'BR' ) {
-                    break;
-                }
-                detach( child );
-                child = next;
-            }
-
-            // 'BR's essentially don't count; they're a browser hack.
-            // If you try to select the contents of a 'BR', FF will not let
-            // you type anything!
-            if ( !child || child.nodeName === 'BR' ||
-                    ( child.nodeType === TEXT_NODE && !isPresto ) ) {
-                break;
-            }
-            nodeAfterSplit = child;
-        }
-        range = self._createRange( nodeAfterSplit, 0 );
-        self.setSelection( range );
-        self._updatePath( range, true );
+      self.enter(self, event, range)
     },
     backspace: function ( self, event, range ) {
         self.backspace(self, event, range)
@@ -527,6 +427,114 @@ var findPreviousTextOrNotEditable = function(root, node){
     w.currentNode = node;
     return w.previousNode(notEditable)
 }
+
+Squire.prototype.enter = function (self, event, range) {
+  self  = self  ? self  : this
+  event.preventDefault()
+  range = range ? range : self.getSelection()
+  var root = self._root;
+  var block, parent, nodeAfterSplit;
+
+  // We handle this ourselves
+  event && event.preventDefault();
+
+  // Save undo checkpoint and add any links in the preceding section.
+  // Remove any zws so we don't think there's content in an empty
+  // block.
+  self._recordUndoState( range );
+  addLinks( range.startContainer, root, self );
+  self._removeZWS();
+  self._getRangeAndRemoveBookmark( range );
+
+  // Selected text is overwritten, therefore delete the contents
+  // to collapse selection.
+  if ( !range.collapsed ) {
+      deleteContentsOfRange( range, root );
+  }
+
+  block = getStartBlockOfRange( range, root );
+
+  // If this is a malformed bit of document or in a table;
+  // just play it safe and insert a <br>.
+  if ( !block || /^T[HD]$/.test( block.nodeName ) ) {
+      self.insertNodeInRange( range, self.createElement( 'BR' ));
+      range.collapse( false );
+      self.setSelection( range );
+      self._updatePath( range, true );
+      return;
+  }
+
+  // If in a list, we'll split the LI instead.
+  if ( parent = getNearest( block, root, 'LI' ) ) {
+      block = parent;
+  }
+
+  if ( !block.textContent ) {
+      // Break list
+      if ( getNearest( block, root, 'UL' ) ||
+              getNearest( block, root, 'OL' ) ) {
+          return self.modifyBlocks( decreaseListLevel, range );
+      }
+      // Break blockquote
+      else if ( getNearest( block, root, 'BLOCKQUOTE' ) ) {
+          return self.modifyBlocks( removeBlockQuote, range );
+      }
+  }
+  // Otherwise, split at cursor point.
+  nodeAfterSplit = splitBlock( self, block,
+      range.startContainer, range.startOffset );
+
+  // Clean up any empty inlines if we hit enter at the beginning of the
+  // block
+  removeZWS( block );
+  removeEmptyInlines( block );
+  fixCursor( block, root );
+
+  // Focus cursor
+  // If there's a <b>/<i> etc. at the beginning of the split
+  // make sure we focus inside it.
+  while ( nodeAfterSplit.nodeType === ELEMENT_NODE ) {
+      var child = nodeAfterSplit.firstChild,
+          next;
+
+      // Don't continue links over a block break; unlikely to be the
+      // desired outcome.
+      if ( nodeAfterSplit.nodeName === 'A' &&
+              ( !nodeAfterSplit.textContent ||
+                  nodeAfterSplit.textContent === ZWS ) ) {
+          child = self._doc.createTextNode( '' );
+          replaceWith( nodeAfterSplit, child );
+          nodeAfterSplit = child;
+          break;
+      }
+
+
+      if ( nodeAfterSplit.nodeType !== TEXT_NODE && notEditable(nodeAfterSplit, root)) {
+          break;
+      }
+      while ( child && child.nodeType === TEXT_NODE && !child.data ) {
+          next = child.nextSibling;
+          if ( !next || next.nodeName === 'BR' ) {
+              break;
+          }
+          detach( child );
+          child = next;
+      }
+
+      // 'BR's essentially don't count; they're a browser hack.
+      // If you try to select the contents of a 'BR', FF will not let
+      // you type anything!
+      if ( !child || child.nodeName === 'BR' ||
+              ( child.nodeType === TEXT_NODE && !isPresto ) ) {
+          break;
+      }
+      nodeAfterSplit = child;
+  }
+  range = self._createRange( nodeAfterSplit, 0 );
+  self.setSelection( range );
+  self._updatePath( range, true );
+}
+
 
 Squire.prototype.backspace = function(self, event, range){
     self  = self  ? self  : this

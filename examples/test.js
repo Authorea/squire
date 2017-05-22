@@ -66,14 +66,14 @@ var initEditors = function(){
 
     quickTest()
 
-    // runTests()
-    // testGetHTML()
-    // testInlineNodeNames()
-    // testCleaner()
+    runTests()
+    testGetHTML()
+    testInlineNodeNames()
+    testCleaner()
     // testLists()
-    // testTables()
-    // testInsertHTML()
-    testHeader()
+    testTables()
+    testInsertHTML()
+    // testHeader()
     testResults()
 
     setTimeout(updateCursor, 20)
