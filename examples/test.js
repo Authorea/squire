@@ -73,7 +73,8 @@ var initEditors = function(){
     // testLists()
     testTables()
     testInsertHTML()
-    // testHeader()
+    testHeader()
+    testIncreaseListLevel()
     testResults()
 
     setTimeout(updateCursor, 20)
@@ -81,6 +82,7 @@ var initEditors = function(){
 }
 testHeader = function(){
   prepareTest('<h1>test</h1>');
+
 
   var textNode = editor._doc.body.childNodes[0].childNodes[0]
 
@@ -95,9 +97,24 @@ testHeader = function(){
   updateCursor();
 
   // make sure new lines were added under the header:
-  test(editor._doc.body.childNodes.length == 1)
+  test(editor._doc.body.childNodes.length == 1, 'header is added with no new lines')
 
 }
+testIncreaseListLevel = function(){
+  prepareTest("<div>test<br></div>")
+  var textNode = editor._doc.body.childNodes[0].childNodes[0]
+  var r = editor.getSelection()
+  r.setStart(textNode, 0 )
+  r.setEnd(textNode, 0 )
+  editor.setSelection(r);
+  editor.increaseIndentLevel()
+  var html = editor.getHTML()
+  test(html.includes('blockquote'), 'indent level increased')
+
+  editor.setHTML(html)
+  test(editor.getHTML(html) == html, 'indent survives cleaner')
+}
+
 
 quickTest = function(){
   // prepareTest("<div>a<br></div><div><br></div><div>b<br></div>")
@@ -449,6 +466,7 @@ testCleaner = function(){
   el = $("<div><span><span>a</span><span>b</span><span>c</span></span></div>")[0]
   Squire.Clean.collapseSimpleSpans(el)
   test(el.innerHTML === "abc", "collapses simple spans")
+
 }
 
 testInsertHTML = function(){
