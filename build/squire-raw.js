@@ -4892,7 +4892,7 @@ var increaseBlockQuoteLevel = function ( frag ) {
 var increaseIndentLevel = function ( frag ) {
   var props = this._config.tagAttributes.blockquote || {};
 
-  props.class = 'no-left-border';
+  props.class = 'au-no-left-border';
 
   return this.createElement( 'BLOCKQUOTE', props, [frag])
 }
