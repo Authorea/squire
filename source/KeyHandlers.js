@@ -430,7 +430,6 @@ var findPreviousTextOrNotEditable = function(root, node){
 
 Squire.prototype.enter = function (self, event, range) {
   self  = self  ? self  : this
-  event.preventDefault()
   range = range ? range : self.getSelection()
   var root = self._root;
   var block, parent, nodeAfterSplit;
