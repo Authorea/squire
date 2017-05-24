@@ -914,7 +914,7 @@ var insertNodeInRange = function ( range, node, root ) {
     if (!root && !(this && this._root)) {
       throw new Error('No document root!')
     }
-
+  
     // Insert at start.
     var startContainer = range.startContainer,
         startOffset = range.startOffset,
@@ -1573,7 +1573,7 @@ var firstOrLastLine = function(self){
   }
   var parentBlock = getStartBlockOfRange(range)
   var numLines    = numberOfLines(root)
-
+  
   var parentBlockLineNumber   = getLineNumber(parentBlock, root)
   var numLinesParentBlock     = numberOfLinesWithinParentBlock(parentBlock)
   var lineNumberWithinParent
@@ -2093,6 +2093,7 @@ var findPreviousTextOrNotEditable = function(root, node){
 
 Squire.prototype.enter = function (self, event, range) {
   self  = self  ? self  : this
+  event.preventDefault()
   range = range ? range : self.getSelection()
   var root = self._root;
   var block, parent, nodeAfterSplit;
