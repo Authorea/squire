@@ -4762,11 +4762,18 @@ proto.changeFormat = function ( add, remove, range, partial ) {
 };
 
 // --- Block formatting ---
-
+// NATE: I'm not sure why on the mainline squire demo page splitting works properly without this
+// modification
 var tagAfterSplit = {
     DT:  'DD',
     DD:  'DT',
-    LI:  'LI'
+    LI:  'LI',
+    H1:  'H1',
+    H2:  'H2',
+    H3:  'H3',
+    H4:  'H4',
+    H5:  'H5',
+    H6:  'H6'
 };
 
 var splitBlock = function ( self, block, node, offset ) {
