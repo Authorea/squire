@@ -2527,12 +2527,18 @@ Squire.prototype.moveLeft = function(self, event, range){
         }
         else{
           console.info("no block found")
+          // TODO: NATE: if we modify isFirstLine to account for uncollapsed ranges we can modify this code accordingly.
+          // Right now we assume that if it isn't collapsed then isFirstLine will return false
           if(isFirstLine(self)){
             console.info("on line 0")
             event && event.preventDefault()
             var e = new CustomEvent('squire::up-on-first-line', { 'detail': {range: range} });
             root.dispatchEvent(e);
             // return
+          }
+          else{
+            range.collapse(true)
+            self.setSelection(range)
           }
         }
     }
