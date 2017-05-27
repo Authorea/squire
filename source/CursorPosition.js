@@ -62,8 +62,11 @@ var firstOrLastLine = function(self){
     var so    = range.startOffset
   }
   var parentBlock = getStartBlockOfRange(range)
+  if(parentBlock.nodeName == "LI"){
+    parentBlock = parentBlock.parentElement
+  }
   var numLines    = numberOfLines(root)
-  
+
   var parentBlockLineNumber   = getLineNumber(parentBlock, root)
   var numLinesParentBlock     = numberOfLinesWithinParentBlock(parentBlock)
   var lineNumberWithinParent
@@ -116,15 +119,17 @@ var firstOrLastLine = function(self){
     var rect = range.getBoundingClientRect()
     var nodeOffset = rect.top
     var parentOffset = parentBlock.getBoundingClientRect().top
-    if(nodeOffset === parentOffset){
-      return {firstLine: true, lastLine: true}
-    }
+    // NATE: removed by Daniel in fix-list-scroll.  This was put in place by me, apparently to fix the calculation
+    // for empty divs, but it doesn't seem to be necessary.  Maybe that is because now authorea divs have a minimum
+    // width and height, just a guess.
+    // if(nodeOffset === parentOffset){
+    //    return {firstLine: true, lastLine: true}
+    // }
     nodeOffset = nodeOffset - parentOffset
     lineHeight = window.getComputedStyle(parentBlock, null)["line-height"]
     lineHeight = parseInt(lineHeight)
     lineNumberWithinParent = Math.round(nodeOffset/lineHeight)
   }
-
 
   if(parentBlockLineNumber === 0 && lineNumberWithinParent === 0){
     if(numLines === 1 && numLinesParentBlock === 1){
