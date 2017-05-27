@@ -694,7 +694,7 @@ Squire.prototype.moveRight = function(self, event, range){
     var parent = sc.parent
     var root = self._root
     var nn
-    var block = getStartBlockOfRange(range, root)
+    var block = getEndBlockOfRange(range, root)
 
     if(rangeDoesEndAtBlockBoundary(range, root)){
         var nextBlock = block && getNextBlock(block, root)
@@ -713,6 +713,10 @@ Squire.prototype.moveRight = function(self, event, range){
               var e = new CustomEvent('squire::down-on-last-line', { 'detail': {range: range} });
               root.dispatchEvent(e);
               // return
+            }
+            else{
+              range.collapse(false)
+              self.setSelection(range)
             }
         }
     }
