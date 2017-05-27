@@ -93,7 +93,7 @@ testHeader = function(){
   updateCursor();
 
   keyEvent = new KeyboardEvent("keydown", {key : "Backspace", keyCode: 8, code: "Backspace", cancelable: true});
-  editor.backspace(editor, keyEvent, range);
+  editor.backspace(editor, keyEvent, r);
   updateCursor();
 
   // make sure new lines were added under the header:

@@ -1596,8 +1596,7 @@ var decreaseListLevel = function ( frag ) {
 proto._ensureBottomLine = function () {
     var root = this._root;
     var last = root.lastElementChild;
-    if ( !last ||
-            last.nodeName !== this._config.blockTag || !isBlock( last ) ) {
+    if ( !last || !isBlock( last ) ) {
         root.appendChild( this.createDefaultBlock() );
     }
 };
