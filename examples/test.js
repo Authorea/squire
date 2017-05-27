@@ -1,20 +1,17 @@
 $(document).ready(function(){
   window.squire_editors = [];
-  setTimeout(initEditors, 100);
+  console.info("starting")
+  setTimeout(initEditors, 1000);
   // setTimeout(updateCursor, 100);
 });
 
 var initEditors = function(){
     console.info("making editor");
-  $("iframe").each(function(index, iframe){
-    window.r = null
-    window.iframe = iframe;
-    window.idoc = iframe.contentDocument;
-    var editor = new Squire(iframe.contentDocument);
+    var editor = new Squire($(".squire")[0]);
     squire_editors.push(editor);
     window.editor = editor;
     $(document).ready(function(){
-      vd = new ViewDom(editor._doc.body)
+      vd = new ViewDom(editor._root)
     })
     $("#increase-list-level").click(function(e){
       // editor.increaseListLevel()
@@ -64,7 +61,10 @@ var initEditors = function(){
 
     testSetup()
 
-    quickTest()
+    // quickTest()
+    // NATE: unfortunately this test makes the later test "does not filter math elements" fail.  I don't yet understand why
+    // but it has to do with how the cursor is positioned in the editor.
+    // splitTest()
 
     runTests()
     testGetHTML()
@@ -78,13 +78,23 @@ var initEditors = function(){
     testResults()
 
     setTimeout(updateCursor, 20)
-  });
 }
+
+splitTest = function(){
+  keyEvent = new KeyboardEvent("keydown", {key : "a", keyCode: 65, code: "KeyA", cancelable: true});
+  // prepareTest("<div>a<br></div><div><br></div><div>b<br></div>")
+  prepareTest('<h1>ab</h1>')
+  editor.moveRight(editor, keyEvent, range);updateCursor()
+  editor.moveRight(editor, keyEvent, range);updateCursor()
+  editor.enter(editor, keyEvent, range);updateCursor()
+  test(editor.getHTML() === '<h1>a<br></h1><h1>b<br></h1>', "can split H tags")
+}
+
 testHeader = function(){
   prepareTest('<h1>test</h1>');
 
 
-  var textNode = editor._doc.body.childNodes[0].childNodes[0]
+  var textNode = editor._root.childNodes[0].childNodes[0]
 
   var r = editor.getSelection()
   r.setStart(textNode, 4 )
@@ -97,12 +107,22 @@ testHeader = function(){
   updateCursor();
 
   // make sure new lines were added under the header:
-  test(editor._doc.body.childNodes.length == 1, 'header is added with no new lines')
+  test(editor._root.childNodes.length == 1, 'header is added with no new lines')
 
+}
+
+testSplit = function(){
+  keyEvent = new KeyboardEvent("keydown", {key : "a", keyCode: 65, code: "KeyA", cancelable: true});
+  // prepareTest("<div>a<br></div><div><br></div><div>b<br></div>")
+  prepareTest('<h1>ab</h1>')
+  editor.moveRight(editor, keyEvent, range);updateCursor()
+  editor.moveRight(editor, keyEvent, range);updateCursor()
+  editor.enter(editor, keyEvent, range);updateCursor()
+  test(editor.getHTML() === '<h1>a<br></h1><h1>b<br></h1>', "can split H tags")
 }
 testIncreaseListLevel = function(){
   prepareTest("<div>test<br></div>")
-  var textNode = editor._doc.body.childNodes[0].childNodes[0]
+  var textNode = editor._root.childNodes[0].childNodes[0]
   var r = editor.getSelection()
   r.setStart(textNode, 0 )
   r.setEnd(textNode, 0 )
@@ -131,12 +151,13 @@ quickTest = function(){
   console.info("starting quick test")
   keyEvent = new KeyboardEvent("keydown", {key : "a", keyCode: 65, code: "KeyA", cancelable: true});
   // prepareTest("<div>a<br></div><div><br></div><div>b<br></div>")
-  prepareTest('<div>ab<span class="not-editable">c</span>d</div>')
+  // prepareTest('<div>ab<span class="not-editable">c</span>d</div>')
   // editor.moveRight(editor, keyEvent, range);updateCursor()
   // editor.moveRight(editor, keyEvent, range);updateCursor()
   // editor.moveRight(editor, keyEvent, range);updateCursor()
   // editor.moveRight(editor, keyEvent, range);updateCursor()
   // testBlock(SquireRange.getNextBlock(firstLine), "right arrow from end of text at end of line")
+  prepareTest('<div>ab<input id="squire-selection-start" type="hidden"><input id="squire-selection-end" type="hidden">d</div>', {focus:1})
 
   console.info("ended quick test")
 }
@@ -146,7 +167,6 @@ var updateCursor = function(){
   window.sc = r.startContainer
   window.so = r.startOffset
   vd.parseRoot()
-  // range = editor._doc.getSelection().getRangeAt(0)
   range = editor.getSelection()
   vd.highlightRange(vd._r, range)
 
@@ -216,12 +236,12 @@ testSetup = function(){
   failedTests = 0
 }
 
-prepareTest = function(html){
-  editor.setHTML(html)
+prepareTest = function(html, options={}){
+  editor.setHTML(html, options)
   updateCursor()
   editor.focus()
   // range = editor.getSelection()
-  // firstLine = editor._doc.body.childNodes[0]
+  // firstLine = editor._root.childNodes[0]
 }
 
 testContent = function(content, offset, message){
@@ -276,7 +296,7 @@ runTests = function(){
   editor.focus()
   return
   range = editor.getSelection()
-  firstLine = editor._doc.body.childNodes[0]
+  firstLine = editor._root.childNodes[0]
   keyEvent = new KeyboardEvent("keydown", {key : "a", keyCode: 65, code: "KeyA", cancelable: true});
 
   // RIGHT ARROW
@@ -319,7 +339,7 @@ runTests = function(){
   testContainer(firstLine, 3, "right arrow before content editable on single line")
   prepareTest('<div>L<span><span class="colour" style="color:rgb(51, 51, 51)"> <span class="font" style="font-family:Helvetica, Times, serif"> <span class="size" style="font-size:16px">&nbsp;f <span class="Apple-converted-space">&nbsp;</span> </span> </span> </span></span><br></div>')
   prepareTest('<div>L<span><span class="colour" style="color:rgb(51, 51, 51)"><span class="font" style="font-family:Helvetica, Times, serif"><span class="size" style="font-size:16px">f<span class="Apple-converted-space">&nbsp;</span></span></span></span></span><br></div>')
-  editor.setSelectionToNode(editor._body.childNodes[0].childNodes[2])
+  editor.setSelectionToNode(editor._root.childNodes[0].childNodes[2])
   // There is for some reason a delay to setting the selection, so we need to wait for a few moments, very ugly
   // NATE: Commenting this test out for now, it is unreliable
   // setTimeout(function(){
@@ -336,7 +356,7 @@ runTests = function(){
   prepareTest("<math>x</math>")
   test(firstLine.childNodes[0].nodeName === "math", "can insert math")
 
-  firstLine = editor._doc.body.childNodes[0]
+  firstLine = editor._root.childNodes[0]
   keyEvent = new KeyboardEvent("keydown", {key : "a", keyCode: 65, code: "KeyA", cancelable: true});
 
   editor.moveRight(editor, keyEvent, range);updateCursor()
@@ -431,7 +451,8 @@ testCleaner = function(){
   editor.insertHTML(s)
   s2 = editor.getHTML()
   test(s2 === '<div><span class="katex ltx_Math"><span class="strut" style="height:1em;">a</span></span><br></div>', "does not filter math elements")
-
+  console.info("S2")
+  console.info(s2)
   el = editor.createElement("span", {style: 'background-color: blue', class: "a b c"})
   Squire.Clean.stylesRewriters["SPAN"](el, el.parentNode)
   test(el.attributes["style"]===undefined, "Removes styles from span")
@@ -493,10 +514,10 @@ testInlineNodeNames = function(){
 
 // Useful to see how the treewalker works
 makeTreeWalker = function(){
-  w = new STreeWalker(editor._body, NodeFilter.SHOW_ALL, function(node){
+  w = new STreeWalker(editor._root, NodeFilter.SHOW_ALL, function(node){
       return ( editor.isText(node) || editor.notEditable(node) )
   } );
-  w2 = new STreeWalker(editor._body, NodeFilter.SHOW_ALL, function(node){
+  w2 = new STreeWalker(editor._root, NodeFilter.SHOW_ALL, function(node){
       return ( true )
   } );
   w2.currentNode = w2.root
@@ -520,7 +541,7 @@ insertNotEditable = function(e){
 }
 insertText = function(text){
   range = editor.getSelection()
-  var node = editor._doc.createTextNode(text)
+  var node = editor._root.createTextNode(text)
   // insert the element into squire
   editor.insertNodeInRange(
       range,
