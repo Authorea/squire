@@ -666,14 +666,15 @@ Squire.prototype.backspace = function(self, event, range){
             rootNodeOfClean = sc
         }
 
-        // if(rootNodeOfClean){
+        if(rootNodeOfClean){
         //     //CleanTree will trim whitespace, but it won't do this if there is a <br> tag at the end of the line
         //     //We want to preserve whitespace that the user has entered so calling ensureBr is necessary
         //     ensureBrAtEndOfAllLines(self._root)
         //     cleanTree(rootNodeOfClean)
-        //     replaceDoubleSpace(rootNodeOfClean, range)
-        //     replaceTrailingSingleSpace(rootNodeOfClean, range)
-        // }
+            // replaceDoubleSpace(rootNodeOfClean, range)
+            // ucommmenting:
+            replaceTrailingSingleSpace(rootNodeOfClean, range)
+        }
         self.setSelection( range );
         // setTimeout( function () { afterDelete( self ); }, 0 );
         afterDelete( self )
