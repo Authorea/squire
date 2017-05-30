@@ -1,6 +1,8 @@
 /*jshint strict:false, undef:false, unused:false */
 
 var inlineNodeNames  = /^(?:#text|A(?:BBR|CRONYM)?|B(?:R|D[IO])?|C(?:ITE|ODE)|D(?:ATA|EL|FN)|EM|FONT|HR|I(?:FRAME|MG|NPUT|NS)?|KBD|Q|R(?:P|T|UBY)|S(?:AMP|MALL|PAN|TR(?:IKE|ONG)|U[BP])?|TABLE|TD|TR|TBODY|U|VAR|WBR|Z)$/;
+// neilj squire version may27 1.8.9
+// var inlineNodeNames  = /^(?:#text|A(?:BBR|CRONYM)?|B(?:R|D[IO])?|C(?:ITE|ODE)|D(?:ATA|EL|FN)|EM|FONT|HR|I(?:FRAME|MG|NPUT|NS)?|KBD|Q|R(?:P|T|UBY)|S(?:AMP|MALL|PAN|TR(?:IKE|ONG)|U[BP])?|TIME|U|VAR|WBR)$/;
 
 var leafNodeNames = {
     BR: 1,
@@ -92,8 +94,47 @@ function every ( nodeList, fn ) {
     return true;
 }
 
-// ---
 
+
+var UNKNOWN = 0;
+var INLINE = 1;
+var BLOCK = 2;
+var CONTAINER = 3;
+
+var nodeCategoryCache = canWeakMap ? new WeakMap() : null;
+
+//neilj
+function getNodeCategory ( node ) {
+    switch ( node.nodeType ) {
+    case TEXT_NODE:
+        return INLINE;
+    case ELEMENT_NODE:
+    case DOCUMENT_FRAGMENT_NODE:
+        if ( canWeakMap && nodeCategoryCache.has( node ) ) {
+            return nodeCategoryCache.get( node );
+        }
+        break;
+    default:
+        return UNKNOWN;
+    }
+
+    var nodeCategory;
+    if ( !every( node.childNodes, isInline ) ) {
+        // Malformed HTML can have block tags inside inline tags. Need to treat
+        // these as containers rather than inline. See #239.
+        nodeCategory = CONTAINER;
+    } else if ( inlineNodeNames.test( node.nodeName ) ) {
+        nodeCategory = INLINE;
+    } else {
+        nodeCategory = BLOCK;
+    }
+    if ( canWeakMap ) {
+        nodeCategoryCache.set( node, nodeCategory );
+    }
+    return nodeCategory;
+}
+// NATE:  I'm not sure about switching these over to neilj's version, hard to say what the effects are with embedded mathml, which
+// we need to account for.
 function isLeaf ( node, root ) {
     //NATE: TODO: replace all occurrences of isLeaf(node) with isLeaf(node, root)
     if (typeof root === 'undefined'){
@@ -108,6 +149,7 @@ function isLeaf ( node, root ) {
 function isInline ( node ) {
     return (inlineNodeNames.test( node.nodeName ) || mathMLNodeNames[node.nodeName]);
 }
+
 function isBlock ( node ) {
     var type = node.nodeType;
     return ( type === ELEMENT_NODE || type === DOCUMENT_FRAGMENT_NODE ) &&
@@ -118,6 +160,25 @@ function isContainer ( node ) {
     return ( type === ELEMENT_NODE || type === DOCUMENT_FRAGMENT_NODE ) &&
         !isInline( node ) && !isBlock( node );
 }
+
+// // neilj1.8.9
+// function isLeaf ( node ) {
+//     return node.nodeType === ELEMENT_NODE && !!leafNodeNames[ node.nodeName ];
+// }
+// // neilj1.8.9
+// function isInline ( node ) {
+//     return getNodeCategory( node ) === INLINE;
+// }
+// // neilj1.8.9
+// function isBlock ( node ) {
+//     return getNodeCategory( node ) === BLOCK;
+// }
+// // neilj1.8.9
+// function isContainer ( node ) {
+//     return getNodeCategory( node ) === CONTAINER;
+// }
+
+
 function isZWS ( node ) {
     return (isText(node) && node.data === ZWS)
 }
@@ -308,13 +369,14 @@ function fixCursor ( node, root ) {
     // unfocussable if they have no content. To remedy this, a <BR> must be
     // inserted. In Opera and IE, we just need a textnode in order for the
     // cursor to appear.
-    var doc = node.ownerDocument,
-        originalNode = node,
-        fixer, child;
+    var self = root.__squire__;
+    var doc = node.ownerDocument;
+    var originalNode = node;
+    var fixer, child;
 
     if ( node === root ) {
         if ( !( child = node.firstChild ) || child.nodeName === 'BR' ) {
-            fixer = getSquireInstance( doc ).createDefaultBlock();
+            fixer = self.createDefaultBlock();
             if ( child ) {
                 node.replaceChild( fixer, child );
             }
@@ -340,7 +402,7 @@ function fixCursor ( node, root ) {
         if ( !child ) {
             if ( cantFocusEmptyTextNodes ) {
                 fixer = doc.createTextNode( ZWS );
-                getSquireInstance( doc )._didAddZWS();
+                self._didAddZWS();
             } else {
                 fixer = doc.createTextNode( '' );
             }
@@ -376,7 +438,7 @@ function fixCursor ( node, root ) {
         try {
             node.appendChild( fixer );
         } catch ( error ) {
-            getSquireInstance( doc ).didError({
+            self.didError({
                 name: 'Squire: fixCursor – ' + error,
                 message: 'Parent: ' + node.nodeName + '/' + node.innerHTML +
                     ' appendChild: ' + fixer.nodeName
@@ -389,11 +451,11 @@ function fixCursor ( node, root ) {
 
 // Recursively examine container nodes and wrap any inline children.
 function fixContainer ( container, root ) {
-    var children = container.childNodes,
-        doc = container.ownerDocument,
-        wrapper = null,
-        i, l, child, isBR,
-        config = getSquireInstance( doc )._config;
+    var children = container.childNodes;
+    var doc = container.ownerDocument;
+    var wrapper = null;
+    var i, l, child, isBR;
+    var config = root.__squire__._config;
 
     for ( i = 0, l = children.length; i < l; i += 1 ) {
         child = children[i];
