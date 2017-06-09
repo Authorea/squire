@@ -446,3 +446,10 @@ Change the **inline** formatting of the current selection. This is a high-level 
 Takes in a function that can modify the document without the modifications being treated as input.
 
 This is useful when the document needs to be changed programmatically, but those changes should not raise input events or modify the undo state.
+
+
+### Development
+Watch source files for continuous rebuilding:
+
+```npm run build_dev
+```
