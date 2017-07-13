@@ -30,7 +30,7 @@ var initEditors = function(){
       editor.removeList();updateCursor()
     })
 
-    $("not-editable-insert").click(insertNotEditable)
+    $("#insert-not-editable").click(insertNotEditable)
 
     // editor.addEventListener("pathChange", function(newPath){
     //   console.info("pathchange")
@@ -76,6 +76,7 @@ var initEditors = function(){
     testHeader()
     testIncreaseListLevel()
     testResults()
+    testNotEditable()
 
     setTimeout(updateCursor, 20)
 }
@@ -106,9 +107,25 @@ testHeader = function(){
   editor.backspace(editor, keyEvent, r);
   updateCursor();
 
-  // make sure new lines were added under the header:
   test(editor._root.childNodes.length == 1, 'header is added with no new lines')
 
+}
+
+testNotEditable = function () {
+  // setup:
+  prepareTest('<div>test</div>')
+  var rootDiv = editor._root.childNodes[0]
+  var textNode = rootDiv.childNodes[0]
+  var r = editor.getSelection()
+  r.setStart(textNode, 4 )
+  r.setEnd(textNode, 4 )
+  editor.setSelection(r);
+  updateCursor();
+
+  insertNotEditable();
+  editor.moveRight();
+  updateCursor();
+  test(editor.getSelection().startContainer == rootDiv, 'not editable passed');
 }
 
 testSplit = function(){
