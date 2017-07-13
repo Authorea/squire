@@ -236,7 +236,10 @@ testSetup = function(){
   failedTests = 0
 }
 
-prepareTest = function(html, options={}){
+prepareTest = function(html, options){
+  if(!options){
+    options = {}
+  }
   editor.setHTML(html, options)
   updateCursor()
   editor.focus()
