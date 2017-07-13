@@ -451,5 +451,10 @@ This is useful when the document needs to be changed programmatically, but those
 ### Development
 Watch source files for continuous rebuilding:
 
-```npm run build_dev
+```npm run build_dev```
+
+### Dev Recipes
+Set githook to run make before every push
+```
+ln -s -f ../../hooks/pre-push .git/hooks/pre-push && chmod +x .git/hooks/pre-push
 ```
