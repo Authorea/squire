@@ -68,6 +68,14 @@ function Squire ( root, config ) {
         var previous
         var root = this._root
 
+        if(notEditable(sc)){
+          e.preventDefault()
+          var tn = this._doc.createTextNode(String.fromCharCode(e.charCode))
+          sc.parentNode.insertBefore(tn, sc.nextSibling)
+          this.setSelectionToNode(tn, 1)
+
+        }
+
         if(notEditable(child)){
             console.info("NOT EDITABLE need to move range")
             ensureOutsideOfNotEditable( this )
