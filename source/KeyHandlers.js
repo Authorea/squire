@@ -160,10 +160,14 @@ var afterDelete = function ( self, range ) {
     }
 };
 
-var ensureOutsideOfNotEditable = function ( self ){
+var ensureOutsideOfNotEditable = function ( self, options ){
+    if(!options){
+      options = {}
+    }
     var range = self.getSelection()
-    moveRangeOutOfNotEditable(range)
+    var movedRight  = moveRangeOutOfNotEditable(range, options)
     self.setSelection(range)
+    return movedRight
 };
 
 var keyHandlers = {

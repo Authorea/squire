@@ -31,7 +31,7 @@ var insertNodeInRange = function ( range, node, root ) {
     if (!root && !(this && this._root)) {
       throw new Error('No document root!')
     }
-  
+
     // Insert at start.
     var startContainer = range.startContainer,
         startOffset = range.startOffset,
@@ -441,21 +441,26 @@ var moveNodeOutOfNotEditable = function( node, nodeOffset ){
     var newParent     = currentParent
     var textLength, startOffset, offset
 
-    if(startContainer.nodeType === TEXT_NODE){
+    if(startContainer.nodeType === TEXT_NODE && notEditable(startContainer)){
+      console.log('moveNodeOutOfNotEditable is text');
         textLength = startContainer.data.length
         // if we are for some reason, likely an up or down arrow, finding ourselves in the middle of a
         // text area that isn't editable, we need to decide if we should be in front of that element
         // or to the right of it.  At the moment this will only work for a single text element in a series
         // of non-editable structures, but it can be extended to work for all cases if necessary.
         if(nodeOffset > textLength/2){
+          console.log('moveNodeOutOfNotEditable > text length (movedright)');
+
             moveRight = true
         }
     }
-    else{
-      currentParent = startContainer.parentNode
-      newParent = currentParent
-    }
+    // else{
+    //   currentParent = startContainer.parentNode
+    //   newParent = currentParent
+    // }
     while(notEditable(newParent)){
+      console.log('moveNodeOutOfNotEditable while loop');
+
         currentParent = newParent
         if(moveRight){
             if(nextSibling = currentParent.nextSibling){
@@ -463,13 +468,15 @@ var moveNodeOutOfNotEditable = function( node, nodeOffset ){
             }
         }
         newParent = currentParent.parentNode
-        startOffset = indexOf.call( newParent.childNodes, currentParent );
+        // startOffset = indexOf.call( newParent.childNodes, currentParent );
     }
     if(newParent !== currentParent){
         offset = indexOf.call( newParent.childNodes, currentParent )
-        return([newParent, offset])
+        console.log('moveNodeOutOfNotEditable newParent !== currentParent');
+        return([currentParent, offset])
     }
     else{
+      console.log('moveNodeOutOfNotEditable else');
       return([node, nodeOffset])
     }
 
@@ -478,15 +485,40 @@ window.moveNodeOutOfNotEditable = moveNodeOutOfNotEditable
 
 // Nate: This has no root argument, but I would think it needs to terminate at
 // the root node if nothing is found
-var moveRangeOutOfNotEditable = function( range ){
+var moveRangeOutOfNotEditable = function( range, options ){
+  if(!options){
+    options = {}
+  }
   var sc = range.startContainer
   var so = range.startOffset
   var ec = range.endContainer
   var eo = range.endOffset
   var newStart = moveNodeOutOfNotEditable(sc, so)
   var newEnd   = moveNodeOutOfNotEditable(ec, eo)
+  console.log('AFTER MOVE OUT');
+  console.log(newStart, newEnd);
+  var movedRight = false
+
+  var newStartNode = newStart[0];
+  var newEndNode = newEnd[0];
+  if (options.moveRight){
+    if (notEditable(newStartNode) && newStartNode.nextSibling ){
+      newStart[0] = newStartNode.nextSibling
+      newStart[1] = 0
+      movedRight = true
+    }
+    if(notEditable(newEndNode) && newEndNode.nextSibling ){
+
+      newEnd[0] = newEndNode.nextSibling
+      newEnd[1] = 0
+      movedRight = true
+
+    }
+  }
+
   range.setStart(newStart[0], newStart[1])
   range.setEnd(newEnd[0], newEnd[1])
+  return movedRight
 }
 window.moveRangeOutOfNotEditable = moveRangeOutOfNotEditable
 

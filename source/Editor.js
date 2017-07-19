@@ -32,6 +32,10 @@ function mergeObjects ( base, extras, mayOverride ) {
     return base;
 }
 
+function insertAfter(newNode, referenceNode) {
+    referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
+}
+
 function Squire ( root, config ) {
   if ( root.nodeType === DOCUMENT_NODE ) {
         root = root.body;
@@ -70,7 +74,13 @@ function Squire ( root, config ) {
 
         if(notEditable(child)){
             console.info("NOT EDITABLE need to move range")
-            ensureOutsideOfNotEditable( this )
+            if (ensureOutsideOfNotEditable( this, {moveRight:true} )){
+              e.preventDefault()
+              var tn = this._doc.createTextNode(String.fromCharCode(e.charCode))
+              insertAfter(tn, sc )
+              this.setSelectionToNode(tn, 1)
+              return
+            }
             r = this.getSelection()
             sc = r.startContainer
             so = r.startOffset
