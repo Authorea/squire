@@ -30,7 +30,12 @@ var initEditors = function(){
       editor.removeList();updateCursor()
     })
 
-    $("#insert-not-editable").click(insertNotEditable)
+    $("#insert-not-editable").click(function () {
+      insertNotEditable()
+    })
+    $("#insert-nested-not-editable").click(function () {
+      insertNotEditable("<span class=not-editable><a>NS</a></span>")
+    })
 
     // editor.addEventListener("pathChange", function(newPath){
     //   console.info("pathchange")
@@ -543,9 +548,12 @@ makeTreeWalker = function(){
   w2.currentNode = w2.root
 }
 
-insertNotEditable = function(e){
+insertNotEditable = function(html){
+  if (!html){
+    html = '<span class=not-editable>NE</span>'
+  }
   range = editor.getSelection()
-  var node = $("<span class=not-editable>NE</span>")[0]
+  var node = $(html)[0]
   // insert the element into squire
   editor.insertNodeInRange(
       range,
@@ -559,6 +567,7 @@ insertNotEditable = function(e){
     this.rich_editor.setSelection(range)
   }
 }
+
 insertText = function(text){
   range = editor.getSelection()
   var node = editor._root.createTextNode(text)
