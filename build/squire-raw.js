@@ -2791,14 +2791,11 @@ var headerCleaner = function (node) {
     if (nodeName == 'B' || nodeName == 'DIV'){
       $child = $(child)
       $child.replaceWith($child.html())
-    } else {
+    }
+    else {
       i++
     }
   }
-  for (var i = 0; i < childNodes.length; i++) {
-
-  }
-
   return node
 }
 var stylesRewriters = {
