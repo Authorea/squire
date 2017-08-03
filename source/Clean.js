@@ -159,6 +159,29 @@ var replaceStyles = function ( node, parent ) {
 //NATE: I like the stylesRewriters, we should have sane defaults for all the elements as a first pass, and then
 // any additional complicated filtering can be done by registering filters with squire that will be executed during
 // insertHTML
+var headerBlackList = /^(?:B|DIV|H1|H2|H3|UL|OL|LI|TABLE)$/;
+var headerCleaner = function (node) {
+  var childNodes = node.children
+  var i = 0;
+  var child, nodeName, $child;
+  if (!childNodes){
+    return node
+  }
+
+  while (i < childNodes.length){
+    child = childNodes[i]
+    headerCleaner(child)
+    nodeName = child.nodeName
+    if (headerBlackList.test(nodeName)){
+      $child = $(child)
+      $child.replaceWith($child.html())
+    }
+    else {
+      i++
+    }
+  }
+  return node
+}
 var stylesRewriters = {
     SPAN: replaceStyles,
     CITE: replaceStyles,
@@ -167,6 +190,9 @@ var stylesRewriters = {
     INS: replaceWithTag( 'U' ),
     STRIKE: replaceWithTag( 'S' ),
     P: replaceWithTag('DIV'),
+    H1: headerCleaner,
+    H2: headerCleaner,
+    H3: headerCleaner,
     FONT: function ( node, parent ) {
         var face = node.face,
             size = node.size,
