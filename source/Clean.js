@@ -159,7 +159,7 @@ var replaceStyles = function ( node, parent ) {
 //NATE: I like the stylesRewriters, we should have sane defaults for all the elements as a first pass, and then
 // any additional complicated filtering can be done by registering filters with squire that will be executed during
 // insertHTML
-
+var headerBlackList = /^(?:B|DIV|H1|H2|H3|UL|OL|LI|TABLE)$/;
 var headerCleaner = function (node) {
   var childNodes = node.children
   var i = 0;
@@ -172,7 +172,7 @@ var headerCleaner = function (node) {
     child = childNodes[i]
     headerCleaner(child)
     nodeName = child.nodeName
-    if (nodeName == 'B' || nodeName == 'DIV'){
+    if (nodeName.test(headerBlackList)){
       $child = $(child)
       $child.replaceWith($child.html())
     }
