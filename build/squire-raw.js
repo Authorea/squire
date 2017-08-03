@@ -2788,7 +2788,7 @@ var headerCleaner = function (node) {
     child = childNodes[i]
     headerCleaner(child)
     nodeName = child.nodeName
-    if (nodeName.test(headerBlackList)){
+    if (headerBlackList.test(nodeName)){
       $child = $(child)
       $child.replaceWith($child.html())
     }
