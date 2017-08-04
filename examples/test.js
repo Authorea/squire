@@ -81,8 +81,7 @@ var initEditors = function(){
     testHeader()
     testIncreaseListLevel()
     testResults()
-    editor.setHTML('<div>... d<span class="math ltx_Math v1 not-editable">\(x=x\)</span> ...&nbsp;</div>')
-    // testNotEditable()
+    testNotEditable()
 
     setTimeout(updateCursor, 20)
 }
