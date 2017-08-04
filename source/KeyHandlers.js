@@ -19,6 +19,7 @@ var keys = {
 
 // Ref: http://unixpapa.com/js/key.html
 var onKey = function ( event ) {
+    console.log(event);
     var code = event.keyCode,
         key = keys[ code ],
         modifiers = '',
@@ -29,6 +30,23 @@ var onKey = function ( event ) {
     if ( event.defaultPrevented ) {
         return;
     }
+
+    if(event.altKey && [37,39].includes(code)){
+      var  currentNode = this.getSelection().startContainer
+      console.log('current', currentNode);
+      console.log('currentNode.nodeType == Node.TEXT_NODE ', currentNode.nodeType == Node.TEXT_NODE );
+      console.log("$(currentNode).parents('.ltx_Math').length > 0)", $(currentNode).parents('.ltx_Math').length > 0)
+      console.log('alt arrow');
+      // debugger
+      if (currentNode &&
+          // currentNode.nodeType == Node.TEXT_NODE &&
+          $(currentNode).parents('.ltx_Math').length > 0){
+            event.preventDefault()
+            console.log('INSIDE ltx_MATH');
+            // editor.moveRight(editor, new KeyboardEvent("keydown"), window.getSelection())
+
+          }
+  }
 
     if ( !key ) {
         key = String.fromCharCode( code ).toLowerCase();
