@@ -44,7 +44,12 @@ var onKey = function ( event ) {
             event.preventDefault()
             console.log('INSIDE ltx_MATH');
             // editor.moveRight(editor, new KeyboardEvent("keydown"), window.getSelection())
-
+            // deleteContentsOfRange( range, this._root );
+            moveRangeOutOfNotEditable(range)
+            this.setSelection( range );
+            if(code == 39){
+              this.moveRight()
+            }
           }
   }
 
