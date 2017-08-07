@@ -29,6 +29,18 @@ var onKey = function ( event ) {
     if ( event.defaultPrevented ) {
         return;
     }
+    // handle alt + left/right arrow explicitly to avoid browser crashing bug:
+    if(event.altKey && [37,39].includes(code)){
+      var  currentNode = this.getSelection().startContainer
+      if (currentNode && $(currentNode).parents('.ltx_Math').length > 0){
+        event.preventDefault()
+        moveRangeOutOfNotEditable(range)
+        this.setSelection( range );
+        if(code == 39){
+          this.moveRight()
+        }
+      }
+    }
 
     if ( !key ) {
         key = String.fromCharCode( code ).toLowerCase();
