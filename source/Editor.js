@@ -1390,7 +1390,7 @@ proto.modifyBlocks = function ( modify, range ) {
     expandRangeToBlockBoundaries( range, root );
     // 3. Remove range.
     moveRangeBoundariesUpTree( range, root );
-    frag = extractContentsOfRange( range, root, root );
+    frag = extractContentsOfRange( range, root, root, {fixCursor: false} );
 
     // 4. Modify tree of fragment and reinsert.
     this.insertNodeInRange( range, modify.call( this, frag ) );
