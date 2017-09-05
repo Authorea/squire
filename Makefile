@@ -3,7 +3,7 @@
 all: install build
 
 install:
-	npm install
+	yarn install
 
 clean:
 	rm -rf build

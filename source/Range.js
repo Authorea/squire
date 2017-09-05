@@ -31,7 +31,7 @@ var insertNodeInRange = function ( range, node, root ) {
     if (!root && !(this && this._root)) {
       throw new Error('No document root!')
     }
-  
+
     // Insert at start.
     var startContainer = range.startContainer,
         startOffset = range.startOffset,
@@ -85,7 +85,9 @@ var insertNodeInRange = function ( range, node, root ) {
     ensureBrAtEndOfAllLines( root || this._root )
 };
 
-var extractContentsOfRange = function ( range, common, root ) {
+var extractContentsOfRange = function ( range, common, root, options ) {
+    var defaultOptions = {fixCursor: true}
+    options = Object.assign({}, defaultOptions, options)
     var startContainer = range.startContainer,
         startOffset = range.startOffset,
         endContainer = range.endContainer,
@@ -132,8 +134,9 @@ var extractContentsOfRange = function ( range, common, root ) {
     range.setStart( startContainer, startOffset );
     range.collapse( true );
 
-    fixCursor( common, root );
-
+    if(options.fixCursor){
+      fixCursor( common, root );
+    }
     return frag;
 };
 
