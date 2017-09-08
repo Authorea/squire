@@ -513,6 +513,10 @@ testCleaner = function(){
   Squire.Clean.collapseSimpleSpans(el)
   test(el.innerHTML === "abc", "collapses simple spans")
 
+  s = "<div>a </div>"
+  prepareTest(s)
+  test(editor.getHTML({stripAllBrs: 1}) === s)
+
 }
 
 testInsertHTML = function(){
