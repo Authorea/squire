@@ -1992,7 +1992,7 @@ proto.underline = command( 'changeFormat', { tag: 'U' } );
 proto.strikethrough = command( 'changeFormat', { tag: 'S' } );
 proto.subscript = command( 'changeFormat', { tag: 'SUB' }, { tag: 'SUP' } );
 proto.superscript = command( 'changeFormat', { tag: 'SUP' }, { tag: 'SUB' } );
-proto.pre = command( 'changeFormat', { tag: 'PRE' } );
+proto.pre = command( 'changeFormat', { tag: 'CODE' } );
 
 proto.removeBold = command( 'changeFormat', null, { tag: 'B' } );
 proto.removeItalic = command( 'changeFormat', null, { tag: 'I' } );
@@ -2000,7 +2000,7 @@ proto.removeUnderline = command( 'changeFormat', null, { tag: 'U' } );
 proto.removeStrikethrough = command( 'changeFormat', null, { tag: 'S' } );
 proto.removeSubscript = command( 'changeFormat', null, { tag: 'SUB' } );
 proto.removeSuperscript = command( 'changeFormat', null, { tag: 'SUP' } );
-proto.removePre = command( 'changeFormat', null, { tag: 'Pre' } );
+proto.removePre = command( 'changeFormat', null, { tag: 'CODE' } );
 proto.makeLink = function ( url, attributes ) {
     var range = this.getSelection();
     if ( range.collapsed ) {
