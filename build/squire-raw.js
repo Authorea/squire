@@ -5214,7 +5214,7 @@ proto.setHTML = function ( html, options ) {
     div.innerHTML = html;
     frag.appendChild( empty( div ) );
 
-    cleanTree( frag );
+    cleanTree( frag, true );
     cleanupBRs( frag, root );
 
     fixContainer( frag, root );
@@ -5395,7 +5395,7 @@ proto.insertHTML = function ( html, isPaste ) {
         };
 
         addLinks( frag, frag, this );
-        cleanTree( frag );
+        cleanTree( frag, true );
         collapseSimpleSpans( frag )
         mergeInlines( frag, range )
         cleanupBRs( frag, null );
