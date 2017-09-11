@@ -1092,6 +1092,7 @@ var insertTreeFragmentIntoRange = function ( range, frag, root ) {
 
     if ( allInline ) {
         // If inline, just insert at the current position.
+        // ????
         insertNodeInRange( range, frag, root );
         if ( range.startContainer !== range.endContainer ) {
             mergeInlines( range.endContainer, range );
@@ -2068,6 +2069,8 @@ keyHandlers[ ctrlKey + ']' ] = mapKeyTo( 'increaseQuoteLevel' );
 keyHandlers[ ctrlKey + 'y' ] = mapKeyTo( 'redo' );
 keyHandlers[ ctrlKey + 'z' ] = mapKeyTo( 'undo' );
 keyHandlers[ ctrlKey + 'shift-z' ] = mapKeyTo( 'redo' );
+keyHandlers[ ctrlKey + 'shift-c' ] = mapKeyTo( 'toggleCode' );
+
 
 var insertTab = function(self, range){
   var node = self._doc.createTextNode(TAB)
@@ -2160,7 +2163,12 @@ Squire.prototype.enter = function (self, event, range) {
       // Break blockquote
       else if ( getNearest( block, root, 'BLOCKQUOTE' ) ) {
           return self.modifyBlocks( removeBlockQuote, range );
-      }
+      }   
+      // break code block
+      else if ( getNearest( block, root, 'PRE' ) ) {
+            return self.modifyBlocks( removeCodeBlock, range );
+        }
+      
   }
   // Otherwise, split at cursor point.
   nodeAfterSplit = splitBlock( self, block,
@@ -2278,6 +2286,10 @@ Squire.prototype.backspace = function(self, event, range){
             // Break blockquote
             else if ( getNearest( current, 'BLOCKQUOTE' ) ) {
                 return self.modifyBlocks( decreaseBlockQuoteLevel, range );
+            }
+            
+            else if ( getNearest( current, 'PRE' ) ) {
+                return self.modifyBlocks( removeCodeBlock, range );
             }
             self.setSelection( range );
             self._updatePath( range, true );
@@ -2881,7 +2893,7 @@ var stylesRewriters = {
 
 var allowedBlock = /^(?:BLOCKQUOTE|D(?:[DLT]|IV)|H[1-3]|LI|OL|PRE|T(?:ABLE|BODY|D|FOOT|H|HEAD|R)|UL)$/;
 
-var blacklist = /^(?:ABBR|ADDRESS|APPLET|AREA|ARTICLE|ASIDE|AUDIO|BASE|BASEFONT|BDI|BDO|BGSOUND|BUTTON|CANVAS|CODE|COL|COLGROUP|COMMAND|CONTENT|DATA|DATALIST|DEL|DFN|DIALOG|DIR|ELEMENT|EMBED|FIELDSET|FIGURE|FONT|FORM|FRAME|FRAMESET|HEAD|HEADER|HR|IFRAME|IMAGE|IMG|INS|ISINDEX|KBD|KEYGEN|LABEL|LEGEND|LINK|LISTING|MAIN|MAP|MARK|MARQUEE|MATH|MENU|MENUITEM|META|METER|MULTICOL|NAV|NOBR|NOEMBED|NOFRAMES|NOSCRIPT|OBJECT|OPTGROUP|OPTION|OUTPUT|PARAM|PRE|PICTURE|PROGRESS|RP|RT|RTC|RUBY|SAMP|SCRIPT|SELECT|SHADOW|SOURCE|SPACER|STYLE|SVG|TEMPLATE|TEXTAREA|TFOOT|TIME|TITLE|TRACK|VAR|VIDEO|WBR|XMP)$/;
+var blacklist = /^(?:ABBR|ADDRESS|APPLET|AREA|ARTICLE|ASIDE|AUDIO|BASE|BASEFONT|BDI|BDO|BGSOUND|BUTTON|CANVAS|CODE|COL|COLGROUP|COMMAND|CONTENT|DATA|DATALIST|DEL|DFN|DIALOG|DIR|ELEMENT|EMBED|FIELDSET|FIGURE|FONT|FORM|FRAME|FRAMESET|HEAD|HEADER|HR|IFRAME|IMAGE|IMG|INS|ISINDEX|KBD|KEYGEN|LABEL|LEGEND|LINK|LISTING|MAIN|MAP|MARK|MARQUEE|MATH|MENU|MENUITEM|META|METER|MULTICOL|NAV|NOBR|NOEMBED|NOFRAMES|NOSCRIPT|OBJECT|OPTGROUP|OPTION|OUTPUT|PARAM|PICTURE|PROGRESS|RP|RT|RTC|RUBY|SAMP|SCRIPT|SELECT|SHADOW|SOURCE|SPACER|STYLE|SVG|TEMPLATE|TEXTAREA|TFOOT|TIME|TITLE|TRACK|VAR|VIDEO|WBR|XMP)$/;
 
 
 
@@ -4926,6 +4938,25 @@ var increaseBlockQuoteLevel = function ( frag ) {
         ]);
 };
 
+var createCodeBlock = function ( frag ) {
+    return this.createElement( 'PRE',
+        this._config.tagAttributes.pre, [
+            frag
+        ]);
+};
+
+var removeCodeBlock = function ( frag ) {
+    var root = this._root;
+    var preTags = frag.querySelectorAll( 'PRE' );
+    Array.prototype.filter.call( preTags, function ( el ) {
+        return !getNearest( el.parentNode, root, 'PRE' );
+    }).forEach( function ( el ) {
+        replaceWith( el, empty( el ) );
+    });
+    return frag;
+};
+
+
 var increaseIndentLevel = function ( frag ) {
   var props = this._config.tagAttributes.blockquote || {};
 
@@ -5728,6 +5759,18 @@ proto.removeList = command( 'modifyBlocks', removeList );
 
 proto.increaseListLevel = command( 'modifyBlocks', increaseListLevel );
 proto.decreaseListLevel = command( 'modifyBlocks', decreaseListLevel );
+
+proto.createCodeBlock = command( 'modifyBlocks', createCodeBlock );
+proto.removeCodeBlock = command( 'modifyBlocks', removeCodeBlock );
+
+proto.toggleCode = function () {
+  if (this.hasFormat('PRE')){
+    this.removeCodeBlock()
+  } else {
+    this.createCodeBlock()
+  }
+  
+}
 
 proto.insertNodeInRange = insertNodeInRange;
 

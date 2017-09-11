@@ -1422,6 +1422,25 @@ var increaseBlockQuoteLevel = function ( frag ) {
         ]);
 };
 
+var createCodeBlock = function ( frag ) {
+    return this.createElement( 'PRE',
+        this._config.tagAttributes.pre, [
+            frag
+        ]);
+};
+
+var removeCodeBlock = function ( frag ) {
+    var root = this._root;
+    var preTags = frag.querySelectorAll( 'PRE' );
+    Array.prototype.filter.call( preTags, function ( el ) {
+        return !getNearest( el.parentNode, root, 'PRE' );
+    }).forEach( function ( el ) {
+        replaceWith( el, empty( el ) );
+    });
+    return frag;
+};
+
+
 var increaseIndentLevel = function ( frag ) {
   var props = this._config.tagAttributes.blockquote || {};
 
@@ -2224,5 +2243,17 @@ proto.removeList = command( 'modifyBlocks', removeList );
 
 proto.increaseListLevel = command( 'modifyBlocks', increaseListLevel );
 proto.decreaseListLevel = command( 'modifyBlocks', decreaseListLevel );
+
+proto.createCodeBlock = command( 'modifyBlocks', createCodeBlock );
+proto.removeCodeBlock = command( 'modifyBlocks', removeCodeBlock );
+
+proto.toggleCode = function () {
+  if (this.hasFormat('PRE')){
+    this.removeCodeBlock()
+  } else {
+    this.createCodeBlock()
+  }
+  
+}
 
 proto.insertNodeInRange = insertNodeInRange;

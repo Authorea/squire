@@ -397,6 +397,8 @@ keyHandlers[ ctrlKey + ']' ] = mapKeyTo( 'increaseQuoteLevel' );
 keyHandlers[ ctrlKey + 'y' ] = mapKeyTo( 'redo' );
 keyHandlers[ ctrlKey + 'z' ] = mapKeyTo( 'undo' );
 keyHandlers[ ctrlKey + 'shift-z' ] = mapKeyTo( 'redo' );
+keyHandlers[ ctrlKey + 'shift-c' ] = mapKeyTo( 'toggleCode' );
+
 
 var insertTab = function(self, range){
   var node = self._doc.createTextNode(TAB)
@@ -489,7 +491,12 @@ Squire.prototype.enter = function (self, event, range) {
       // Break blockquote
       else if ( getNearest( block, root, 'BLOCKQUOTE' ) ) {
           return self.modifyBlocks( removeBlockQuote, range );
-      }
+      }   
+      // break code block
+      else if ( getNearest( block, root, 'PRE' ) ) {
+            return self.modifyBlocks( removeCodeBlock, range );
+        }
+      
   }
   // Otherwise, split at cursor point.
   nodeAfterSplit = splitBlock( self, block,
@@ -607,6 +614,10 @@ Squire.prototype.backspace = function(self, event, range){
             // Break blockquote
             else if ( getNearest( current, 'BLOCKQUOTE' ) ) {
                 return self.modifyBlocks( decreaseBlockQuoteLevel, range );
+            }
+            
+            else if ( getNearest( current, 'PRE' ) ) {
+                return self.modifyBlocks( removeCodeBlock, range );
             }
             self.setSelection( range );
             self._updatePath( range, true );
