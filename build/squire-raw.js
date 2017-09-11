@@ -1564,6 +1564,7 @@ var numberOfLinesWithinParentBlock = function(parent){
 // It increases the range to one character, moving both the start and end
 // of the range into the nextSibling (if that exists).  Getting the bounding
 // rect of this single character appears to return the proper rect.
+var elementsWithNesting = ['UL', 'OL', 'BLOCKQUOTE', "PRE"]
 var firstOrLastLine = function(self){
   var root  = self._root
   var range = self.getSelection()
@@ -1576,7 +1577,7 @@ var firstOrLastLine = function(self){
     var so    = range.startOffset
   }
   var parentBlock = getStartBlockOfRange(range)
-  if(parentBlock.nodeName == "LI"){
+  if(parentBlock.parentElement && elementsWithNesting.indexOf( parentBlock.parentElement.nodeName) > -1 ){
     parentBlock = parentBlock.parentElement
   }
   var numLines    = numberOfLines(root)
