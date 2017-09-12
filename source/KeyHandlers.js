@@ -387,6 +387,7 @@ if ( !isMac ) {
 keyHandlers[ ctrlKey + 'b' ] = mapKeyToFormat( 'B' );
 keyHandlers[ ctrlKey + 'i' ] = mapKeyToFormat( 'I' );
 keyHandlers[ ctrlKey + 'u' ] = mapKeyToFormat( 'U' );
+keyHandlers[ ctrlKey + 'shift-c' ] = mapKeyToFormat( 'CODE' );
 keyHandlers[ ctrlKey + 'shift-7' ] = mapKeyToFormat( 'S' );
 keyHandlers[ ctrlKey + 'shift-5' ] = mapKeyToFormat( 'SUB', { tag: 'SUP' } );
 keyHandlers[ ctrlKey + 'shift-6' ] = mapKeyToFormat( 'SUP', { tag: 'SUB' } );

@@ -2058,6 +2058,7 @@ if ( !isMac ) {
 keyHandlers[ ctrlKey + 'b' ] = mapKeyToFormat( 'B' );
 keyHandlers[ ctrlKey + 'i' ] = mapKeyToFormat( 'I' );
 keyHandlers[ ctrlKey + 'u' ] = mapKeyToFormat( 'U' );
+keyHandlers[ ctrlKey + 'shift-c' ] = mapKeyToFormat( 'CODE' );
 keyHandlers[ ctrlKey + 'shift-7' ] = mapKeyToFormat( 'S' );
 keyHandlers[ ctrlKey + 'shift-5' ] = mapKeyToFormat( 'SUB', { tag: 'SUP' } );
 keyHandlers[ ctrlKey + 'shift-6' ] = mapKeyToFormat( 'SUP', { tag: 'SUB' } );
@@ -2881,7 +2882,7 @@ var stylesRewriters = {
 
 var allowedBlock = /^(?:BLOCKQUOTE|D(?:[DLT]|IV)|H[1-3]|LI|OL|PRE|T(?:ABLE|BODY|D|FOOT|H|HEAD|R)|UL)$/;
 
-var blacklist = /^(?:ABBR|ADDRESS|APPLET|AREA|ARTICLE|ASIDE|AUDIO|BASE|BASEFONT|BDI|BDO|BGSOUND|BUTTON|CANVAS|CODE|COL|COLGROUP|COMMAND|CONTENT|DATA|DATALIST|DEL|DFN|DIALOG|DIR|ELEMENT|EMBED|FIELDSET|FIGURE|FONT|FORM|FRAME|FRAMESET|HEAD|HEADER|HR|IFRAME|IMAGE|IMG|INS|ISINDEX|KBD|KEYGEN|LABEL|LEGEND|LINK|LISTING|MAIN|MAP|MARK|MARQUEE|MATH|MENU|MENUITEM|META|METER|MULTICOL|NAV|NOBR|NOEMBED|NOFRAMES|NOSCRIPT|OBJECT|OPTGROUP|OPTION|OUTPUT|PARAM|PRE|PICTURE|PROGRESS|RP|RT|RTC|RUBY|SAMP|SCRIPT|SELECT|SHADOW|SOURCE|SPACER|STYLE|SVG|TEMPLATE|TEXTAREA|TFOOT|TIME|TITLE|TRACK|VAR|VIDEO|WBR|XMP)$/;
+var blacklist = /^(?:ABBR|ADDRESS|APPLET|AREA|ARTICLE|ASIDE|AUDIO|BASE|BASEFONT|BDI|BDO|BGSOUND|BUTTON|CANVAS|COL|COLGROUP|COMMAND|CONTENT|DATA|DATALIST|DEL|DFN|DIALOG|DIR|ELEMENT|EMBED|FIELDSET|FIGURE|FONT|FORM|FRAME|FRAMESET|HEAD|HEADER|HR|IFRAME|IMAGE|IMG|INS|ISINDEX|KBD|KEYGEN|LABEL|LEGEND|LINK|LISTING|MAIN|MAP|MARK|MARQUEE|MATH|MENU|MENUITEM|META|METER|MULTICOL|NAV|NOBR|NOEMBED|NOFRAMES|NOSCRIPT|OBJECT|OPTGROUP|OPTION|OUTPUT|PARAM|PRE|PICTURE|PROGRESS|RP|RT|RTC|RUBY|SAMP|SCRIPT|SELECT|SHADOW|SOURCE|SPACER|STYLE|SVG|TEMPLATE|TEXTAREA|TFOOT|TIME|TITLE|TRACK|VAR|VIDEO|WBR|XMP)$/;
 
 
 
@@ -5503,6 +5504,16 @@ proto.removeUnderline = command( 'changeFormat', null, { tag: 'U' } );
 proto.removeStrikethrough = command( 'changeFormat', null, { tag: 'S' } );
 proto.removeSubscript = command( 'changeFormat', null, { tag: 'SUB' } );
 proto.removeSuperscript = command( 'changeFormat', null, { tag: 'SUP' } );
+
+proto.addCode = command( 'changeFormat', { tag: 'CODE' } );
+proto.removeCode = command( 'changeFormat', null, { tag: 'CODE' } );
+proto.toggleCode = function () {
+  if( this.hasFormat('CODE')){
+    this.removeCode()
+  } else{
+    this.addCode()
+  }
+}
 
 proto.makeLink = function ( url, attributes ) {
     var range = this.getSelection();

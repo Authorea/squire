@@ -2000,6 +2000,16 @@ proto.removeStrikethrough = command( 'changeFormat', null, { tag: 'S' } );
 proto.removeSubscript = command( 'changeFormat', null, { tag: 'SUB' } );
 proto.removeSuperscript = command( 'changeFormat', null, { tag: 'SUP' } );
 
+proto.addCode = command( 'changeFormat', { tag: 'CODE' } );
+proto.removeCode = command( 'changeFormat', null, { tag: 'CODE' } );
+proto.toggleCode = function () {
+  if( this.hasFormat('CODE')){
+    this.removeCode()
+  } else{
+    this.addCode()
+  }
+}
+
 proto.makeLink = function ( url, attributes ) {
     var range = this.getSelection();
     if ( range.collapsed ) {
