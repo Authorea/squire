@@ -509,12 +509,19 @@ Squire.prototype.enter = function (self, event, range) {
       var child = nodeAfterSplit.firstChild,
           next;
 
-      // Don't continue links over a block break; unlikely to be the
+      // Don't continue links and headings over a block break; unlikely to be the
       // desired outcome.
-      if ( nodeAfterSplit.nodeName === 'A' &&
+      if ( ['A', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(nodeAfterSplit.nodeName) &&
               ( !nodeAfterSplit.textContent ||
-                  nodeAfterSplit.textContent === ZWS ) ) {
-          child = self._doc.createTextNode( '' );
+                nodeAfterSplit.textContent === ZWS ) ) {
+
+          if (isBlock(nodeAfterSplit)) {
+            child = self._doc.createElement('div')
+            child.appendChild(self._doc.createTextNode( '' ));
+          }
+          else {
+            child = self._doc.createTextNode( '' );
+          }
           replaceWith( nodeAfterSplit, child );
           nodeAfterSplit = child;
           break;
