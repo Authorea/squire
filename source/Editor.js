@@ -559,6 +559,10 @@ proto.getSelection = function () {
         if ( endContainer && isLeaf( endContainer, root ) ) {
             selection.setEndBefore( endContainer );
         }
+
+        if (!startContainer.isSameNode(endContainer) && selection.endOffset === 0) {
+            selection.setEndBefore(endContainer)
+        }
     }
     if ( selection &&
             isOrContains( root, selection.commonAncestorContainer ) ) {
