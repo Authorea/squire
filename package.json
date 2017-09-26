@@ -25,10 +25,12 @@
     "url": "https://github.com/neilj/Squire/issues"
   },
   "homepage": "https://github.com/neilj/Squire",
+  "dependencies":{
+    "uglify-js": "^2.4.15",
+  },
   "devDependencies": {
     "mocha": "2.2.5",
     "onchange": "^3.2.1",
-    "uglify-js": "^2.4.15",
     "unexpected": "8.2.0"
   }
 }
