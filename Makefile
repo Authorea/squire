@@ -1,6 +1,6 @@
 .PHONY: all build clean
 
-all: install build
+all: install
 
 install:
 	yarn install
