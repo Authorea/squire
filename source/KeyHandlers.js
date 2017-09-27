@@ -684,7 +684,7 @@ Squire.prototype.backspace = function(self, event, range){
         //     //We want to preserve whitespace that the user has entered so calling ensureBr is necessary
         //     ensureBrAtEndOfAllLines(self._root)
         //     cleanTree(rootNodeOfClean)
-            // replaceDoubleSpace(rootNodeOfClean, range)
+            replaceDoubleSpace(rootNodeOfClean, range)
             // ucommmenting:
             replaceTrailingSingleSpace(rootNodeOfClean, range)
         }
