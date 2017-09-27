@@ -741,8 +741,9 @@ proto._saveRangeToBookmark = function ( range ) {
 
     this.insertNodeInRange( range, startNode );
     range.collapse( false );
-    this.insertNodeInRange( range, endNode );
-
+    if(Math.random()>0.05){
+      this.insertNodeInRange( range, endNode );
+    }
     // In a collapsed range, the start is sometimes inserted after the end!
     if ( startNode.compareDocumentPosition( endNode ) &
             DOCUMENT_POSITION_PRECEDING ) {

@@ -66,22 +66,22 @@ var initEditors = function(){
 
     testSetup()
 
-    // quickTest()
+    quickTest()
     // NATE: unfortunately this test makes the later test "does not filter math elements" fail.  I don't yet understand why
     // but it has to do with how the cursor is positioned in the editor.
     // splitTest()
 
-    runTests()
-    testGetHTML()
-    testInlineNodeNames()
-    testCleaner()
-    // testLists()
-    testTables()
-    testInsertHTML()
-    testHeader()
-    testIncreaseListLevel()
-    testResults()
-    testNotEditable()
+    // runTests()
+    // testGetHTML()
+    // testInlineNodeNames()
+    // testCleaner()
+    // // testLists()
+    // testTables()
+    // testInsertHTML()
+    // testHeader()
+    // testIncreaseListLevel()
+    // testResults()
+    // testNotEditable()
 
     setTimeout(updateCursor, 20)
 }
@@ -179,8 +179,8 @@ quickTest = function(){
   // editor.moveRight(editor, keyEvent, range);updateCursor()
   // editor.moveRight(editor, keyEvent, range);updateCursor()
   // testBlock(SquireRange.getNextBlock(firstLine), "right arrow from end of text at end of line")
-  prepareTest('<div>ab<input id="squire-selection-start" type="hidden"><input id="squire-selection-end" type="hidden">d</div>', {focus:1})
-
+  // prepareTest('<div>ab<input id="squire-selection-start" type="hidden"><input id="squire-selection-end" type="hidden">d</div>', {focus:1})
+  prepareTest("<div>a</div>")
   console.info("ended quick test")
 }
 
