@@ -2004,7 +2004,7 @@ var keyHandlers = {
             self.setSelection( range );
             self._updatePath( range, true );
         }
-
+        replaceTrailingSingleSpace(node, range)
         self.setSelection( range );
     },
     right: function(self, event, range){
