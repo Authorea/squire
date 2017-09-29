@@ -19,7 +19,6 @@ var keys = {
 
 // Ref: http://unixpapa.com/js/key.html
 var onKey = function ( event ) {
-  console.log('******* key pressed (post install build) *********');
     var code = event.keyCode,
         key = keys[ code ],
         modifiers = '',
