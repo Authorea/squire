@@ -15,7 +15,7 @@ build/squire-raw.js: source/intro.js source/Constants.js source/TreeWalker.js so
 	cat $^ | grep -v '^\/\*jshint' >$@
 
 build/squire.js: build/squire-raw.js
-	./node_modules/uglify-js/bin/uglifyjs $^ -c -m -o $@
+	uglifyjs $^ -c -m -o $@
 
 build/document.html: source/document.html
 	mkdir -p $(@D)
