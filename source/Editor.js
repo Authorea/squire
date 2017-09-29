@@ -1691,7 +1691,7 @@ proto.getHTML = function ( options ) {
         ensureBrAtEndOfAllLines(root)
     }
     else if(options["stripAllBrs"]){
-        ensureBrAtEndOfAllTags(root, ['div', 'li'])
+        ensureBrAtEndOfAllTags(root, ['div', 'li', 'h1', 'h2', 'h3'])
     }
     return html;
 };
