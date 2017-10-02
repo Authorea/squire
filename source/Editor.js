@@ -1352,7 +1352,7 @@ var tagAfterSplit = {
     DT:  'DD',
     DD:  'DT',
     LI:  'LI',
-    PRE: 'PRE'
+    PRE: 'PRE',
     H1:  'H1',
     H2:  'H2',
     H3:  'H3',
