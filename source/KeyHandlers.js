@@ -493,11 +493,11 @@ Squire.prototype.enter = function (self, event, range) {
       block = parent;
   }
 
-  if ( !isEmptyBlock( block ) ) {
+  if ( isEmptyBlock( block ) ) {
       // Break list
       if ( getNearest( block, root, 'UL' ) ||
               getNearest( block, root, 'OL' ) ) {
-          return self.modifyBlocks( decreaseListLevel, range );
+          return self.decreaseListLevel( range );
       }
       // Break blockquote
       else if ( getNearest( block, root, 'BLOCKQUOTE' ) ) {
@@ -587,7 +587,7 @@ Squire.prototype.backspace = function(self, event, range){
     }
     // If at beginning of block, merge with previous
   else if ( rangeDoesStartAtBlockBoundary( range, root ) ) {
-        var current = getStartBlockOfRange( range, root );
+        var current = getStartBlockOfRange( range, root ),
             previous;
 
         if (!current) {
