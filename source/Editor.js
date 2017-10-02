@@ -131,7 +131,7 @@ function Squire ( root, config ) {
     // a selection change
     // if ( 'onselectionchange' in doc ) {
     //   this.addEventListener( 'selectionchange', this._updatePathOnEvent );
-  // } else {
+    // } else {
       this.addEventListener( 'keyup', this._updatePathOnEvent );
       this.addEventListener( 'mouseup', this._updatePathOnEvent );
       this._selectionClick = false
@@ -545,7 +545,6 @@ proto.setSelectionToNode = function (node, startOffset){
 }
 
 proto.getSelection = function () {
-  console.log('called getSelection')
     var sel = getWindowSelection( this );
     var root = this._root;
     var selection, startContainer, endContainer;
