@@ -246,9 +246,6 @@ function getNearest ( node, root, tag, attributes ) {
     }
     return null;
 }
-function getNextBlock ( node ) {
-    return getBlockWalker( node ).nextNode();
-}
 function isOrContains ( parent, node ) {
     while ( node ) {
         if ( node === parent ) {

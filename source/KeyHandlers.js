@@ -580,7 +580,7 @@ Squire.prototype.backspace = function(self, event, range){
     moveRangeBoundariesDownTree( range );
 
     // If not collapsed, delete contents
-    var block = getStartBlockOfRange(range)
+    var block = getStartBlockOfRange(range, root)
     if ( !range.collapsed ) {
         deleteContentsOfRange( range, root );
         afterDelete( self, range );
@@ -891,7 +891,7 @@ Squire.prototype.moveLeft = function(self, event, range){
         self.setSelection(range)
     }
     if(rangeDoesStartAtBlockBoundary(range, root)){
-        var block = getStartBlockOfRange(range)
+        var block = getStartBlockOfRange(range, root)
 
         var previousBlock = block && getPreviousBlock(block, root)
         if(block && previousBlock){

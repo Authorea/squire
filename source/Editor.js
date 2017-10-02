@@ -607,8 +607,9 @@ function restoreSelection () {
 }
 
 proto.getCurrentStartBlock = function() {
+    var root = this._root;
     var r = this.getSelection()
-    return getStartBlockOfRange(r)
+    return getStartBlockOfRange(r, root)
 }
 
 proto.getSelectedText = function () {
