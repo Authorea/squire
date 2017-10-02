@@ -127,13 +127,9 @@ function getNodeCategory ( node ) {
         return UNKNOWN;
     }
 
-  var nodeCategory;
+    var nodeCategory;
 
-    if ( type === TEXT_NODE ) {
-        nodeCategory = INLINE;
-    } else if ( type !== ELEMENT_NODE && type !== DOCUMENT_FRAGMENT_NODE ) {
-        nodeCategory = UNKNOWN;
-    } else if ( !every( node.childNodes, isInline ) ) {
+    if ( !every( node.childNodes, isInline ) ) {
         nodeCategory = CONTAINER;
     } else if ( inlineNodeNames.test( node.nodeName ) || mathMLNodeNames[node.nodeName]) {
         nodeCategory = INLINE;
