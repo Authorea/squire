@@ -104,7 +104,7 @@ function Squire ( root, config ) {
         }
         else{
           console.info("NOT TEXT NODE")
-          previous = findPreviousTextOrNotEditable(root, child)
+          previous = child && findPreviousTextOrNotEditable(root, child)
           if(notEditable(previous, root)){
             console.info("prev not edit")
             // TODO: nate: could possibly just insert the char here
