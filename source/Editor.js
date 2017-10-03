@@ -569,8 +569,10 @@ proto.getSelection = function () {
             walker.currentNode = selection.endContainer;
             previousNode = walker.previousNode()
 
-            // We know it's a text node because of the walker filter
-            selection.setEnd(previousNode, previousNode.data.length)
+            if (previousNode) {
+                // We know it's a text node because of the walker filter
+                selection.setEnd(previousNode, previousNode.data.length)
+            }
         }
     }
     if ( selection &&
