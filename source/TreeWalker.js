@@ -29,7 +29,7 @@ var typeToBitArray = {
 function TreeWalker ( root, nodeType, filter ) {
     this.root = this.currentNode = root;
     this.nodeType = nodeType;
-    this.filter = filter;
+    this.filter = filter || (function () { return true });
 }
 
 // There is a javascript TreeWalker already that I don't want to write over
