@@ -449,9 +449,33 @@ This is useful when the document needs to be changed programmatically, but those
 
 
 ### Development
-Watch source files for continuous rebuilding:
+ Add to `~/.bashrc`:
+ ```
+alias sq-server='tab python -m http.server'
+alias sq-build='tab npm run build_dev'
+alias sq-start='sq-server ; sq-build'
 
-```npm run build_dev```
+function tab() {
+osascript 2>/dev/null <<EOF
+  tell application "System Events"
+    tell process "Terminal" to keystroke "t" using command down
+  end
+  tell application "Terminal"
+    activate
+    do script with command "cd \"$PWD\"; $*" in window 1
+    do script $1 in selected tab of window 1
+  end tell
+EOF
+}
+
+```
+
+
+Watch source files for continuous rebuilding and start server:
+
+```
+sq-start
+```
 
 ### Dev Recipes
 Set githook to run make before every push
