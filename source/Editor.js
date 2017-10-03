@@ -130,17 +130,11 @@ function Squire ( root, config ) {
         moveRangeOutOfNotEditable(range)
         // Only set selection in the editor if there was no selection on click; otherwise, clear it will clear.
         if(!this._selectionClick){
-        this.setSelection(range)
+            this.setSelection(range)
         }
         this._selectionClick = false
     } );
     // }
-
-    this.addEventListener( 'mouseup', function(){
-        var range = this.getSelection()
-        moveRangeOutOfNotEditable(range)
-        this.setSelection(range)
-    } );
 
     win.addEventListener( 'focus', this, false );
     win.addEventListener( 'blur', this, false );
