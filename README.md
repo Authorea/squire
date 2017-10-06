@@ -477,8 +477,3 @@ Watch source files for continuous rebuilding and start server:
 sq-start
 ```
 
-### Dev Recipes
-Set githook to run make before every push
-```
-ln -s -f ../../hooks/pre-push .git/hooks/pre-push && chmod +x .git/hooks/pre-push
-```

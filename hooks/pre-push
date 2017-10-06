@@ -1,6 +1,0 @@
-#!/usr/bin/env ruby
-`make`
-if !system('git diff --exit-code')
-  puts "still a diff, can't push"
-	exit(1)
-end
