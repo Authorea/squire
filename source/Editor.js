@@ -527,6 +527,7 @@ proto.setSelection = function ( range ) {
             if ( isIOS ) {
                 this._win.focus();
             }
+            // We get the range we want, but then it gets modifyed when we calll this. Why? It's a just a get method, right?
             var sel = getWindowSelection( this );
             if ( sel ) {
                 sel.removeAllRanges();
