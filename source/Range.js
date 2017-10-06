@@ -436,44 +436,51 @@ var moveRangeBoundariesUpTree = function ( range, common ) {
     range.setEnd( endContainer, endOffset );
 };
 
-var moveNodeOutOfNotEditable = function( node, nodeOffset ){
-    var startContainer = node
+var moveNodeOutOfNotEditable = function( originalNode, originalOffset ){
+    var currentNode = originalNode
     var moveRight = false
     var nextSibling
-    var currentParent = startContainer.parentNode
-    var newParent     = currentParent
+    var currentParent = currentNode.parentNode
     var textLength, startOffset, offset
 
-    if(startContainer.nodeType === TEXT_NODE){
-        textLength = startContainer.data.length
+    if(currentNode.nodeType === TEXT_NODE){
+        textLength = currentNode.data.length
         // if we are for some reason, likely an up or down arrow, finding ourselves in the middle of a
         // text area that isn't editable, we need to decide if we should be in front of that element
         // or to the right of it.  At the moment this will only work for a single text element in a series
         // of non-editable structures, but it can be extended to work for all cases if necessary.
-        if(nodeOffset > textLength/2){
+        if(originalOffset > textLength/2){
             moveRight = true
         }
     }
-    else{
-      currentParent = startContainer.parentNode
-      newParent = currentParent
-    }
-    while(notEditable(newParent)){
-        currentParent = newParent
-        if(moveRight){
-            if(nextSibling = currentParent.nextSibling){
-                currentParent = nextSibling
-            }
+  
+    while(notEditable(currentNode)){
+        if ($(currentNode).hasClass('not-editable') && !notEditable(currentParent)){
+          currentNode = currentNode.nextSibling
+          currentParent = currentNode.parentNode
+
+        } else {
+          
+        
+          currentNode = currentNode.parentNode
+          currentParent = currentNode.parentNode
+          if(moveRight){
+              if(nextSibling = currentParent.nextSibling){
+                  currentParent = nextSibling
+              }
+          }
         }
-        newParent = currentParent.parentNode
-        startOffset = indexOf.call( newParent.childNodes, currentParent );
     }
-    if(newParent !== currentParent){
-        offset = indexOf.call( newParent.childNodes, currentParent )
-        return([newParent, offset])
+    if(currentNode !== originalNode){
+        offset = indexOf.call( currentParent.childNodes, currentNode )
+        // console.log('setting currentParent', currentParent);
+        // console.log('with offset', offset);
+        // console.log('children', currentParent.childNodes);
+        // console.log('so the node is ', currentParent.childNodes[offset]);
+        return([currentParent, offset])
     }
     else{
-      return([node, nodeOffset])
+      return([originalNode, originalOffset])
     }
 
 }
@@ -488,8 +495,11 @@ var moveRangeOutOfNotEditable = function( range ){
   var eo = range.endOffset
   var newStart = moveNodeOutOfNotEditable(sc, so)
   var newEnd   = moveNodeOutOfNotEditable(ec, eo)
+  console.log('start',newStart);
+  console.log('end', newEnd);
   range.setStart(newStart[0], newStart[1])
   range.setEnd(newEnd[0], newEnd[1])
+  console.log('RANGE!!!', range);
 }
 window.moveRangeOutOfNotEditable = moveRangeOutOfNotEditable
 
