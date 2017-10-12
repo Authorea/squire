@@ -61,7 +61,7 @@ var firstOrLastLine = function(self){
     var sc    = range.startContainer
     var so    = range.startOffset
   }
-  var parentBlock = getStartBlockOfRange(range)
+  var parentBlock = getStartBlockOfRange(range, root)
   if(parentBlock.nodeName == "LI"){
     parentBlock = parentBlock.parentElement
   }

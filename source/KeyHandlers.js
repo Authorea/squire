@@ -180,7 +180,7 @@ var ensureOutsideOfNotEditable = function ( self ){
 
 var keyHandlers = {
     enter: function ( self, event, range ) {
-      self.enter(self, event, range)
+        self.enter(self, event, range)
     },
     backspace: function ( self, event, range ) {
         self.backspace(self, event, range)
@@ -216,7 +216,7 @@ var keyHandlers = {
                     return;
                 }
                 // Otherwise merge.
-                mergeWithBlock( current, next, range );
+                mergeWithBlock( current, next, range, root );
                 // If deleted line between containers, merge newly adjacent
                 // containers.
                 next = current.parentNode;
@@ -231,11 +231,16 @@ var keyHandlers = {
             }
         }
         else {
-            var sc = range.startContainer
-            var so = range.startOffset
-            if(sc.nodeType === ELEMENT_NODE){
-                var ch = sc.childNodes[so]
-                if(notEditable(ch, root)){
+            // But first check if the cursor is just before an IMG tag. If so,
+            // delete it ourselves, because the browser won't if it is not
+            // inline.
+            originalRange = range.cloneRange();
+            moveRangeBoundariesUpTree( range, root, root, root );
+            cursorContainer = range.endContainer;
+            cursorOffset = range.endOffset;
+            if ( cursorContainer.nodeType === ELEMENT_NODE ) {
+                nodeAfterCursor = cursorContainer.childNodes[ cursorOffset ];
+                if ( nodeAfterCursor && nodeAfterCursor.nodeName === 'IMG' ) {
                     event.preventDefault();
                     detach( ch );
                 }
@@ -257,14 +262,14 @@ var keyHandlers = {
         if ( range.collapsed && rangeDoesStartAtBlockBoundary( range, root ) ) {
             node = getStartBlockOfRange( range, root );
             // Iterate through the block's parents
-            while ( parent = node.parentNode ) {
+            while ( ( parent = node.parentNode ) ) {
                 // If we find a UL or OL (so are in a list, node must be an LI)
                 if ( parent.nodeName === 'UL' || parent.nodeName === 'OL' ) {
                     // AND the LI is not the first in the list
                     if ( node.previousSibling ) {
                         // Then increase the list level
                         event.preventDefault();
-                        self.modifyBlocks( increaseListLevel, range );
+                        self.increaseListLevel( range )
                         insideList = true;
                     }
                     break;
@@ -305,7 +310,7 @@ var keyHandlers = {
             if ( getNearest( node, root, 'UL' ) ||
                     getNearest( node, root, 'OL' ) ) {
                 event.preventDefault();
-                self.modifyBlocks( decreaseListLevel, range );
+                self.decreaseListLevel( range );
             }
         }
     },
@@ -469,6 +474,13 @@ Squire.prototype.enter = function (self, event, range) {
   // If this is a malformed bit of document or in a table;
   // just play it safe and insert a <br>.
   if ( !block || /^T[HD]$/.test( block.nodeName ) ) {
+      // If inside an <a>, move focus out
+      parent = getNearest( range.endContainer, root, 'A' );
+      if ( parent ) {
+          parent = parent.parentNode;
+          moveRangeBoundariesUpTree( range, parent, parent, root );
+          range.collapse( false );
+      }
       self.insertNodeInRange( range, self.createElement( 'BR' ));
       range.collapse( false );
       self.setSelection( range );
@@ -481,11 +493,11 @@ Squire.prototype.enter = function (self, event, range) {
       block = parent;
   }
 
-  if ( !block.textContent ) {
+  if ( isEmptyBlock( block ) ) {
       // Break list
       if ( getNearest( block, root, 'UL' ) ||
               getNearest( block, root, 'OL' ) ) {
-          return self.modifyBlocks( decreaseListLevel, range );
+          return self.decreaseListLevel( range );
       }
       // Break blockquote
       else if ( getNearest( block, root, 'BLOCKQUOTE' ) ) {
@@ -575,15 +587,23 @@ Squire.prototype.backspace = function(self, event, range){
     moveRangeBoundariesDownTree( range );
 
     // If not collapsed, delete contents
-    var block = getStartBlockOfRange(range)
+    var block = getStartBlockOfRange(range, root)
     if ( !range.collapsed ) {
-        deleteContentsOfRange( range, self._root );
+        deleteContentsOfRange( range, root );
         afterDelete( self, range );
     }
     // If at beginning of block, merge with previous
-  else if ( rangeDoesStartAtBlockBoundary( range, self._root ) ) {
-        var current = getStartBlockOfRange( range ),
-            previous = current && getPreviousBlock( current, self._root );
+  else if ( rangeDoesStartAtBlockBoundary( range, root ) ) {
+        var current = getStartBlockOfRange( range, root ),
+            previous;
+
+        if (!current) {
+            return;
+        }
+        // In case inline data has somehow got between blocks
+        fixContainer(current.parentNode, root);
+        // Now get previous block
+        previous = getPreviousBlock( current, root );
         // Must not be at the very beginning of the text area.
         if ( previous ) {
             // If not editable, just delete whole block.
@@ -592,15 +612,15 @@ Squire.prototype.backspace = function(self, event, range){
                 return;
             }
             // Otherwise merge.
-            mergeWithBlock( previous, current, range );
+            mergeWithBlock( previous, current, range, root );
             // If deleted line between containers, merge newly adjacent
             // containers.
             current = previous.parentNode;
             while ( current && !current.nextSibling && current !== root ) {
                 current = current.parentNode;
             }
-            if ( current && ( current = current.nextSibling ) ) {
-                mergeContainers( current );
+            if ( current && current !== root && ( current = current.nextSibling ) ) {
+                mergeContainers( current, root );
             }
             self.setSelection( range );
         }
@@ -608,12 +628,12 @@ Squire.prototype.backspace = function(self, event, range){
         // to break lists/blockquote.
         else if ( current ) {
             // Break list
-            if ( getNearest( current, 'UL' ) ||
-                    getNearest( current, 'OL' ) ) {
-                return self.modifyBlocks( decreaseListLevel, range );
+            if ( getNearest( current, root, 'UL' ) ||
+                    getNearest( current, root, 'OL' ) ) {
+                return self.decreaseListLevel( range );
             }
             // Break blockquote
-            else if ( getNearest( current, 'BLOCKQUOTE' ) ) {
+            else if ( getNearest( current, root, 'BLOCKQUOTE' ) ) {
                 return self.modifyBlocks( decreaseBlockQuoteLevel, range );
             }
             self.setSelection( range );
@@ -696,7 +716,9 @@ Squire.prototype.backspace = function(self, event, range){
             replaceTrailingSingleSpace(rootNodeOfClean, range)
         }
         self.setSelection( range );
-        // setTimeout( function () { afterDelete( self ); }, 0 );
+        //  MILO: Squire mainline still uses a setTimeout here.
+        //        Not sure why we don't so leaving as is.
+        //  setTimeout( function () { afterDelete( self ); }, 0 );
         afterDelete( self )
     }
 }
@@ -876,7 +898,7 @@ Squire.prototype.moveLeft = function(self, event, range){
         self.setSelection(range)
     }
     if(rangeDoesStartAtBlockBoundary(range, root)){
-        var block = getStartBlockOfRange(range)
+        var block = getStartBlockOfRange(range, root)
 
         var previousBlock = block && getPreviousBlock(block, root)
         if(block && previousBlock){
