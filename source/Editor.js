@@ -547,7 +547,7 @@ proto.setSelectionToNode = function (node, startOffset){
 proto.getSelection = function () {
     var sel = getWindowSelection( this );
     var root = this._root;
-    var selection, startContainer, endContainer;
+    var selection, startContainer, endContainer, walker, previousNode;
     if ( sel && sel.rangeCount ) {
         selection  = sel.getRangeAt( 0 ).cloneRange();
         startContainer = selection.startContainer;
@@ -558,6 +558,21 @@ proto.getSelection = function () {
         }
         if ( endContainer && isLeaf( endContainer, root ) ) {
             selection.setEndBefore( endContainer );
+        }
+
+        if ( startContainer && endContainer &&
+             !startContainer.isSameNode(endContainer) &&
+             selection.endOffset === 0
+        ) {
+            walker = new TreeWalker(selection.commonAncestorContainer, SHOW_TEXT);
+
+            walker.currentNode = selection.endContainer;
+            previousNode = walker.previousNode()
+
+            if (previousNode) {
+                // We know it's a text node because of the walker filter
+                selection.setEnd(previousNode, previousNode.data.length)
+            }
         }
     }
     if ( selection &&
