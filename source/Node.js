@@ -165,6 +165,16 @@ function getNextBlock ( node, root ) {
     return node !== root ? node : null;
 }
 
+function findNextTextOrNotEditable (root, node){
+    var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node, root){
+        return ( isText(node) || notEditable(node, root) )
+    } );
+    w.currentNode = node;
+    //NATE: TODO: call this with root
+    return w.nextNONode(notEditable)
+}
+
+
 function areAlike ( node, node2, root ) {
     return !isLeaf( node, root ) && (
         node.nodeType === node2.nodeType &&
@@ -640,3 +650,4 @@ Squire.Node.isBlock = isBlock
 Squire.Node.isZWS = isZWS
 Squire.Node.empty = empty
 Squire.Node.isLeaf = isLeaf
+Squire.Node.findNextTextOrNotEditable = findNextTextOrNotEditable

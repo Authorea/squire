@@ -424,15 +424,6 @@ var findPreviousBRTag = function(root, node){
     return w.previousNode()
 }
 
-var findNextTextOrNotEditable = function(root, node){
-    var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node, root){
-        return ( isText(node) || notEditable(node, root) )
-    } );
-    w.currentNode = node;
-    //NATE: TODO: call this with root
-    return w.nextNONode(notEditable)
-}
-
 var findPreviousTextOrNotEditable = function(root, node){
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node, root){
         return ( isText(node) || notEditable(node, root) )
