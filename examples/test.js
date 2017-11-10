@@ -17,6 +17,13 @@ var initEditors = function(){
       // editor.increaseListLevel()
       editor.increaseListLevel();updateCursor()
     })
+    $('#cache-content').click(function(){
+      console.log('caching')
+      localStorage['editorContent'] = editor.getHTML({withBookMark: 1})
+    })
+    $('#clear-cache').click(function(){
+      delete localStorage['editorContent'] 
+    })
     $("#decrease-list-level").click(function(e){
       // editor.increaseListLevel()
       editor.decreaseListLevel();updateCursor()
@@ -84,6 +91,9 @@ var initEditors = function(){
     testNotEditable()
 
     setTimeout(updateCursor, 20)
+    if (localStorage['editorContent']){
+      editor.setHTML(localStorage['editorContent'])
+    }
 }
 
 splitTest = function(){
