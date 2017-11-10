@@ -843,7 +843,9 @@ Squire.prototype.moveDown = function(self, event, range){
   }
   setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
 }
-
+Squire.prototype.ensureOutsideOfNotEditable = function(){
+    ensureOutsideOfNotEditable(this)
+}
 Squire.prototype.moveLeft = function(self, event, range){
     self  = self  ? self  : this
     //TODO: stop looking for BR tags to designate end of lines
