@@ -441,6 +441,36 @@ function fixContainer ( container, root ) {
     return container;
 }
 
+function unparentedLi(node) {
+  return !node.parentNode ||
+         !['UL', 'OL'].includes(node.parentNode.tagName)
+}
+
+function slurpLis(node, slurpCount) {
+  slurpCount = slurpCount || 0
+
+  const next = node.nextSibling
+
+  if (next && next.tagName === 'LI') {
+    const detachedLi = detach(next)
+    node.appendChild(detachedLi)
+    return slurpLis(node, slurpCount + 1)
+  }
+
+  return slurpCount
+}
+
+function removeNested(tag, node) {
+  const nesteds = node.querySelectorAll(tag)
+
+  _.each(nesteds, function (nested) {
+    nested.outerHTML = nested.innerHTML
+  })
+
+  return node
+}
+
+
 function split ( node, offset, stopNode, root ) {
     var nodeType = node.nodeType,
         parent, clone, next;
