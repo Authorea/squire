@@ -553,11 +553,18 @@ testInlineNodeNames = function(){
 }
 
 testRemoveCiteFromLinks = function(){
+  var s, s2
   prepareTest("")
-  var   s = '<div><a>link<cite>cite</cite>test</a><br></div>'
+   s = '<div><a>link<cite>cite</cite>test</a><br></div>'
   editor.setHTML(s)
   s2 = editor.getHTML()
   test(s2 == '<div><a>linkcitetest</a><br></div>', 'strip cite from a tags')
+  prepareTest("")
+  s = '<a><cite class="ltx_cite rendered v1 not-editable" data-raw-citation="\cite{Pinker_2006}"></cite></a>'
+  editor.setHTML(s)
+   s2 = editor.getHTML()
+   
+  test(s2 == '<div><a></a><br></div>', 'strip cite from a tags when cite has no content')
 }
 
 // Useful to see how the treewalker works

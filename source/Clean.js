@@ -142,19 +142,11 @@ var filterSpanAttributes = function(span){
     return filterAttributes(span, whiteList)
 }
 
-var unwrapChildren = function(node, targetNodeNames){
-    var $node, $targetNodes
-    if( typeof targetNodeNames == 'string' ){
-        targetNodeNames = [targetNodeNames]
-    }
-    targetNodeNames.forEach(function(nodeName){
-        $node = $(node)
-        $targetNodes = $node.find(nodeName)
-        if ($targetNodes.length > 0 ){
-            $targetNodes.contents().unwrap();
-        }
+var unwrapChildren = function(node, targetNodeName){
+    $(node).find(targetNodeName).each(function(i){
+        node.replaceChild( empty( this ), this );
     })
-
+    return node
 }
 
 var replaceStyles = function ( node, parent ) {
@@ -297,7 +289,6 @@ var doNotCleanNode = function(node){
     That function in principle could be replaced by a user-supplied function.
 */
 var cleanTree = function cleanTree ( node, preserveWS ) {
-    console.warn('*********** CLEAN TREE ***********')
     var children = node.childNodes,
         nonInlineParent, i, l, child, nodeName, nodeType, rewriter, childLength,
         startsWithWS, endsWithWS, data, sibling;
@@ -321,6 +312,7 @@ var cleanTree = function cleanTree ( node, preserveWS ) {
             if ( rewriter ) {
                 // TODO: child could technically change here and I think childLength needs to be recalculated
                 child = rewriter( child, node );
+                childLength = child.childNodes.length;
             }
             else{
                 child = stylesRewriters[ 'DEFAULT_REWRITER' ](child, node);
