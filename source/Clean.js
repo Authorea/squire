@@ -626,5 +626,7 @@ Squire.prototype.cleanTree = cleanTree
 Squire.prototype.removeEmptyInlines = removeEmptyInlines
 Squire.prototype.collapseSimpleSpans = collapseSimpleSpans
 Squire.prototype.ensureBrAtEndOfAllLines = ensureBrAtEndOfAllLines
-
+Squire.prototype.cleanTreeFromRoot = function(){
+    cleanTree(this._root, true)
+}
 Squire.Clean.stylesRewriters = stylesRewriters
