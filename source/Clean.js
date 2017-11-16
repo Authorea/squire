@@ -297,6 +297,7 @@ var doNotCleanNode = function(node){
     That function in principle could be replaced by a user-supplied function.
 */
 var cleanTree = function cleanTree ( node, preserveWS ) {
+    console.warn('*********** CLEAN TREE ***********')
     var children = node.childNodes,
         nonInlineParent, i, l, child, nodeName, nodeType, rewriter, childLength,
         startsWithWS, endsWithWS, data, sibling;
