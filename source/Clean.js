@@ -142,6 +142,21 @@ var filterSpanAttributes = function(span){
     return filterAttributes(span, whiteList)
 }
 
+var unwrapChildren = function(node, targetNodeNames){
+    var $node, $targetNodes
+    if( typeof targetNodeNames == 'string' ){
+        targetNodeNames = [targetNodeNames]
+    }
+    targetNodeNames.forEach(function(nodeName){
+        $node = $(node)
+        $targetNodes = $node.find(nodeName)
+        if ($targetNodes.length > 0 ){
+            $targetNodes.contents().unwrap();
+        }
+    })
+
+}
+
 var replaceStyles = function ( node, parent ) {
   //NATE: TODO: whitelist of classes for span
   node.removeAttribute("style")
@@ -237,6 +252,7 @@ var stylesRewriters = {
     A: function ( node, parent ){
         filterClasses(node, {})
         filterAttributes(node, {"href": 1, "target": 1})
+        unwrapChildren(node, 'CITE')
         return node
     },
     // NATE: probably want to check if it is a squire cursor bookmark
