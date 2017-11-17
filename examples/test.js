@@ -87,8 +87,9 @@ var initEditors = function(){
     testInsertHTML()
     testHeader()
     testIncreaseListLevel()
-    testResults()
     testNotEditable()
+    testRemoveCiteFromLinks()
+    testResults()
 
     setTimeout(updateCursor, 20)
     if (localStorage['editorContent']){
@@ -549,6 +550,21 @@ testInlineNodeNames = function(){
   nodeNames.forEach(function(n){
     test(Squire.Node.isInline($("<"+n+">")[0]), n + " is inline?")
   })
+}
+
+testRemoveCiteFromLinks = function(){
+  var s, s2
+  prepareTest("")
+   s = '<div><a>link<cite>cite</cite>test</a><br></div>'
+  editor.setHTML(s)
+  s2 = editor.getHTML()
+  test(s2 == '<div><a>linkcitetest</a><br></div>', 'strip cite from a tags')
+  prepareTest("")
+  s = '<a><cite class="ltx_cite rendered v1 not-editable" data-raw-citation="\cite{Pinker_2006}"></cite></a>'
+  editor.setHTML(s)
+   s2 = editor.getHTML()
+   
+  test(s2 == '<div><a></a><br></div>', 'strip cite from a tags when cite has no content')
 }
 
 // Useful to see how the treewalker works

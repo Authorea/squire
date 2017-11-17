@@ -142,6 +142,13 @@ var filterSpanAttributes = function(span){
     return filterAttributes(span, whiteList)
 }
 
+var unwrapChildren = function(node, targetNodeName){
+    $(node).find(targetNodeName).each(function(i){
+        node.replaceChild( empty( this ), this );
+    })
+    return node
+}
+
 var replaceStyles = function ( node, parent ) {
   //NATE: TODO: whitelist of classes for span
   node.removeAttribute("style")
@@ -237,6 +244,7 @@ var stylesRewriters = {
     A: function ( node, parent ){
         filterClasses(node, {})
         filterAttributes(node, {"href": 1, "target": 1})
+        unwrapChildren(node, 'CITE')
         return node
     },
     // NATE: probably want to check if it is a squire cursor bookmark
@@ -304,6 +312,7 @@ var cleanTree = function cleanTree ( node, preserveWS ) {
             if ( rewriter ) {
                 // TODO: child could technically change here and I think childLength needs to be recalculated
                 child = rewriter( child, node );
+                childLength = child.childNodes.length;
             }
             else{
                 child = stylesRewriters[ 'DEFAULT_REWRITER' ](child, node);
@@ -617,5 +626,7 @@ Squire.prototype.cleanTree = cleanTree
 Squire.prototype.removeEmptyInlines = removeEmptyInlines
 Squire.prototype.collapseSimpleSpans = collapseSimpleSpans
 Squire.prototype.ensureBrAtEndOfAllLines = ensureBrAtEndOfAllLines
-
+Squire.prototype.cleanTreeFromRoot = function(){
+    cleanTree(this._root, true)
+}
 Squire.Clean.stylesRewriters = stylesRewriters
