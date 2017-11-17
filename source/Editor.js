@@ -1689,7 +1689,7 @@ proto.getHTML = function ( options ) {
         }
     }
     if ( range ) {
-        this._getRangeAndRemoveBookmark( range, true );
+        this._getRangeAndRemoveBookmark( range );
     }
     // TODO: NATE: might need to extend this to li elements.  Squire uses BR tags
     // internally to correct some browser behavior but we don't necessarily wants
