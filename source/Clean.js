@@ -325,7 +325,7 @@ var cleanTree = function cleanTree ( node, preserveWS ) {
                 l += childLength - 1;
                 node.replaceChild( empty( child ), child );
                 continue;
-            } else if (nodeName === 'LI' && !isParentedBy(child, ['UL', 'OL'])) {
+            } else if (nodeName === 'LI' && !hasAncestor(child, ['UL', 'OL'])) {
               const ulNode = createElement(doc, 'UL')
               child.parentNode.insertBefore(ulNode, child)
               const slurpedNodes = slurpNodes(ulNode, 'LI')

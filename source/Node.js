@@ -441,7 +441,7 @@ function fixContainer ( container, root ) {
     return container;
 }
 
-function isParentedBy(node, parents=[]) {
+function hasAncestor(node, parents=[]) {
   if (!node.parentNode) {
     return false
   }
@@ -450,7 +450,7 @@ function isParentedBy(node, parents=[]) {
     return true
   }
 
-  return isParentedBy(node.parentNode, parents)
+  return hasAncestor(node.parentNode, parents)
 }
 
 function slurpNodes(node, tagToSlurp, slurpedNodes) {
