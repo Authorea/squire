@@ -165,9 +165,12 @@ function getNextBlock ( node, root ) {
     return node !== root ? node : null;
 }
 
-function findNextTextOrNotEditable (root, node){
+function findNextTextOrNotEditable (root, node, options){
+    if (!options){
+        options = {}
+    }
     var w = new TreeWalker(root, NodeFilter.SHOW_ALL, function(node, root){
-        return ( isText(node) || notEditable(node, root) )
+        return ( isText(node) || notEditable(node, root)  || (options['allowBrs'] && node.nodeName=='BR'))
     } );
     w.currentNode = node;
     //NATE: TODO: call this with root
