@@ -325,11 +325,11 @@ var cleanTree = function cleanTree ( node, preserveWS ) {
                 l += childLength - 1;
                 node.replaceChild( empty( child ), child );
                 continue;
-            } else if (nodeName === 'LI' && unparentedLi(child)) {
+            } else if (nodeName === 'LI' && !isParentedBy(child, ['UL', 'OL'])) {
               const ulNode = createElement(doc, 'UL')
               child.parentNode.insertBefore(ulNode, child)
-              const slurpCount = slurpLis(ulNode)
-              l -= slurpCount
+              const slurpedNodes = slurpNodes(ulNode, 'LI')
+              l -= slurpedNodes.length
               continue;
             }
 

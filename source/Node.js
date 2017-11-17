@@ -441,23 +441,30 @@ function fixContainer ( container, root ) {
     return container;
 }
 
-function unparentedLi(node) {
-  return !node.parentNode ||
-         !['UL', 'OL'].includes(node.parentNode.tagName)
+function isParentedBy(node, parents=[]) {
+  if (!node.parentNode) {
+    return false
+  }
+
+  if (parents.includes(node.parentNode.tagName)) {
+    return true
+  }
+
+  return isParentedBy(node.parentNode, parents)
 }
 
-function slurpLis(node, slurpCount) {
-  slurpCount = slurpCount || 0
+function slurpNodes(node, tagToSlurp, slurpedNodes) {
+  slurpedNodes = slurpedNodes || []
 
   const next = node.nextSibling
 
   if (next && next.tagName === 'LI') {
     const detachedLi = detach(next)
     node.appendChild(detachedLi)
-    return slurpLis(node, slurpCount + 1)
+    return slurpNodes(node, tagToSlurp, slurpedNodes.concat([detachedLi]))
   }
 
-  return slurpCount
+  return slurpedNodes
 }
 
 function removeNested(tag, node) {
