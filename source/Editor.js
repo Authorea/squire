@@ -781,8 +781,15 @@ proto._getRangeAndRemoveBookmark = function ( range ) {
         range.setStart( startContainer, startOffset );
         range.setEnd( endContainer, endOffset );
 
+
         // Merge any text nodes we split
-        mergeInlines( startContainer, range );
+        //mergeInlines( startContainer, range, this._root );
+
+        // MILO:
+        //       Use Node.normalize instead of mergeInlines because mergeInlines
+        //       screws up the offset calculation
+        startContainer.normalize()
+
         if ( startContainer !== endContainer ) {
             mergeInlines( endContainer, range );
         }
@@ -1682,7 +1689,7 @@ proto.getHTML = function ( options ) {
         }
     }
     if ( range ) {
-        this._getRangeAndRemoveBookmark( range );
+        this._getRangeAndRemoveBookmark( range, true );
     }
     // TODO: NATE: might need to extend this to li elements.  Squire uses BR tags
     // internally to correct some browser behavior but we don't necessarily wants

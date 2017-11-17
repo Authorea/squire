@@ -182,8 +182,17 @@ var keyHandlers = {
     enter: function ( self, event, range ) {
       self.enter(self, event, range)
     },
-    backspace: function ( self, event, range ) {
-        self.backspace(self, event, range)
+  backspace: function ( self, event, range ) {
+      event && event.preventDefault()
+      const html = self.getHTML({ stripAllBrs: true, withBookMark: true })
+
+      if (html === '<div><input id="squire-selection-start" type="hidden"><input id="squire-selection-end" type="hidden"></div>') {
+        return self.fireEvent('squire::backspace-on-first', { empty: true })
+      } else if (html.lastIndexOf('<div><input id="squire-selection-start"') === 0) {
+        return self.fireEvent('squire::backspace-on-first', { empty: false })
+      }
+
+      self.backspace(self, event, range)
     },
     'delete': function ( self, event, range ) {
         var root = self._root;
