@@ -444,6 +444,43 @@ function fixContainer ( container, root ) {
     return container;
 }
 
+function hasAncestor(node, parents=[]) {
+  if (!node.parentNode) {
+    return false
+  }
+
+  if (parents.includes(node.parentNode.tagName)) {
+    return true
+  }
+
+  return hasAncestor(node.parentNode, parents)
+}
+
+function slurpNodes(node, tagToSlurp, slurpedNodes) {
+  slurpedNodes = slurpedNodes || []
+
+  const next = node.nextSibling
+
+  if (next && next.tagName === 'LI') {
+    const detachedLi = detach(next)
+    node.appendChild(detachedLi)
+    return slurpNodes(node, tagToSlurp, slurpedNodes.concat([detachedLi]))
+  }
+
+  return slurpedNodes
+}
+
+function removeNested(tag, node) {
+  const nesteds = node.querySelectorAll(tag)
+
+  _.each(nesteds, function (nested) {
+    nested.outerHTML = nested.innerHTML
+  })
+
+  return node
+}
+
+
 function split ( node, offset, stopNode, root ) {
     var nodeType = node.nodeType,
         parent, clone, next;

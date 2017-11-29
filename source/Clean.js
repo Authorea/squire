@@ -174,6 +174,13 @@ var stylesRewriters = {
     INS: replaceWithTag( 'U' ),
     STRIKE: replaceWithTag( 'S' ),
     P: replaceWithTag('DIV'),
+    DIV: function ( node, parent ) {
+      if (node.querySelectorAll('div').length) {
+        return removeNested('div', node)
+      }
+
+      return node
+    },
     FONT: function ( node, parent ) {
         var face = node.face,
             size = node.size,
@@ -327,7 +334,14 @@ var cleanTree = function cleanTree ( node, preserveWS ) {
                 l += childLength - 1;
                 node.replaceChild( empty( child ), child );
                 continue;
+            } else if (nodeName === 'LI' && !hasAncestor(child, ['UL', 'OL'])) {
+              const ulNode = createElement(doc, 'UL')
+              child.parentNode.insertBefore(ulNode, child)
+              const slurpedNodes = slurpNodes(ulNode, 'LI')
+              l -= slurpedNodes.length
+              continue;
             }
+
             if ( childLength ) {
                 cleanTree( child, preserveWS || ( nodeName === 'PRE' ) );
             }
