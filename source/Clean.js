@@ -168,8 +168,7 @@ var replaceStyles = function ( node, parent ) {
 // insertHTML
 
 
-var headerBlackList = /^(?:B|DIV|H1|H2|H3|UL|OL|LI|TABLE)$/;
-var headerNodeNames = /^(?:H1|H2|H3)$/;
+
 var stylesRewriters = {
     SPAN: replaceStyles,
     CITE: replaceStyles,
@@ -292,9 +291,48 @@ var doNotCleanNode = function(node){
     structure for them.  I am adding a function 'doNotCleanNode' which simply returns the node if true.
     That function in principle could be replaced by a user-supplied function.
 */
-var cleanTree = function cleanTree ( node, preserveWS, isInside ) {
-    if(!isInside){
-      isInside = {}
+
+
+// name them whatever you want (human readable)
+var nodeGroupToBlackList = {
+    "header": {
+        nodesRegEx: /^(?:H1|H2|H3)$/,
+        blackListRegEx: /^(?:B|DIV|H1|H2|H3|UL|OL|LI|TABLE)$/
+    },
+    "div" :{
+        nodesRegEx: /^(?:DIV)$/,
+        blackListRegEx: /^(?:DIV)$/
+    }
+}
+
+// nesetdNodeTracker makes node regex to boolean indicating whether it's been seen yet
+var shouldUnwrapNode = function(nodeName, nestedNodeTracker) {
+    var blackListRegex;
+    for(var nodeGroup in nestedNodeTracker){
+        blackListRegex = nodeGroupToBlackList[nodeGroup].blackListRegEx;
+        return blackListRegex.test(nodeName)
+    }
+    return false
+
+};
+
+var getNewNestedNodeHash = function(nestedNodeTracker, nodeName){
+    var nodesRegEx;
+    for(var nodeGroup in nodeGroupToBlackList){
+        nodesRegEx = nodeGroupToBlackList[nodeGroup].nodesRegEx;
+        if(!nestedNodeTracker[nodeGroup] && nodesRegEx.test(nodeName)){
+            var newNestedNodeTracker = {};
+            newNestedNodeTracker[nodeGroup] = true
+            return Object.assign({}, nestedNodeTracker, newNestedNodeTracker)
+        }
+    } 
+    return nestedNodeTracker
+}
+ 
+
+var cleanTree = function cleanTree ( node, preserveWS, nestedNodeTracker ) {
+    if(!nestedNodeTracker){
+      nestedNodeTracker = {}
     }
     var children = node.childNodes,
         nonInlineParent, i, l, child, nodeName, nodeType, rewriter, childLength,
@@ -330,14 +368,8 @@ var cleanTree = function cleanTree ( node, preserveWS, isInside ) {
                 i -= 1;
                 l -= 1;
                 continue;
-            }  // unwrap elements not whitelisted
-            else if ( !allowedBlock.test( nodeName ) && !isInline( child ) ) {
-                i -= 1;
-                l += childLength - 1;
-                node.replaceChild( empty( child ), child );
-                continue;
-            }  //unwrap headerBlackListed elements while inside a header
-             else if(isInside.header && headerBlackList.test(nodeName)){
+            }  // unwrap elements not whitelisted and blacklisted nested elements
+             else if(shouldUnwrapNode(nodeName, nestedNodeTracker)|| (!allowedBlock.test( nodeName ) && !isInline( child ) )){
               i -= 1;
               l += childLength - 1;
               node.replaceChild( empty( child ), child );
@@ -346,11 +378,7 @@ var cleanTree = function cleanTree ( node, preserveWS, isInside ) {
             if ( childLength ) {
                 // update inside-hash (closure for safe scoping)
                 (function () {
-                  var newInsideHash = isInside
-                  if(!isInside.header && headerNodeNames.test(nodeName)){
-                    newInsideHash = Object.assign({}, isInside, {header: true})
-                  }
-
+                  var newInsideHash = getNewNestedNodeHash(nestedNodeTracker, nodeName);
                   cleanTree( child, preserveWS || ( nodeName === 'PRE' ), newInsideHash );
                 }())
 
