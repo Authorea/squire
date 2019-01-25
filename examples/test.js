@@ -72,6 +72,7 @@ var initEditors = function(){
     });
 
     testSetup()
+    
     // quickTest()
     // NATE: unfortunately this test makes the later test "does not filter math elements" fail.  I don't yet understand why
     // but it has to do with how the cursor is positioned in the editor.
