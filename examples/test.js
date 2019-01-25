@@ -82,6 +82,7 @@ var initEditors = function(){
     testGetHTML()
     testInlineNodeNames()
     testCleaner()
+    testHeaderCleaner()
     // testLists()
     testTables()
     testInsertHTML()
@@ -527,6 +528,46 @@ testCleaner = function(){
   s = "<div>a </div>"
   prepareTest(s)
   test(editor.getHTML({stripAllBrs: 1}) === s)
+
+}
+
+testHeaderCleaner = function(){
+  prepareTest("")
+  s = '<h1><b>test</b> test</h1>'
+  editor.setHTML(s)
+  s2 = editor.getHTML()
+  test(s2 == '<h1>test test<br></h1>', 'strip bs from header')
+
+  prepareTest("")
+  s = '<h1><i><b>test</b></i> test</h1>'
+  editor.setHTML(s)
+  s2 = editor.getHTML()
+  test(s2 == '<h1><i>test</i> test<br></h1>', 'strip bs in is from header')
+
+  //
+  prepareTest("")
+  s = '<h1><div>test</div></h1>'
+  editor.setHTML(s)
+  s2 = editor.getHTML()
+  test(s2 == '<h1>test<br></h1>', 'strip div from header')
+
+  prepareTest("")
+  s = '<h1>test<div>x</div>test</h1>'
+  editor.setHTML(s)
+  s2 = editor.getHTML()
+  test(s2 == '<h1>testxtest<br></h1>', 'strip div from header')
+
+  prepareTest("")
+  s = '<h2>test<div></div><div></div><div></div><div></div></h2>'
+  editor.setHTML(s)
+  s2 = editor.getHTML()
+  test(s2 == '<h2>test<br></h2>', 'strip many empty div from header')
+
+  prepareTest("")
+  s = '<h2><div><div><div>test</div></div></div></h2>'
+  editor.setHTML(s)
+  s2 = editor.getHTML()
+  test(s2 == '<h2>test<br></h2>', 'strip nested div from header')
 
 }
 

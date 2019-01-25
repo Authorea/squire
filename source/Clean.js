@@ -166,6 +166,10 @@ var replaceStyles = function ( node, parent ) {
 //NATE: I like the stylesRewriters, we should have sane defaults for all the elements as a first pass, and then
 // any additional complicated filtering can be done by registering filters with squire that will be executed during
 // insertHTML
+
+
+var headerBlackList = /^(?:B|DIV|H1|H2|H3|UL|OL|LI|TABLE)$/;
+var headerNodeNames = /^(?:H1|H2|H3)$/;
 var stylesRewriters = {
     SPAN: replaceStyles,
     CITE: replaceStyles,
@@ -288,7 +292,10 @@ var doNotCleanNode = function(node){
     structure for them.  I am adding a function 'doNotCleanNode' which simply returns the node if true.
     That function in principle could be replaced by a user-supplied function.
 */
-var cleanTree = function cleanTree ( node, preserveWS ) {
+var cleanTree = function cleanTree ( node, preserveWS, isInside ) {
+    if(!isInside){
+      isInside = {}
+    }
     var children = node.childNodes,
         nonInlineParent, i, l, child, nodeName, nodeType, rewriter, childLength,
         startsWithWS, endsWithWS, data, sibling;
@@ -317,19 +324,36 @@ var cleanTree = function cleanTree ( node, preserveWS ) {
             else{
                 child = stylesRewriters[ 'DEFAULT_REWRITER' ](child, node);
             }
+            // entirely remove blacklisted elements
             if ( blacklist.test( nodeName ) ) {
                 node.removeChild( child );
                 i -= 1;
                 l -= 1;
                 continue;
-            } else if ( !allowedBlock.test( nodeName ) && !isInline( child ) ) {
+            }  // unwrap elements not whitelisted
+            else if ( !allowedBlock.test( nodeName ) && !isInline( child ) ) {
                 i -= 1;
                 l += childLength - 1;
                 node.replaceChild( empty( child ), child );
                 continue;
+            }  //unwrap headerBlackListed elements while inside a header
+             else if(isInside.header && headerBlackList.test(nodeName)){
+              i -= 1;
+              l += childLength - 1;
+              node.replaceChild( empty( child ), child );
+              continue;
             }
             if ( childLength ) {
-                cleanTree( child, preserveWS || ( nodeName === 'PRE' ) );
+                // update inside-hash (closure for safe scoping)
+                (function () {
+                  var newInsideHash = isInside
+                  if(!isInside.header && headerNodeNames.test(nodeName)){
+                    newInsideHash = Object.assign({}, isInside, {header: true})
+                  }
+
+                  cleanTree( child, preserveWS || ( nodeName === 'PRE' ), newInsideHash );
+                }())
+
             }
         } else {
             if ( nodeType === TEXT_NODE ) {
