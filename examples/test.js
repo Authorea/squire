@@ -72,7 +72,7 @@ var initEditors = function(){
     });
 
     testSetup()
-    
+
     // quickTest()
     // NATE: unfortunately this test makes the later test "does not filter math elements" fail.  I don't yet understand why
     // but it has to do with how the cursor is positioned in the editor.
@@ -544,7 +544,6 @@ moreCleanerTests = function(){
   s2 = editor.getHTML()
   test(s2 == '<h1><i>test</i> test<br></h1>', 'strip bs in is from header')
 
-  //
   prepareTest("")
   s = '<h1><div>test</div></h1>'
   editor.setHTML(s)
@@ -573,10 +572,7 @@ moreCleanerTests = function(){
   s = '<div><div><div>test</div></div></div>'
   editor.setHTML(s)
   s2 = editor.getHTML()
-  console.log('?????????XXXXX',s2)
   test(s2 == '<div>test<br></div>', 'strip nested div')
-
-
 }
 
 testInsertHTML = function(){

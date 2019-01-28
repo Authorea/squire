@@ -166,9 +166,6 @@ var replaceStyles = function ( node, parent ) {
 //NATE: I like the stylesRewriters, we should have sane defaults for all the elements as a first pass, and then
 // any additional complicated filtering can be done by registering filters with squire that will be executed during
 // insertHTML
-
-
-
 var stylesRewriters = {
     SPAN: replaceStyles,
     CITE: replaceStyles,
@@ -293,7 +290,7 @@ var doNotCleanNode = function(node){
 */
 
 
-// name them whatever you want (human readable)
+// name the keys whatever you want (human readable)
 var nodeGroupToBlackList = {
     "header": {
         nodesRegEx: /^(?:H1|H2|H3)$/,
@@ -305,21 +302,26 @@ var nodeGroupToBlackList = {
     }
 }
 
-// nesetdNodeTracker makes node regex to boolean indicating whether it's been seen yet
-var shouldUnwrapNode = function(nodeName, nestedNodeTracker) {
+// nesetdNodeTracker maps node group (see above to boolean indicating whether it's been seen yet
+var shouldUnwrapNode = function(nestedNodeTracker, nodeName ) {
     var blackListRegex;
+    // check nodesGroups we're already "inside of"
     for(var nodeGroup in nestedNodeTracker){
         blackListRegex = nodeGroupToBlackList[nodeGroup].blackListRegEx;
-        return blackListRegex.test(nodeName)
+        // If our element is blacklisted, unwrap it
+        if (blackListRegex.test(nodeName)){
+            return true
+        }
     }
     return false
-
 };
 
 var getNewNestedNodeHash = function(nestedNodeTracker, nodeName){
     var nodesRegEx;
+    // check all nodegroups with blacklists
     for(var nodeGroup in nodeGroupToBlackList){
         nodesRegEx = nodeGroupToBlackList[nodeGroup].nodesRegEx;
+        // If the nodegroup isn't blacklistsed yet, and our node is in the group, add the nodegroup to the blacklist
         if(!nestedNodeTracker[nodeGroup] && nodesRegEx.test(nodeName)){
             var newNestedNodeTracker = {};
             newNestedNodeTracker[nodeGroup] = true
@@ -328,7 +330,6 @@ var getNewNestedNodeHash = function(nestedNodeTracker, nodeName){
     } 
     return nestedNodeTracker
 }
- 
 
 var cleanTree = function cleanTree ( node, preserveWS, nestedNodeTracker ) {
     if(!nestedNodeTracker){
@@ -369,7 +370,7 @@ var cleanTree = function cleanTree ( node, preserveWS, nestedNodeTracker ) {
                 l -= 1;
                 continue;
             }  // unwrap elements not whitelisted and blacklisted nested elements
-             else if(shouldUnwrapNode(nodeName, nestedNodeTracker)|| (!allowedBlock.test( nodeName ) && !isInline( child ) )){
+             else if(shouldUnwrapNode(nestedNodeTracker,nodeName)|| (!allowedBlock.test( nodeName ) && !isInline( child ) )){
               i -= 1;
               l += childLength - 1;
               node.replaceChild( empty( child ), child );
