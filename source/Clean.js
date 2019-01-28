@@ -288,7 +288,53 @@ var doNotCleanNode = function(node){
     structure for them.  I am adding a function 'doNotCleanNode' which simply returns the node if true.
     That function in principle could be replaced by a user-supplied function.
 */
-var cleanTree = function cleanTree ( node, preserveWS ) {
+
+
+// name the keys whatever you want (human readable)
+var nodeGroupToBlackList = {
+    "header": {
+        nodesRegEx: /^(?:H1|H2|H3)$/,
+        blackListRegEx: /^(?:B|DIV|H1|H2|H3|UL|OL|LI|TABLE)$/
+    },
+    "div" :{
+        nodesRegEx: /^(?:DIV)$/,
+        blackListRegEx: /^(?:DIV)$/
+    }
+}
+
+// nesetdNodeTracker maps node group (see above to boolean indicating whether it's been seen yet
+var shouldUnwrapNode = function(nestedNodeTracker, nodeName ) {
+    var blackListRegex;
+    // check nodesGroups we're already "inside of"
+    for(var nodeGroup in nestedNodeTracker){
+        blackListRegex = nodeGroupToBlackList[nodeGroup].blackListRegEx;
+        // If our element is blacklisted, unwrap it
+        if (blackListRegex.test(nodeName)){
+            return true
+        }
+    }
+    return false
+};
+
+var getNewNestedNodeHash = function(nestedNodeTracker, nodeName){
+    var nodesRegEx;
+    // check all nodegroups with blacklists
+    for(var nodeGroup in nodeGroupToBlackList){
+        nodesRegEx = nodeGroupToBlackList[nodeGroup].nodesRegEx;
+        // If the nodegroup isn't blacklistsed yet, and our node is in the group, add the nodegroup to the blacklist
+        if(!nestedNodeTracker[nodeGroup] && nodesRegEx.test(nodeName)){
+            var newNestedNodeTracker = {};
+            newNestedNodeTracker[nodeGroup] = true
+            return Object.assign({}, nestedNodeTracker, newNestedNodeTracker)
+        }
+    } 
+    return nestedNodeTracker
+}
+
+var cleanTree = function cleanTree ( node, preserveWS, nestedNodeTracker ) {
+    if(!nestedNodeTracker){
+      nestedNodeTracker = {}
+    }
     var children = node.childNodes,
         nonInlineParent, i, l, child, nodeName, nodeType, rewriter, childLength,
         startsWithWS, endsWithWS, data, sibling;
@@ -317,19 +363,26 @@ var cleanTree = function cleanTree ( node, preserveWS ) {
             else{
                 child = stylesRewriters[ 'DEFAULT_REWRITER' ](child, node);
             }
+            // entirely remove blacklisted elements
             if ( blacklist.test( nodeName ) ) {
                 node.removeChild( child );
                 i -= 1;
                 l -= 1;
                 continue;
-            } else if ( !allowedBlock.test( nodeName ) && !isInline( child ) ) {
-                i -= 1;
-                l += childLength - 1;
-                node.replaceChild( empty( child ), child );
-                continue;
+            }  // unwrap elements not whitelisted and blacklisted nested elements
+             else if(shouldUnwrapNode(nestedNodeTracker,nodeName)|| (!allowedBlock.test( nodeName ) && !isInline( child ) )){
+              i -= 1;
+              l += childLength - 1;
+              node.replaceChild( empty( child ), child );
+              continue;
             }
             if ( childLength ) {
-                cleanTree( child, preserveWS || ( nodeName === 'PRE' ) );
+                // update inside-hash (closure for safe scoping)
+                (function () {
+                  var newInsideHash = getNewNestedNodeHash(nestedNodeTracker, nodeName);
+                  cleanTree( child, preserveWS || ( nodeName === 'PRE' ), newInsideHash );
+                }())
+
             }
         } else {
             if ( nodeType === TEXT_NODE ) {
