@@ -573,6 +573,14 @@ moreCleanerTests = function(){
   editor.setHTML(s)
   s2 = editor.getHTML()
   test(s2 == '<div>test<br></div>', 'strip nested div')
+
+  prepareTest("")
+  s = "<ul><li>x <ul><li><div>y</div></li></ul></li></ul>"
+  editor.setHTML(s)
+  s2 = editor.getHTML()
+  
+  test(s2 == '<ul><li>x y<br></li></ul>', 'handle nasty nested list & div')
+
 }
 
 testInsertHTML = function(){
