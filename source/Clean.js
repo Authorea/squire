@@ -299,6 +299,14 @@ var nodeGroupToBlackList = {
     "div" :{
         nodesRegEx: /^(?:DIV)$/,
         blackListRegEx: /^(?:DIV)$/
+    },
+    "list":{
+        nodesRegEx: /^(?:LI)$/,
+        blackListRegEx: /^(?:UL|OL|LI|DIV|H1|H2|H3|)$/
+    },
+    "listWrapper":{
+        nodesRegEx: /^(?:UL|OL)$/,
+        blackListRegEx: /^(?:UL|OL|DIV|H1|H2|H3|)$/ 
     }
 }
 
