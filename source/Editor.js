@@ -1990,6 +1990,61 @@ proto.bold = command( 'changeFormat', { tag: 'B' } );
 proto.italic = command( 'changeFormat', { tag: 'I' } );
 proto.underline = command( 'changeFormat', { tag: 'U' } );
 proto.strikethrough = command( 'changeFormat', { tag: 'S' } );
+
+
+proto.colorizeBackground = function ( backgroundColorClass ) {
+    // TODO: enforce only supported colors?
+    this.changeFormat({
+        tag: 'SPAN',
+        attributes: {
+            'class': backgroundColorClass,
+        }
+    })
+    return this.focus();
+};
+
+proto.changeBackgroundColor = function ( backgroundColorClass ) {
+    if (!color) return
+    this.changeFormat(
+        { tag: 'SPAN',
+        attributes: 
+        {
+            'class': backgroundColorClass,
+        }}, {
+        tag: 'SPAN'
+    })
+    return this.focus();
+};
+
+proto.colorizeFont = function ( colorClass ) {
+    // TODO: enforce only supported colors?
+    this.changeFormat({
+        tag: 'SPAN',
+        attributes: {
+            'class': colorClass,
+        }
+    })
+    return this.focus();
+};
+
+proto.changeFontColor = function ( colorClass ) {
+    if (!color) return
+    this.changeFormat(
+        { tag: 'SPAN',
+        attributes: 
+        {
+            'class': colorClass,
+        }}, {
+        tag: 'SPAN'
+    })
+    return this.focus();
+};
+
+
+proto.removeFontColor =  command( 'changeFormat', null,  { tag: 'SPAN' } );
+
+proto.removeBackgroundColor =  command( 'changeFormat', null,  { tag: 'SPAN' } );
+
 proto.subscript = command( 'changeFormat', { tag: 'SUB' }, { tag: 'SUP' } );
 proto.superscript = command( 'changeFormat', { tag: 'SUP' }, { tag: 'SUB' } );
 
