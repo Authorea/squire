@@ -2029,7 +2029,7 @@ proto.colorizeFont = function ( colorClass ) {
 };
 
 proto.changeFontColor = function ( colorClass ) {
-    if (!color) return
+    if (!colorClass) return
     this.changeFormat(
         { tag: 'SPAN',
         attributes: 
