@@ -12,10 +12,27 @@ h1 {
 iframe {
   border: 1px solid #888;
 }
-span {
+span.not-editable {
   cursor: pointer;
   text-decoration: underline;
 }
+
+span.au-background-yellow{
+  background-color: yellow;
+}
+
+span.au-background-red{
+  background-color: red;
+}
+
+span.au-font-red{
+  color: red;
+}
+
+span.au-font-yellow{
+  color: yellow;
+}
+
 p {
   margin: 5px 0;
 }
