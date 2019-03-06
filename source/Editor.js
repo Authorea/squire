@@ -1993,58 +1993,46 @@ proto.underline = command( 'changeFormat', { tag: 'U' } );
 proto.strikethrough = command( 'changeFormat', { tag: 'S' } );
 
 
-proto.colorizeBackground = function ( backgroundColorClass ) {
-    // TODO: enforce only supported colors?
-    this.changeFormat({
-        tag: 'SPAN',
-        attributes: {
-            'class': backgroundColorClass,
-        }
-    })
-    return this.focus();
-};
+
+proto.removeBackgroundColor =  command( 'changeFormat', null,  { tag: 'SPAN', attributes:{  'data-background': 'true'} } );
 
 proto.changeBackgroundColor = function ( backgroundColorClass ) {
-    if (!color) return
+    if (!backgroundColorClass) return
     this.changeFormat(
         { tag: 'SPAN',
         attributes: 
         {
             'class': backgroundColorClass,
+            'data-background': 'true'
         }}, {
-        tag: 'SPAN'
-    })
-    return this.focus();
-};
-
-proto.colorizeFont = function ( colorClass ) {
-    // TODO: enforce only supported colors?
-    this.changeFormat({
         tag: 'SPAN',
-        attributes: {
-            'class': colorClass,
+        attributes:{
+            'data-background': 'true'
         }
     })
     return this.focus();
 };
+
 
 proto.changeFontColor = function ( colorClass ) {
     if (!colorClass) return
     this.changeFormat(
         { tag: 'SPAN',
-        attributes: 
-        {
+        attributes: {
             'class': colorClass,
-        }}, {
-        tag: 'SPAN'
-    })
+            'data-font-color': 'true'}
+        }, {
+        tag: 'SPAN',
+        attributes: {
+            'data-font-color': 'true'}
+        }
+    )
     return this.focus();
 };
 
 
-proto.removeFontColor =  command( 'changeFormat', null,  { tag: 'SPAN' } );
+proto.removeFontColor =  command( 'changeFormat', null,  { tag: 'SPAN', attributes:{  'data-font-color': 'true'} } );
 
-proto.removeBackgroundColor =  command( 'changeFormat', null,  { tag: 'SPAN' } );
 
 proto.subscript = command( 'changeFormat', { tag: 'SUB' }, { tag: 'SUP' } );
 proto.superscript = command( 'changeFormat', { tag: 'SUP' }, { tag: 'SUB' } );
