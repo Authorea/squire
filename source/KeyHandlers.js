@@ -655,7 +655,7 @@ Squire.prototype.backspace = function(self, event, range){
         }
         else {
             var child = sc.childNodes[so]
-            console.log('2',block, sc );
+            console.log('2',block, child );
             pn = findPreviousTextOrNotEditable(block, child)
             if(pn){
                 if(pn.nodeType === TEXT_NODE){
