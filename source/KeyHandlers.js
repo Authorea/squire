@@ -656,7 +656,7 @@ Squire.prototype.backspace = function(self, event, range){
             }
         }
         else {
-            var child = sc.childNodes[so] || child
+            var child = sc.childNodes[so]
             console.log('233',block, child, sc, so );
             pn = findPreviousTextOrNotEditable(block, child)
             if(pn){
