@@ -617,6 +617,7 @@ Squire.prototype.backspace = function(self, event, range){
     // text.  There is some information on what is probably the same bug here:
     // https://bugzilla.mozilla.org/show_bug.cgi?id=685445
     else {
+        console.log('elseeee123')
         var sc = range.startContainer;
         var so = range.startOffset;
         var pn = null;
@@ -625,6 +626,7 @@ Squire.prototype.backspace = function(self, event, range){
         var rootNodeOfClean = null;
 
         if((sc.nodeType === TEXT_NODE)){
+            console.log('textnode?')
             if(so>1){
                 sc.deleteData(so-1, 1)
                 parent = sc.parentNode
@@ -654,8 +656,8 @@ Squire.prototype.backspace = function(self, event, range){
             }
         }
         else {
-            var child = sc.childNodes[so]
-            console.log('2',block, child, sc, so );
+            var child = sc.childNodes[so] || child
+            console.log('233',block, child, sc, so );
             pn = findPreviousTextOrNotEditable(block, child)
             if(pn){
                 if(pn.nodeType === TEXT_NODE){
