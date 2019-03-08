@@ -635,6 +635,8 @@ Squire.prototype.backspace = function(self, event, range){
                 sc.deleteData(so-1, 1)
             }
             else{ //so === 0
+                console.log('1',block, sc );
+                
                 pn = findPreviousTextOrNotEditable(block, sc)
                 var previousParent = pn.parentNode
                 if(pn.nodeType === TEXT_NODE){
@@ -653,6 +655,7 @@ Squire.prototype.backspace = function(self, event, range){
         }
         else {
             var child = sc.childNodes[so]
+            console.log('2',block, sc );
             pn = findPreviousTextOrNotEditable(block, child)
             if(pn){
                 if(pn.nodeType === TEXT_NODE){
