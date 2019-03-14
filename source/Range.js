@@ -461,12 +461,11 @@ var moveNodeOutOfNotEditable = function( node, nodeOffset ){
     while(notEditable(newParent)){
         currentParent = newParent
         if(moveRight){
-            if(nextSibling = currentParent.nextSibling){
+            if(nextSibling = new TreeWalker(currentParent, NodeFilter.SHOW_ALL,function(){return true}).nextSNode()){
                 currentParent = nextSibling
             }
         }
         newParent = currentParent.parentNode
-        startOffset = indexOf.call( newParent.childNodes, currentParent );
     }
     if(newParent !== currentParent){
         offset = indexOf.call( newParent.childNodes, currentParent )
