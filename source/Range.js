@@ -437,7 +437,6 @@ var moveRangeBoundariesUpTree = function ( range, common ) {
 };
 
 var moveNodeOutOfNotEditable = function( node, nodeOffset ){
-
     var startContainer = node
     var moveRight = false
     var nextSibling
@@ -458,7 +457,7 @@ var moveNodeOutOfNotEditable = function( node, nodeOffset ){
     else{
       currentParent = startContainer.parentNode
       newParent = currentParent
-    } 
+    }
     while(notEditable(newParent)){
         currentParent = newParent
         if(moveRight){
@@ -469,7 +468,7 @@ var moveNodeOutOfNotEditable = function( node, nodeOffset ){
         newParent = currentParent.parentNode
     }
     if(newParent !== currentParent){
-        offset = indexOf.call( newParent.childNodes, currentParent ) 
+        offset = indexOf.call( newParent.childNodes, currentParent )
         return([newParent, offset])
     }
     else{
