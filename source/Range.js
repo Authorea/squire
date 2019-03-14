@@ -437,6 +437,7 @@ var moveRangeBoundariesUpTree = function ( range, common ) {
 };
 
 var moveNodeOutOfNotEditable = function( node, nodeOffset ){
+
     var startContainer = node
     var moveRight = false
     var nextSibling
@@ -457,19 +458,18 @@ var moveNodeOutOfNotEditable = function( node, nodeOffset ){
     else{
       currentParent = startContainer.parentNode
       newParent = currentParent
-    }
+    } 
     while(notEditable(newParent)){
         currentParent = newParent
         if(moveRight){
-            if(nextSibling = currentParent.nextSibling){
+            if(nextSibling = new TreeWalker(currentParent, NodeFilter.SHOW_ALL,function(){return true}).nextSNode()){
                 currentParent = nextSibling
             }
         }
         newParent = currentParent.parentNode
-        startOffset = indexOf.call( newParent.childNodes, currentParent );
     }
     if(newParent !== currentParent){
-        offset = indexOf.call( newParent.childNodes, currentParent )
+        offset = indexOf.call( newParent.childNodes, currentParent ) 
         return([newParent, offset])
     }
     else{
