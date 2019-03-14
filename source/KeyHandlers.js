@@ -652,27 +652,33 @@ Squire.prototype.backspace = function(self, event, range){
             }
         }
         else {
-            var child = sc.childNodes[so]
-            pn = findPreviousTextOrNotEditable(block, child)
-            if(pn){
-                if(pn.nodeType === TEXT_NODE){
-                    if(pn.length>0){
-                        pn.deleteData(pn.length - 1, 1)
-                        pOffset = pn.length
-                        range.setStart(pn, pOffset)
-                        range.setEnd(pn, pOffset)
-                        self.setSelectionToNode(pn, pOffset)
-                    }
-                    else{
-                        detach(pn)
-                    }
+       
+            // This if-condition is a monkey patch to get around improper range calculation; it doesn't fix the core problem (start offset is off), but it side-steps it in this one case in a guarunteed regression-free way. If the range calculation is ever fixed, it can be removed)
+            if (so >= sc.childNodes.length && notEditable(sc.lastChild)  ){
+                detach(sc.lastChild);
+            } else {
+                var child = sc.childNodes[so]
+                pn = findPreviousTextOrNotEditable(block, child)
+                if(pn){
+                    if(pn.nodeType === TEXT_NODE){
+                        if(pn.length>0){
+                            pn.deleteData(pn.length - 1, 1)
+                            pOffset = pn.length
+                            range.setStart(pn, pOffset)
+                            range.setEnd(pn, pOffset)
+                            self.setSelectionToNode(pn, pOffset)
+                        }
+                        else{
+                            detach(pn)
+                        }
 
-                }
-                else if(notEditable(pn, root)){
-                    detach(pn);
+                     }
+                    else if(notEditable(pn, root)){
+                        detach(pn);
+                    }
                 }
             }
-
+            
             //Nate: Todo: Currently cleaning from this node results in the range not getting moved down the tree, not good
             rootNodeOfClean = sc
         }
