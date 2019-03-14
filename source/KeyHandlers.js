@@ -655,7 +655,7 @@ Squire.prototype.backspace = function(self, event, range){
        
             // This if-condition is a monkey patch to get around improper range calculation; it doesn't fix the core problem (start offset is off), but it side-steps it in this one case in a guarunteed regression-free way. If the range calculation is ever fixed, it can be removed)
             if (so >= sc.childNodes.length && notEditable(sc.lastChild)  ){
-                detach(sc.childNodes[sc.childNodes.length -1]);
+                detach(sc.lastChild);
             } else {
                 var child = sc.childNodes[so]
                 pn = findPreviousTextOrNotEditable(block, child)
