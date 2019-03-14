@@ -129,7 +129,7 @@ TreeWalker.prototype.nextSNode = function (){
                 return null
             } else {
                 this.currentNode = sib 
-                return sib.firstChild ? sid.firstChild : sib
+                return sib.firstChild ? sib.firstChild : sib
             }
         }
     }
