@@ -110,6 +110,7 @@ TreeWalker.prototype.nextNONode = function (breakoutFunction) {
     }
 };
 
+// NOTE: haven't included a fliter/ breakut function yet
 TreeWalker.prototype.nextSNode = function (){
     var current = this.currentNode,
     root = this.root,
