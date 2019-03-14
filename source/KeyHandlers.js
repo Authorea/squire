@@ -652,24 +652,35 @@ Squire.prototype.backspace = function(self, event, range){
             }
         }
         else {
-            var child = sc.childNodes[so]
-            pn = findPreviousTextOrNotEditable(block, child)
-            if(pn){
-                if(pn.nodeType === TEXT_NODE){
-                    if(pn.length>0){
-                        pn.deleteData(pn.length - 1, 1)
-                        pOffset = pn.length
-                        range.setStart(pn, pOffset)
-                        range.setEnd(pn, pOffset)
-                        self.setSelectionToNode(pn, pOffset)
-                    }
-                    else{
-                        detach(pn)
-                    }
+       
+            // This if-condition is a monkey patch to get around improper range calculation; it doesn't fix the core problem (start offset is off), but it side-steps it in this one case in a guarunteed regression-free way. If the range calculation is ever fixed, it can be removed)
+            if (so >= sc.childNodes.length && notEditable(sc.lastChild)  ){
+                detach(sc.childNodes[sc.childNodes.length -1]);
+            } else {
 
-                }
-                else if(notEditable(pn, root)){
-                    detach(pn);
+                if (so >= sc.childNodes.length && notEditable(sc.lastChild)  ){
+                    detach(sc.childNodes[sc.childNodes.length -1]);
+                } else {
+                    var child = sc.childNodes[so]
+                    pn = findPreviousTextOrNotEditable(block, child)
+                    if(pn){
+                        if(pn.nodeType === TEXT_NODE){
+                            if(pn.length>0){
+                                pn.deleteData(pn.length - 1, 1)
+                                pOffset = pn.length
+                                range.setStart(pn, pOffset)
+                                range.setEnd(pn, pOffset)
+                                self.setSelectionToNode(pn, pOffset)
+                            }
+                            else{
+                                detach(pn)
+                            }
+
+                        }
+                        else if(notEditable(pn, root)){
+                            detach(pn);
+                        }
+                    }
                 }
             }
 
