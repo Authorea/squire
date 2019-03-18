@@ -225,6 +225,12 @@ function getPath ( node, root, options ) {
     var path = '';
     var id, className, classNames, dir;
     if ( node && node !== root ) {
+
+        // Leaving commented for now: include classes for background & font -color: TODO: double check no weird sideeffects with paths for non-editable elements..
+        // if (node.nodeName== 'SPAN'){
+        //     options['include_attributes'] = true;
+        // }
+
         path = getPath( node.parentNode, root );
         if ( node.nodeType === ELEMENT_NODE ) {
             path += ( path ? '>' : '' ) + node.nodeName;

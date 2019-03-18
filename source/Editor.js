@@ -1991,6 +1991,49 @@ proto.bold = command( 'changeFormat', { tag: 'B' } );
 proto.italic = command( 'changeFormat', { tag: 'I' } );
 proto.underline = command( 'changeFormat', { tag: 'U' } );
 proto.strikethrough = command( 'changeFormat', { tag: 'S' } );
+
+
+
+proto.removeBackgroundColor =  command( 'changeFormat', null,  { tag: 'SPAN', attributes:{  'data-background': 'true'} } );
+
+proto.changeBackgroundColor = function ( backgroundColorClass ) {
+    if (!backgroundColorClass) return
+    this.changeFormat(
+        { tag: 'SPAN',
+        attributes: 
+        {
+            'class': backgroundColorClass,
+            'data-background': 'true'
+        }}, {
+        tag: 'SPAN',
+        attributes:{
+            'data-background': 'true'
+        }
+    })
+    return this.focus();
+};
+
+
+proto.changeFontColor = function ( colorClass ) {
+    if (!colorClass) return
+    this.changeFormat(
+        { tag: 'SPAN',
+        attributes: {
+            'class': colorClass,
+            'data-font-color': 'true'}
+        }, {
+        tag: 'SPAN',
+        attributes: {
+            'data-font-color': 'true'}
+        }
+    )
+    return this.focus();
+};
+
+
+proto.removeFontColor =  command( 'changeFormat', null,  { tag: 'SPAN', attributes:{  'data-font-color': 'true'} } );
+
+
 proto.subscript = command( 'changeFormat', { tag: 'SUB' }, { tag: 'SUP' } );
 proto.superscript = command( 'changeFormat', { tag: 'SUP' }, { tag: 'SUB' } );
 
