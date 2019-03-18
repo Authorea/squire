@@ -12,7 +12,7 @@ h1 {
 iframe {
   border: 1px solid #888;
 }
-span.not-editable {
+span{
   cursor: pointer;
   text-decoration: underline;
 }
