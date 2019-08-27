@@ -2000,7 +2000,7 @@ proto.changeBackgroundColor = function ( backgroundColorClass, commentId ) {
 
     if (!backgroundColorClass) return
 
-    const newAttributes = {
+    var newAttributes = {
         'class': backgroundColorClass,
         'data-background': 'true'
     }
