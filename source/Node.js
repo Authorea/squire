@@ -183,6 +183,7 @@ function areAlike ( node, node2, root ) {
         node.nodeType === node2.nodeType &&
         node.nodeName === node2.nodeName &&
         node.nodeName !== 'A' &&
+        !(node.getAttribute && node.getAttribute('data-comment-id')) &&
         node.className === node2.className &&
         ( ( !node.style && !node2.style ) ||
           node.style.cssText === node2.style.cssText )
