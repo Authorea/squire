@@ -649,6 +649,11 @@ function mergeContainers ( node, root ) {
     }
 }
 
+function unWrapNode (node) {
+    var parent = node.parentNode;
+    parent.replaceChild( empty( node ), node );
+} 
+
 Squire.Node = function(){}
 Squire.Node.isInline = isInline
 Squire.Node.getBlockWalker = getBlockWalker
