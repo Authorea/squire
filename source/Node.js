@@ -177,13 +177,16 @@ function findNextTextOrNotEditable (root, node, options){
     return w.nextNONode(notEditable)
 }
 
+function isCommentHighlight(node){
+    return node && node.getAttribute && node.getAttribute('data-comment-id')
+}
 
 function areAlike ( node, node2, root ) {
     return !isLeaf( node, root ) && (
         node.nodeType === node2.nodeType &&
         node.nodeName === node2.nodeName &&
         node.nodeName !== 'A' &&
-        !(node.getAttribute && node.getAttribute('data-comment-id')) &&
+        !(isCommentHighlight(node) || isCommentHighlight(node2) ) &&
         node.className === node2.className &&
         ( ( !node.style && !node2.style ) ||
           node.style.cssText === node2.style.cssText )
