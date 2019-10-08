@@ -182,8 +182,8 @@ function commentHighlightId(node){
 }
 
 function preventCommentHighlightMerge(n1, n2) {
-    const n1HighlightId = commentHighlightId(n1)
-    const n2HighlightId = commentHighlightId(n2)
+    var n1HighlightId = commentHighlightId(n1)
+    var n2HighlightId = commentHighlightId(n2)
     // if neither are highlights, don't prevent
     if (!n1HighlightId && !n1HighlightId){
         return false
