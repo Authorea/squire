@@ -1996,15 +1996,21 @@ proto.strikethrough = command( 'changeFormat', { tag: 'S' } );
 
 proto.removeBackgroundColor =  command( 'changeFormat', null,  { tag: 'SPAN', attributes:{  'data-background': 'true'} } );
 
-proto.changeBackgroundColor = function ( backgroundColorClass ) {
+proto.changeBackgroundColor = function ( backgroundColorClass, commentId ) {
+
     if (!backgroundColorClass) return
+
+    var newAttributes = {
+        'class': backgroundColorClass,
+        'data-background': 'true'
+    }
+    if (commentId){
+        newAttributes['data-comment-id'] = commentId
+    }
     this.changeFormat(
         { tag: 'SPAN',
-        attributes: 
-        {
-            'class': backgroundColorClass,
-            'data-background': 'true'
-        }}, {
+        attributes: newAttributes
+        }, {
         tag: 'SPAN',
         attributes:{
             'data-background': 'true'

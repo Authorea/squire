@@ -454,6 +454,29 @@ var cleanTree = function cleanTree ( node, preserveWS, nestedNodeTracker ) {
     return node;
 };
 
+
+var removeCommentHighlights = function removeCommentHighlights (node, commentId){
+    var i, l, child, nodeName, nodeType, childLength;
+    var children = node.childNodes
+    for ( i = 0, l = children.length; i < l; i += 1 ) {
+        child = children[i];
+        nodeName = child.nodeName;
+        nodeType = child.nodeType;
+        if (nodeType === ELEMENT_NODE){
+            childLength = child.childNodes.length;
+            if (child.getAttribute('data-comment-id') == commentId){
+                unWrapNode(child)
+                i -= 1;
+                l += childLength - 1;
+            }
+            removeCommentHighlights(child, commentId)
+        }
+    }
+}
+
+var removeCommentHighlightsFromRoot = function removeCommentHighlightsFromRoot(commentId){
+    this.removeCommentHighlights(this._root, commentId)
+}
 // ---
 
 var removeEmptyInlines = function removeEmptyInlines ( node ) {
@@ -687,6 +710,8 @@ Squire.prototype.cleanTree = cleanTree
 Squire.prototype.removeEmptyInlines = removeEmptyInlines
 Squire.prototype.collapseSimpleSpans = collapseSimpleSpans
 Squire.prototype.ensureBrAtEndOfAllLines = ensureBrAtEndOfAllLines
+Squire.prototype.removeCommentHighlights = removeCommentHighlights
+Squire.prototype.removeCommentHighlightsFromRoot = removeCommentHighlightsFromRoot
 Squire.prototype.cleanTreeFromRoot = function(){
     cleanTree(this._root, true)
 }
