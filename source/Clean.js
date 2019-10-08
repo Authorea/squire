@@ -462,7 +462,7 @@ var removeCommentHighlights = function removeCommentHighlights (node, commentId)
         child = children[i];
         nodeName = child.nodeName;
         nodeType = child.nodeType;
-        if (nodeType == ELEMENT_NODE){
+        if (nodeType === ELEMENT_NODE){
             childLength = child.childNodes.length;
             if (child.getAttribute('data-comment-id') == commentId){
                 unWrapNode(child)
@@ -471,7 +471,6 @@ var removeCommentHighlights = function removeCommentHighlights (node, commentId)
             }
             removeCommentHighlights(child, commentId)
         }
-        
     }
 }
 
