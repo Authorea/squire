@@ -177,8 +177,30 @@ function findNextTextOrNotEditable (root, node, options){
     return w.nextNONode(notEditable)
 }
 
-function isCommentHighlight(node){
+function commentHighlightId(node){
     return node && node.getAttribute && node.getAttribute('data-comment-id')
+}
+
+function preventCommentHighlightMerge(n1, n2) {
+    const n1HighlightId = commentHighlightId(n1)
+    const n2HighlightId = commentHighlightId(n2)
+    // if neither are highlights, don't prevent
+    if (!n1HighlightId && !n1HighlightId){
+        return false
+    }
+    // if exactly one is a highlight, prevent merge
+    else if (!n1HighlightId || !n1HighlightId){
+        return true
+    }
+    // if they are both highlights, but not of equal ids, prevent merge
+    else if (n1HighlightId !== n2HighlightId) {
+        return true
+    } else {
+        // implicitely: if both are highlights and equal, don't prevent merge
+        return false
+    }
+
+    
 }
 
 function areAlike ( node, node2, root ) {
@@ -186,7 +208,7 @@ function areAlike ( node, node2, root ) {
         node.nodeType === node2.nodeType &&
         node.nodeName === node2.nodeName &&
         node.nodeName !== 'A' &&
-        !(isCommentHighlight(node) || isCommentHighlight(node2) ) &&
+        !preventCommentHighlightMerge(node, node2) &&
         node.className === node2.className &&
         ( ( !node.style && !node2.style ) ||
           node.style.cssText === node2.style.cssText )
