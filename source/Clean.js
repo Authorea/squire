@@ -244,6 +244,7 @@ var stylesRewriters = {
     A: function ( node, parent ){
         filterClasses(node, {})
         filterAttributes(node, {"href": 1, "rel": 1, "target": 1})
+        addRelToBlankTarget(node)
         unwrapChildren(node, 'CITE')
         return node
     },
@@ -701,6 +702,14 @@ var collapseSimpleSpans = function collapseSimpleSpans( node ) {
         }
     }
 
+}
+
+function addRelToBlankTarget(node) {
+    if (node.getAttribute('target') === '_blank') {
+        node.setAttribute('rel', 'noopener noreferrer')
+    }
+
+    return node
 }
 
 Squire.Clean = function(){}
