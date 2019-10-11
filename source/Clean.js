@@ -243,7 +243,7 @@ var stylesRewriters = {
     },
     A: function ( node, parent ){
         filterClasses(node, {})
-        filterAttributes(node, {"href": 1, "target": 1})
+        filterAttributes(node, {"href": 1, "rel": 1, "target": 1})
         unwrapChildren(node, 'CITE')
         return node
     },
