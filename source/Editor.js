@@ -1971,7 +1971,7 @@ proto.insertPlainText = function ( plainText, isPaste ) {
 var command = function ( method, arg, arg2 ) {
     return function () {
         this[ method ]( arg, arg2 );
-        // return this.focus();
+        return this.focus();
     };
 };
 
@@ -2016,7 +2016,7 @@ proto.changeBackgroundColor = function ( backgroundColorClass, commentId ) {
             'data-background': 'true'
         }
     })
-    // return this.focus();
+    return this.focus();
 };
 
 
