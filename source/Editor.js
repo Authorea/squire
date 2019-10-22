@@ -1260,6 +1260,8 @@ proto._removeFormat = function ( tag, attributes, range, partial ) {
 };
 
 proto.changeFormat = function ( add, remove, range, partial ) {
+    console.warn('changing format');
+    debugger
     // Normalise the arguments and get selection
     if ( !range && !( range = this.getSelection() ) ) {
         return this;
