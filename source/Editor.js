@@ -1268,7 +1268,7 @@ proto.changeFormat = function ( add, remove, range, partial ) {
     // Save undo checkpoint
     this.saveUndoState( range );
 
-    if ( remove ) {
+    if ( false ) {
         range = this._removeFormat( remove.tag.toUpperCase(),
             remove.attributes || {}, range, partial );
     }
