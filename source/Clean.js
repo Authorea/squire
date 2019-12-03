@@ -476,16 +476,16 @@ var removeCommentHighlights = function removeCommentHighlights (node, commentId)
 }
 
 var resolveCommentHighlightsFromRoot = function (commentId){
-    var unresolvedHighlights  = this._root.querySelectorAll(`span[data-comment-id=${commentId}]:not([data-is-resolved])`)
-    for (let i = 0; i < unresolvedHighlights.length; i++) {
+    var unresolvedHighlights  = this._root.querySelectorAll('span[data-comment-id=' + commentId + ']:not([data-is-resolved])')
+    for (var i = 0; i < unresolvedHighlights.length; i++) {
         var el = unresolvedHighlights[i];
         el.setAttribute('data-is-resolved', true)  
     }
 }
 
 var reopenCommentHighlightsFromRoot = function (commentId){
-    var resolvedHighlights  = this._root.querySelectorAll(`span[data-comment-id=${commentId}][data-is-resolved]`)
-    for (let i = 0; i < resolvedHighlights.length; i++) {
+    var resolvedHighlights  = this._root.querySelectorAll('span[data-comment-id=' + commentId + '][data-is-resolved]')
+    for (var i = 0; i < resolvedHighlights.length; i++) {
         var el = resolvedHighlights[i];
         el.removeAttribute('data-is-resolved')    
     }
