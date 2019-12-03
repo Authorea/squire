@@ -475,6 +475,22 @@ var removeCommentHighlights = function removeCommentHighlights (node, commentId)
     }
 }
 
+var resolveCommentHighlightsFromRoot = function (commentId){
+    var unresolvedHighlights  = this._root.querySelectorAll('span[data-comment-id="' + commentId + '"]:not([data-is-resolved])')
+    for (var i = 0; i < unresolvedHighlights.length; i++) {
+        var el = unresolvedHighlights[i];
+        el.setAttribute('data-is-resolved', true)  
+    }
+}
+
+var reopenCommentHighlightsFromRoot = function (commentId){
+    var resolvedHighlights  = this._root.querySelectorAll('span[data-comment-id="' + commentId + '"][data-is-resolved]')
+    for (var i = 0; i < resolvedHighlights.length; i++) {
+        var el = resolvedHighlights[i];
+        el.removeAttribute('data-is-resolved')    
+    }
+}
+
 var removeCommentHighlightsFromRoot = function removeCommentHighlightsFromRoot(commentId){
     this.removeCommentHighlights(this._root, commentId)
 }
@@ -721,6 +737,8 @@ Squire.prototype.collapseSimpleSpans = collapseSimpleSpans
 Squire.prototype.ensureBrAtEndOfAllLines = ensureBrAtEndOfAllLines
 Squire.prototype.removeCommentHighlights = removeCommentHighlights
 Squire.prototype.removeCommentHighlightsFromRoot = removeCommentHighlightsFromRoot
+Squire.prototype.resolveCommentHighlightsFromRoot = resolveCommentHighlightsFromRoot
+Squire.prototype.reopenCommentHighlightsFromRoot = reopenCommentHighlightsFromRoot
 Squire.prototype.cleanTreeFromRoot = function(){
     cleanTree(this._root, true)
 }
