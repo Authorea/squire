@@ -491,8 +491,6 @@ var reopenCommentHighlightsFromRoot = function (commentId){
     }
 }
 
-
-
 var removeCommentHighlightsFromRoot = function removeCommentHighlightsFromRoot(commentId){
     this.removeCommentHighlights(this._root, commentId)
 }
@@ -741,7 +739,6 @@ Squire.prototype.removeCommentHighlights = removeCommentHighlights
 Squire.prototype.removeCommentHighlightsFromRoot = removeCommentHighlightsFromRoot
 Squire.prototype.resolveCommentHighlightsFromRoot = resolveCommentHighlightsFromRoot
 Squire.prototype.reopenCommentHighlightsFromRoot = reopenCommentHighlightsFromRoot
-
 Squire.prototype.cleanTreeFromRoot = function(){
     cleanTree(this._root, true)
 }
