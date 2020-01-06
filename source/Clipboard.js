@@ -13,7 +13,10 @@ var onCut = function ( event ) {
     // Edge only seems to support setting plain text as of 2016-03-11.
     // Mobile Safari flat out doesn't work:
     // https://bugs.webkit.org/show_bug.cgi?id=143776
-    if ( !isEdge && !isIOS && clipboardData ) {
+    if ( !isEdge && !isIOS && clipboardData 
+        && isOrContains(this._root, range.startContainer)
+        && isOrContains(this._root, range.endContainer)
+        ) {                        
         moveRangeBoundariesUpTree( range, root );
         node.appendChild( deleteContentsOfRange( range, root ) );
         clipboardData.setData( 'text/html', node.innerHTML );
