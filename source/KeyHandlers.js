@@ -825,6 +825,11 @@ Squire.prototype.moveUp = function(self, event, range){
     root.dispatchEvent(e);
     // return
   }
+  else{
+    event && event.preventDefault()
+    var ci = cursorInfo(self, {findNodeAbove: true})
+    ci.rangeAbove && self.setSelection(ci.rangeAbove)
+  }
   setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
 }
 
@@ -846,6 +851,11 @@ Squire.prototype.moveDown = function(self, event, range){
     var e = new CustomEvent('squire::down-on-last-line', { 'detail': {range: range} });
     root.dispatchEvent(e);
     // return
+  }
+  else{
+    event && event.preventDefault()
+    var ci = cursorInfo(self, {findNodeBelow: true})
+    ci.rangeBelow && self.setSelection(ci.rangeBelow)
   }
   setTimeout( function () { ensureOutsideOfNotEditable( self ); }, 0 );
 }
