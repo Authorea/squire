@@ -122,7 +122,7 @@ var firstOrLastLine = function(self){
     var rect = range.getBoundingClientRect()
     var nodeOffset;
     // here we need to handle a browser issue where an empty DomRect gets returned by the range sometimes; 
-    // in this case we fall back to using the startcontainer startcontainer
+    // in this case we fall back to using the startContainer
     if ( Object.keys(emptyDomRect).every(function(key) { return rect[key]===0}) ){
       nodeOffset = range.startContainer.getBoundingClientRect().top
     } else {
