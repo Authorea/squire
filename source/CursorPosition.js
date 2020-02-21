@@ -50,6 +50,9 @@ var numberOfLinesWithinParentBlock = function(parent){
 // It increases the range to one character, moving both the start and end
 // of the range into the nextSibling (if that exists).  Getting the bounding
 // rect of this single character appears to return the proper rect.
+
+var emptyDomRect = { x: 0, y: 0, width: 0, height: 0, top: 0, right: 0, bottom: 0, left: 0 }
+
 var firstOrLastLine = function(self){
   var root  = self._root
   var range = self.getSelection()
@@ -117,7 +120,14 @@ var firstOrLastLine = function(self){
     // should only contain one character thus the width and height should
     // both be reasonably small.
     var rect = range.getBoundingClientRect()
-    var nodeOffset = rect.top
+    var nodeOffset;
+    // here we need to handle a browser issue where an empty DomRect gets returned by the range sometimes; 
+    // in this case we fall back to using the startContainer
+    if ( Object.keys(emptyDomRect).every(function(key) { return rect[key]===0}) ){
+      nodeOffset = range.startContainer.getBoundingClientRect().top
+    } else {
+      nodeOffset = rect.top 
+    }
     var parentOffset = parentBlock.getBoundingClientRect().top
     // NATE: removed by Daniel in fix-list-scroll.  This was put in place by me, apparently to fix the calculation
     // for empty divs, but it doesn't seem to be necessary.  Maybe that is because now authorea divs have a minimum
