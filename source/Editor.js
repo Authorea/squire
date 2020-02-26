@@ -2271,6 +2271,17 @@ proto.removeAllFormatting = function ( range ) {
     return this.focus();
 };
 
+proto.removeLine =  function ( index ) {
+    var childNodes =  this._root.childNodes
+
+    if (index >= childNodes.length) return 
+    var nodeToRemove =  childNodes[index]
+    var htmlStr = nodeToRemove.outerHTML
+    nodeToRemove.remove()
+    return htmlStr
+
+}
+
 proto.increaseQuoteLevel = command( 'modifyBlocks', increaseBlockQuoteLevel );
 proto.decreaseQuoteLevel = command( 'modifyBlocks', decreaseBlockQuoteLevel );
 
