@@ -781,8 +781,15 @@ proto._getRangeAndRemoveBookmark = function ( range ) {
         range.setStart( startContainer, startOffset );
         range.setEnd( endContainer, endOffset );
 
+
         // Merge any text nodes we split
-        mergeInlines( startContainer, range );
+        //mergeInlines( startContainer, range, this._root );
+
+        // MILO:
+        //       Use Node.normalize instead of mergeInlines because mergeInlines
+        //       screws up the offset calculation
+        startContainer.normalize()
+
         if ( startContainer !== endContainer ) {
             mergeInlines( endContainer, range );
         }
