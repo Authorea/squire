@@ -43,6 +43,9 @@ var initEditors = function(){
     $("#insert-nested-not-editable").click(function () {
       insertNotEditable("<span class=not-editable><a>NS</a></span>")
     })
+    $("#set-katex-content").click(function() {
+      editor.setHTML(`<div>this is a line </div><div> here is another <span class="katex ltx_Math math not-editable v1" data-equation="\(x=x\)"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>=</mo><mi>x</mi></mrow><annotation encoding="application/x-tex">x=x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathdefault">x</span></span></span></span> line blah</div><div>and another here </div>  q`)
+    })
 
     // editor.addEventListener("pathChange", function(newPath){
     //   console.info("pathchange")
