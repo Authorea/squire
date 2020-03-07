@@ -124,6 +124,7 @@ function Squire ( root, config ) {
     this._lastFocusNode = null;
     this._path = '';
     this._willUpdatePath = false;
+    this._colors = {font: null, background: null}
 
     // NATE: We are resorting to the old way of handling changes since we need to move out of noteditable nodes.
     // To do this with the 'selectionchange' event is trickier since our current procedure triggers a selection change
@@ -317,7 +318,7 @@ proto.modifyDocument = function ( modificationCallback ) {
 // document node, since these events are fired in a custom manner by the
 // editor code.
 var customEvents = {
-    pathChange: 1, select: 1, input: 1, undoStateChange: 1
+    pathChange: 1, select: 1, input: 1, undoStateChange: 1, colorChange: 1
 };
 
 proto.fireEvent = function ( type, event ) {
@@ -694,7 +695,36 @@ proto._updatePath = function ( range, force ) {
     if ( !range.collapsed ) {
         this.fireEvent( 'select' );
     }
+    this._updateColors(newPath, anchor)
 };
+
+proto._updateColors = function (path, anchor) {
+
+    var newColors=  {font: null, background:null}
+    if (path && path.includes('SPAN')){
+
+        var currentNode = anchor 
+        while(currentNode && currentNode != this._root){
+            if (currentNode.nodeName === "SPAN"){
+                if (currentNode.getAttribute('data-font-color')){
+                    newColors.font = currentNode.getAttribute('class')
+                }
+                if (currentNode.getAttribute('data-background')){
+                    newColors.background = currentNode.getAttribute('class')
+                }
+            }
+            currentNode = currentNode.parentNode
+        }
+
+    } else {
+        newColors = {font: null, background:null}
+    }
+
+    if (newColors.font !== this._colors.font || newColors.background !== this._colors.background){
+        this.fireEvent( 'colorChange', { colors: newColors } );
+    }
+    this._colors = newColors
+}
 
 // selectionchange is fired synchronously in IE when removing current selection
 // and when setting new selection; keyup/mouseup may have processing we want
